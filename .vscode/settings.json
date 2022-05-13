@@ -2,6 +2,8 @@
     "files.associations": {
         "cmath": "cpp",
         "ios": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "iostream": "cpp",
+        "bitset": "cpp"
     }
 }

@@ -1,11 +1,24 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
+#include <string>
+#include <bitset>
 
 using namespace std;
 
 typedef long long unsigned int bitboard;
 typedef short unsigned int uint16_t;
+typedef short unsigned int piece;
+
+#define WHITE (piece)0x0
+#define BLACK (piece)0x1
+#define PAWN (piece)0x2
+#define KNIGHT (piece)0x4
+#define BISHOP (piece)0x6
+#define ROOK (piece)0x8
+#define QUEEN (piece)0xA
+#define KING (piece)0xC
+#define EMPTY (piece)0x0
 
 enum square { A1, B1, C1, D1, E1, F1, G1, H1,
               A2, B2, C2, D2, E2, F2, G2, H2,
@@ -18,23 +31,10 @@ enum square { A1, B1, C1, D1, E1, F1, G1, H1,
 
 enum rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 enum file { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
-enum piece { NONE, P, N, B, R, Q, K, p, n, b, r, q, k };
 
 typedef struct Board
 {
-    bitboard white_pawns;
-    bitboard white_knights;
-    bitboard white_bishops;
-    bitboard white_rooks;
-    bitboard white_queens;
-    bitboard white_kings;
-
-    bitboard black_pawns;
-    bitboard black_knights;
-    bitboard black_bishops;
-    bitboard black_rooks;
-    bitboard black_queens;
-    bitboard black_kings;
+    bitboard piece_boards[12];
 
     bitboard white_pieces;
     bitboard black_pieces;
@@ -58,8 +58,6 @@ typedef struct LUTs {
 typedef struct move_struct {
     square start;
     square target;
-
-    piece captured;
 } move_t;
 
 lut_t *init_LUT () {
@@ -83,44 +81,43 @@ lut_t *init_LUT () {
         luts->pieces[i] = piece;
         piece = piece << 1;
     }
+
+    // creating knight move LUT
+
+
     return luts;
+}
+
+size_t bitboard_index_from_piece(piece pc) {
+    return pc - 2; //this is to offset the existence of the two EMPTY (0000 and 0001)
 }
 
 board_t *zero_board() {
     board_t *board = (board_t *) malloc(sizeof(board_t));
-    board->white_pawns = 0;
-    board->white_knights = 0;
-    board->white_bishops = 0;
-    board->white_rooks = 0;
-    board->white_queens = 0;
-    board->white_kings = 0;
-
-    board->black_pawns = 0;
-    board->black_knights = 0;
-    board->black_bishops = 0;
-    board->black_rooks = 0;
-    board->black_queens = 0;
-    board->black_kings = 0;
+    
+    for (size_t i = 0; i < 12; i++) {
+        board->piece_boards[i] = 0;
+    }
 
     board->white_pieces = 0;
     board->black_pieces = 0;
     board->all_pieces = 0;
 
     for (size_t i = 0; i < 64; i++) {
-        board->sq_board[i] = NONE;
+        board->sq_board[i] = EMPTY;
     }
 
     return board;
 }
 
 void update_boards(board_t *board) {
-    board->white_pieces = (board->white_pawns   | board->white_knights | 
-                           board->white_bishops | board->white_rooks   |
-                           board->white_queens  | board->white_kings);
+    board->black_pieces = (board->piece_boards[1]  | board->piece_boards[3] | 
+                           board->piece_boards[5]  | board->piece_boards[7] |
+                           board->piece_boards[9]  | board->piece_boards[11]);
 
-    board->black_pieces = (board->black_pawns   | board->black_knights | 
-                           board->black_bishops | board->black_rooks   |
-                           board->black_queens  | board->black_kings);
+    board->white_pieces = (board->piece_boards[0]  | board->piece_boards[2] | 
+                           board->piece_boards[4]  | board->piece_boards[6] |
+                           board->piece_boards[8]  | board->piece_boards[10]);
 
     board->all_pieces = board->white_pieces | board->black_pieces;
 }
@@ -151,126 +148,216 @@ bitboard rem_piece(bitboard board, square sq, lut_t *luts) {
 }
 
 void make_move(board_t *board, move_t move, lut_t *luts) {
-
     square start = move.start;
     square target = move.target;
 
     piece mv_piece = board->sq_board[start];
     piece tar_piece = board->sq_board[target];
 
-    switch(mv_piece) {
-        case P :
-            board->white_pawns = rem_piece(board->white_pawns, start, luts);
-            board->white_pawns = place_piece(board->white_pawns, target, luts);
-            break;
-        case N :
-            board->white_knights = rem_piece(board->white_knights, start, luts);
-            board->white_knights = place_piece(board->white_knights, target, luts);
-            break;
-        case B :
-            board->white_bishops = rem_piece(board->white_bishops, start, luts);
-            board->white_bishops = place_piece(board->white_bishops, target, luts);
-            break;
-        case R :
-            board->white_rooks = rem_piece(board->white_rooks, start, luts);
-            board->white_rooks = place_piece(board->white_rooks, target, luts);
-            break;
-        case Q :
-            board->white_queens = rem_piece(board->white_queens, start, luts);
-            board->white_queens = place_piece(board->white_queens, target, luts);
-            break;
-        case K :
-            board->white_kings = rem_piece(board->white_kings, start, luts);
-            board->white_kings = place_piece(board->white_kings, target, luts);
-            break;
-        
-        case p :
-            board->black_pawns = rem_piece(board->black_pawns, start, luts);
-            board->black_pawns = place_piece(board->black_pawns, target, luts);
-            break;
-        case n :
-            board->black_knights = rem_piece(board->black_knights, start, luts);
-            board->black_knights = place_piece(board->black_knights, target, luts);
-            break;
-        case b :
-            board->black_bishops = rem_piece(board->black_bishops, start, luts);
-            board->black_bishops = place_piece(board->black_bishops, target, luts);
-            break;
-        case r :
-            board->black_rooks = rem_piece(board->black_rooks, start, luts);
-            board->black_rooks = place_piece(board->black_rooks, target, luts);
-            break;
-        case q :
-            board->black_queens = rem_piece(board->black_queens, start, luts);
-            board->black_queens = place_piece(board->black_queens, target, luts);
-            break;
-        case k :
-            board->black_kings = rem_piece(board->black_kings, start, luts);
-            board->black_kings = place_piece(board->black_kings, target, luts);
-            break;
-    }
+    bitboard *mv_board = &board->piece_boards[bitboard_index_from_piece(mv_piece)];
+    bitboard *landing_board = &board->piece_boards[bitboard_index_from_piece(mv_piece)];
     
-    switch(tar_piece) {
-        case NONE :
-            break;
-        case P :
-            board->white_pawns = rem_piece(board->white_pawns, target, luts);
-            break;
-        case N :
-            board->white_knights = rem_piece(board->white_knights, target, luts);
-            break;
-        case B :
-            board->white_bishops = rem_piece(board->white_bishops, target, luts);
-            break;
-        case R :
-            board->white_rooks = rem_piece(board->white_rooks, target, luts);
-            break;
-        case Q :
-            board->white_queens = rem_piece(board->white_queens, target, luts);
-            break;
-        case K :
-            board->white_kings = rem_piece(board->white_kings, target, luts);
-            break;
-        
-        case p :
-            board->black_pawns = rem_piece(board->black_pawns, target, luts);
-            break;
-        case n :
-            board->black_knights = rem_piece(board->black_knights, target, luts);
-            break;
-        case b :
-            board->black_bishops = rem_piece(board->black_bishops, target, luts);
-            break;
-        case r :
-            board->black_rooks = rem_piece(board->black_rooks, target, luts);
-            break;
-        case q :
-            board->black_queens = rem_piece(board->black_queens, target, luts);
-            break;
-        case k :
-            board->black_kings = rem_piece(board->black_kings, target, luts);
-            break;
+    *mv_board = rem_piece(*mv_board, start, luts);
+    *landing_board = place_piece(*landing_board, target, luts);
+
+    if(tar_piece != EMPTY) {
+        bitboard *captured_board = &board->piece_boards[bitboard_index_from_piece(tar_piece)];
+        *captured_board = rem_piece(*captured_board, target, luts);
     }
 
-    board->sq_board[move.start] = NONE;
+    board->sq_board[move.start] = EMPTY;
     board->sq_board[move.target] = mv_piece;
     update_boards(board);
     return;
 }
 
-int main(){
-    board_t *board = zero_board();
-    lut_t *luts = init_LUT();
 
-    board->white_knights = place_piece(board->white_knights, A1, luts);
-    board->sq_board[A1] = N;
-    move_t move;
-    for (size_t i = 0; i < 63; i++) {
-        move.start = (square)i;
-        move.target = (square)(i+1);
-        make_move(board, move, luts);
-        cout << hex << uppercase << board->white_knights << endl;
+// will have to update this with turn info, castling, and en passant
+board_t *decode_fen(string fen, lut_t *luts) {
+    board_t *board = zero_board();
+    bitboard *place_board;
+    piece pc;
+    int loc = 0;
+    for (size_t i = 0; i < fen.size(); i++) {
+        char c = fen[fen.size() - i - 1];
+        pc = 0;
+        if (isdigit(c)) {
+            loc += c - '0'; // adds c onto loc
+        }
+        else if (c == '/') {
+            continue;
+        }
+        else {
+            if (isupper(c)) {
+                pc = pc | WHITE;
+            }
+            else {
+                pc = pc | BLACK;
+            }
+
+            if (c == 'p' || c == 'P') {
+                pc = pc | PAWN;
+            }
+            else if (c == 'n' || c == 'N') {
+                pc = pc | KNIGHT;
+            }
+            else if (c == 'b' || c == 'B') {
+                pc = pc | BISHOP;
+            }
+            else if (c == 'r' || c == 'R') {
+                pc = pc | ROOK;
+            }
+            else if (c == 'q' || c == 'Q') {
+                pc = pc | QUEEN;
+            }
+            else {
+                pc = pc | KING;
+            }
+            board->sq_board[loc] = pc;
+            place_board = &board->piece_boards[bitboard_index_from_piece(pc)];
+            *place_board = place_piece(*place_board, (square)loc, luts);
+            loc += 1;
+        }
     }
+    update_boards(board);
+    return board;
+}
+
+void print_bitboard (bitboard b) {
+    bitset<64> bs(b);
+    for (size_t i = 0; i < 8; i++) {
+        for (size_t j = 0; j < 8; j++) {
+            cout << bs[(7-i)*8 + j];
+        }
+        cout << endl;
+    }
+}
+// make print_bitboard function
+void print_board(board_t *board) {
+    bitboard all_pieces = (board->all_pieces);
+    bitboard white_pieces = (board->white_pieces);
+    bitboard black_pieces = (board->black_pieces);
+
+    bitboard white_pawns = (board->piece_boards[0]);
+    bitboard black_pawns = (board->piece_boards[1]);
+    bitboard white_knights = (board->piece_boards[2]);
+    bitboard black_knights = (board->piece_boards[3]);
+    bitboard white_bishops = (board->piece_boards[4]);
+    bitboard black_bishops = (board->piece_boards[5]);
+    bitboard white_rooks = (board->piece_boards[6]);
+    bitboard black_rooks = (board->piece_boards[7]);
+    bitboard white_queens = (board->piece_boards[8]);
+    bitboard black_queens = (board->piece_boards[9]);
+    bitboard white_kings = (board->piece_boards[10]);
+    bitboard black_kings = (board->piece_boards[11]);
+
+    piece *sqs = board->sq_board;
+    piece pc;
+
+    cout << "All Pieces" << endl;
+    print_bitboard(all_pieces);
+
+    cout << endl << "White Pieces" << endl;
+    print_bitboard(white_pieces);
+
+    cout << endl <<  "Black Pieces" << endl;
+    print_bitboard(black_pieces);
+
+    cout << endl <<  "White Pawns" << endl;
+    print_bitboard(white_pawns);
+
+    cout << endl <<  "Black Pawns" << endl;
+    print_bitboard(black_pawns);
+
+    cout << endl <<  "White Knights" << endl;
+    print_bitboard(white_knights);
+
+    cout << endl <<  "Black Knights" << endl;
+    print_bitboard(black_knights);
+
+    cout << endl <<  "White Bishops" << endl;
+    print_bitboard(white_bishops);
+
+    cout << endl <<  "Black Bishops" << endl;
+    print_bitboard(black_bishops);
+
+    cout << endl <<  "White Rooks" << endl;
+    print_bitboard(white_rooks);
+
+    cout << endl <<  "Black Rooks" << endl;
+    print_bitboard(black_rooks);
+
+    cout << endl <<  "White Queens" << endl;
+    print_bitboard(white_queens);
+
+    cout << endl <<  "Black Queens" << endl;
+    print_bitboard(black_queens);
+
+    cout << endl <<  "White Kings" << endl;
+    print_bitboard(white_kings);
+
+    cout << endl <<  "Black Kings" << endl;
+    print_bitboard(black_kings);
+
+    cout << endl <<  "Square-wise" << endl;
+    char c;
+    for (size_t i = 0; i < 8; i++) {
+        for (size_t j = 0; j < 8; j++) {
+            pc = sqs[(7-i)*8 + j];
+
+            switch (pc) {
+                case (WHITE | PAWN) :
+                    c = 'P';
+                    break;
+                case (BLACK | PAWN) :
+                    c = 'p';
+                    break;
+                case (WHITE | KNIGHT) :
+                    c = 'N';
+                    break;
+                case (BLACK | KNIGHT) :
+                    c = 'n';
+                    break;
+                case (WHITE | BISHOP) :
+                    c = 'B';
+                    break;
+                case (BLACK | BISHOP) :
+                    c = 'b';
+                    break;
+                case (WHITE | ROOK) :
+                    c = 'R';
+                    break;
+                case (BLACK | ROOK) :
+                    c = 'r';
+                    break;
+                case (WHITE | QUEEN) :
+                    c = 'Q';
+                    break;
+                case (BLACK | QUEEN) :
+                    c = 'q';
+                    break;
+                case (WHITE | KING) :
+                    c = 'K';
+                    break;
+                case (BLACK | KING) :
+                    c = 'k';
+                    break;
+                default:
+                    c = '*';
+                    break;
+            }
+            cout << c;
+        }
+        cout << endl;
+    }
+    return;
+}
+
+int main(){
+    lut_t *luts = init_LUT();
+    board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", luts);
+
+    print_board(board);
 
     int x;
     cin >> x;
@@ -297,7 +384,20 @@ int main(){
         - ^^^ maybe not tho cuz its large
         - for dealing with captured pieces, maybe make the board struct hold
           the most recent captured pieces (NONE if none captured) in order to 
-          undo the move
+          undo the move. Other stuff would also need to be stored for this to 
+          work.
+        - make FEN -> board function
+        - I should have a better way of representing pieces in the piece array
+        - 01000 = white
+        - 10000 = black
+        - 00001 = pawn
+        - change the way that I store the twelve bitboards... maybe an array
+          that is indexed by the enums?
+        - I think I will need to create a new board for every new move...
+        - However, I can simply an array of a fuckton of boards = depth of the
+          search. Note about the non-fixed depth due to completing capture
+          chains.
+        - Read the wiki page... need to do bitscanning
 
 
 

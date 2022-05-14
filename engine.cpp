@@ -28,14 +28,14 @@ typedef bool turn;
 #define BLACK_PAWNS_INDEX (bitboard_index_from_piece(BLACK | PAWN))
 #define WHITE_KNIGHTS_INDEX (bitboard_index_from_piece(WHITE | KNIGHT))
 #define BLACK_KNIGHTS_INDEX (bitboard_index_from_piece(BLACK | KNIGHT))
-#define WHITE_BISHOP_INDEX (bitboard_index_from_piece(WHITE | BISHOP))
-#define BLACK_BISHOP_INDEX (bitboard_index_from_piece(BLACK | BISHOP))
-#define WHITE_ROOK_INDEX (bitboard_index_from_piece(WHITE | ROOK))
-#define BLACK_ROOK_INDEX (bitboard_index_from_piece(BLACK | ROOK))
-#define WHITE_QUEEN_INDEX (bitboard_index_from_piece(WHITE | QUEEN))
-#define BLACK_QUEEN_INDEX (bitboard_index_from_piece(BLACK | QUEEN))
-#define WHITE_KING_INDEX (bitboard_index_from_piece(WHITE | KING))
-#define BLACK_KING_INDEX (bitboard_index_from_piece(BLACK | KING))
+#define WHITE_BISHOPS_INDEX (bitboard_index_from_piece(WHITE | BISHOP))
+#define BLACK_BISHOPS_INDEX (bitboard_index_from_piece(BLACK | BISHOP))
+#define WHITE_ROOKS_INDEX (bitboard_index_from_piece(WHITE | ROOK))
+#define BLACK_ROOKS_INDEX (bitboard_index_from_piece(BLACK | ROOK))
+#define WHITE_QUEENS_INDEX (bitboard_index_from_piece(WHITE | QUEEN))
+#define BLACK_QUEENS_INDEX (bitboard_index_from_piece(BLACK | QUEEN))
+#define WHITE_KINGS_INDEX (bitboard_index_from_piece(WHITE | KING))
+#define BLACK_KINGS_INDEX (bitboard_index_from_piece(BLACK | KING))
 
 
 
@@ -62,6 +62,8 @@ typedef struct Board
     bitboard all_pieces;
 
     piece sq_board[64];
+
+    turn t;
 } board_t;
 
 typedef struct LUTs {
@@ -128,6 +130,7 @@ board_t *zero_board() {
         board->sq_board[i] = EMPTY;
     }
 
+    board->t = W;
     return board;
 }
 
@@ -172,6 +175,7 @@ bitboard rem_piece(bitboard board, square sq, lut_t *luts) {
     return board & ~(luts->pieces[sq]);
 }
 
+// need to make this push onto the stack and also should change the turn
 void make_move(board_t *board, move_t move, lut_t *luts) {
     square start = move.start;
     square target = move.target;
@@ -193,6 +197,8 @@ void make_move(board_t *board, move_t move, lut_t *luts) {
     board->sq_board[move.start] = EMPTY;
     board->sq_board[move.target] = mv_piece;
     update_boards(board);
+
+    board->t = !board->t;
     return;
 }
 
@@ -383,7 +389,12 @@ void print_board(board_t *board) {
     return;
 }
 
-bitboard generate_knight_moves(bitboard knight, bitboard own_pieces, lut_t *luts) {
+// might be worth doing this at the beginning and then using an LUT
+bitboard generate_knight_moves(bitboard knight, board_t *board, lut_t *luts) {
+    bitboard own_pieces;
+    if(board->t == W) own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
+    
     bitboard spot_1_clip = luts->clear_file[FILE_A] & luts->clear_file[FILE_B];
     bitboard spot_2_clip = luts->clear_file[FILE_A];
     bitboard spot_3_clip = luts->clear_file[FILE_H];
@@ -411,18 +422,88 @@ bitboard generate_knight_moves(bitboard knight, bitboard own_pieces, lut_t *luts
     return knight_moves & ~own_pieces;           
 }
 
-// generates the moves in the position given the turn and returns number of moves in a position
-size_t generate_moves(board_t *board, move_t *move_list, lut_t *luts, turn t) {
-    size_t curr_move = 0;
-    
+bitboard generate_king_moves(bitboard king, board_t *board, lut_t *luts) {
+    // still need to add castling... will have to take in info from the board for that
     bitboard own_pieces;
-    if (t == W) own_pieces = board->white_pieces;
-    else        own_pieces = board->black_pieces;
+    if(board->t == W) own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
+    
+    bitboard spot_1_clip = luts->clear_file[FILE_H];
+    bitboard spot_3_clip = luts->clear_file[FILE_A];
+    bitboard spot_4_clip = luts->clear_file[FILE_A];
+
+    bitboard spot_5_clip = luts->clear_file[FILE_A];
+    bitboard spot_7_clip = luts->clear_file[FILE_H];
+    bitboard spot_8_clip = luts->clear_file[FILE_H];
+
+    bitboard spot_1 = (king & spot_1_clip) << 7;
+    bitboard spot_2 = king << 8;
+    bitboard spot_3 = (king & spot_3_clip) << 9;
+    bitboard spot_4 = (king & spot_4_clip) << 1;
+
+    bitboard spot_5 = (king & spot_5_clip) >> 7;
+    bitboard spot_6 = king >> 8;
+    bitboard spot_7 = (king & spot_7_clip) >> 9;
+    bitboard spot_8 = (king & spot_8_clip) >> 1;
+
+    bitboard king_moves = spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |
+                          spot_7 | spot_8;
+
+    return king_moves & ~own_pieces;           
+}
+
+bitboard generate_pawn_moves(bitboard pawn, board_t *board, lut_t *luts) {
+    // will need to add en passant later
+    // generate capture moves first
+    bitboard enemy_pieces;
+    bitboard all_pieces = board->all_pieces;
+    bitboard spot_1_clip = luts->clear_file[FILE_H];
+    bitboard spot_4_clip = luts->clear_file[FILE_A];
+
+    bitboard white_mask_rank = luts->mask_rank[RANK_2];
+    bitboard black_mask_rank = luts->mask_rank[RANK_7];
+
+    bitboard spot_1;
+    bitboard spot_2;
+    bitboard spot_3;
+    bitboard spot_4;
+
+    bitboard captures;
+    bitboard forward_moves;
+
+    if(board->t == W) {
+        enemy_pieces = board->black_pieces;
+        spot_1 = (pawn & spot_1_clip) << 7;
+        spot_4 = (pawn & spot_4_clip) << 9;
+        captures = (spot_1 | spot_4) & enemy_pieces;
+
+        spot_2 = (pawn << 8) & ~all_pieces;
+        spot_3 = ((((pawn & white_mask_rank) << 8) & ~all_pieces) << 8) & ~all_pieces;
+        forward_moves = spot_2 | spot_3;
+    }
+    else {
+        enemy_pieces = board->white_pieces;
+        spot_1 = (pawn & spot_4_clip) >> 7;
+        spot_4 = (pawn & spot_1_clip) >> 9;
+        captures = (spot_1 | spot_4) & enemy_pieces;
+
+        spot_2 = (pawn >> 8) & ~all_pieces;
+        spot_3 = ((((pawn & black_mask_rank) >> 8) & ~all_pieces) >> 8) & ~all_pieces;
+        forward_moves = spot_2 | spot_3;
+    }
+
+    return captures | forward_moves;
+}
+
+// generates the moves in the position given the turn and returns number of moves in a position
+size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
+    // restrict move generation due to check in this function
+    size_t curr_move = 0;
 
     // generate knight moves
     bitboard knights;
-    if (t == W) knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
-    else        knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
+    if (board->t == W) knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
+    else               knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
 
     bitboard knight_attacks;
     bitboard one_knight;
@@ -431,19 +512,61 @@ size_t generate_moves(board_t *board, move_t *move_list, lut_t *luts, turn t) {
     while(knights) {
         pc_loc = first_set_bit(knights);
         one_knight = luts->pieces[pc_loc];
-        knight_attacks = generate_knight_moves(one_knight, own_pieces, luts);
+        knight_attacks = generate_knight_moves(one_knight, board, luts);
         
         while(knight_attacks) {
             tar_loc = first_set_bit(knight_attacks);
             move_list[curr_move].start = (square)pc_loc;
             move_list[curr_move].target = (square)tar_loc;
-            print_bitboard(knight_attacks);
             knight_attacks = rem_first_bit(knight_attacks);
             curr_move++;
         }
         knights = rem_first_bit(knights);
     }
 
+    // generate king moves
+    bitboard kings;
+    if (board->t == W) kings = board->piece_boards[WHITE_KINGS_INDEX];
+    else               kings = board->piece_boards[BLACK_KINGS_INDEX];
+
+    bitboard kings_attacks;
+    bitboard one_kings;
+    while(kings) {
+        pc_loc = first_set_bit(kings);
+        one_kings = luts->pieces[pc_loc];
+        kings_attacks = generate_king_moves(one_kings, board, luts);
+        
+        while(kings_attacks) {
+            tar_loc = first_set_bit(kings_attacks);
+            move_list[curr_move].start = (square)pc_loc;
+            move_list[curr_move].target = (square)tar_loc;
+            kings_attacks = rem_first_bit(kings_attacks);
+            curr_move++;
+        }
+        kings = rem_first_bit(kings);
+    }
+
+    // generate pawn moves
+    bitboard pawns;
+    if (board->t == W) pawns = board->piece_boards[WHITE_PAWNS_INDEX];
+    else               pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+
+    bitboard pawns_attacks;
+    bitboard one_pawns;
+    while(pawns) {
+        pc_loc = first_set_bit(pawns);
+        one_pawns = luts->pieces[pc_loc];
+        pawns_attacks = generate_pawn_moves(one_pawns, board, luts);
+        
+        while(pawns_attacks) {
+            tar_loc = first_set_bit(pawns_attacks);
+            move_list[curr_move].start = (square)pc_loc;
+            move_list[curr_move].target = (square)tar_loc;
+            pawns_attacks = rem_first_bit(pawns_attacks);
+            curr_move++;
+        }
+        pawns = rem_first_bit(pawns);
+    }
     return curr_move;
 }
 
@@ -457,17 +580,16 @@ void print_moves(move_t *move_list, size_t num_moves) {
 int main(){
     lut_t *luts = init_LUT();
     board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", luts);
+    // board->t = B;
     move_t *move_list = (move_t *) malloc(sizeof(move_t) * MAX_MOVES);
     print_board(board);
 
-    size_t num_moves = generate_moves(board, move_list, luts, W);
+    size_t num_moves = generate_leaping_moves(board, move_list, luts);
     cout << endl << endl << num_moves << endl;
     print_moves(move_list, num_moves);
 
-    cout << endl; 
-    print_bitboard(rem_first_bit(0x000000000000FFF0));
-
-    // print_bitboard(generate_knight_moves(luts->pieces[6], board->white_pieces, luts));
+    // print_bitboard(generate_pawn_moves(luts->pieces[16], board, luts));
+    // print_bitboard(board->piece_boards[BLACK_PAWNS_INDEX]);
 
     int x;
     cin >> x;
@@ -512,4 +634,8 @@ int main(){
         - tomorrow start with knight moves LUT generation
         - consider using stacks for the board history
         - unmake move would just be popping from the stack
+        - do all pseudo-legal moves now, then cycle back once I have all the
+          squares that are being attacked to deal with check
+        - I think I want the board struct to hold the turn and castling rights
+          info. So I have to move the turn into that.
 */

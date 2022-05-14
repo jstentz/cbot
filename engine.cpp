@@ -9,6 +9,10 @@ using namespace std;
 typedef long long unsigned int bitboard;
 typedef short unsigned int uint16_t;
 typedef short unsigned int piece;
+typedef bool turn;
+
+#define W (turn)true
+#define B (turn)false
 
 #define WHITE (piece)0x0
 #define BLACK (piece)0x1
@@ -19,6 +23,23 @@ typedef short unsigned int piece;
 #define QUEEN (piece)0xA
 #define KING (piece)0xC
 #define EMPTY (piece)0x0
+
+#define WHITE_PAWNS_INDEX (bitboard_index_from_piece(WHITE | PAWN))
+#define BLACK_PAWNS_INDEX (bitboard_index_from_piece(BLACK | PAWN))
+#define WHITE_KNIGHTS_INDEX (bitboard_index_from_piece(WHITE | KNIGHT))
+#define BLACK_KNIGHTS_INDEX (bitboard_index_from_piece(BLACK | KNIGHT))
+#define WHITE_BISHOP_INDEX (bitboard_index_from_piece(WHITE | BISHOP))
+#define BLACK_BISHOP_INDEX (bitboard_index_from_piece(BLACK | BISHOP))
+#define WHITE_ROOK_INDEX (bitboard_index_from_piece(WHITE | ROOK))
+#define BLACK_ROOK_INDEX (bitboard_index_from_piece(BLACK | ROOK))
+#define WHITE_QUEEN_INDEX (bitboard_index_from_piece(WHITE | QUEEN))
+#define BLACK_QUEEN_INDEX (bitboard_index_from_piece(BLACK | QUEEN))
+#define WHITE_KING_INDEX (bitboard_index_from_piece(WHITE | KING))
+#define BLACK_KING_INDEX (bitboard_index_from_piece(BLACK | KING))
+
+
+
+#define MAX_MOVES 218
 
 enum square { A1, B1, C1, D1, E1, F1, G1, H1,
               A2, B2, C2, D2, E2, F2, G2, H2,
@@ -128,6 +149,10 @@ uint16_t first_set_bit(bitboard bits) {
     return log2(bits & -bits);
 }
 
+bitboard rem_first_bit(bitboard bits) {
+    return bits & (bits - 1);
+}
+
 /* returns the 0-indexed location of the first 1 bit from MSB to LSB
    also returns 0 when the input is 0 (so case on that) */
 uint16_t last_set_bit(bitboard bits) {
@@ -177,15 +202,18 @@ board_t *decode_fen(string fen, lut_t *luts) {
     board_t *board = zero_board();
     bitboard *place_board;
     piece pc;
-    int loc = 0;
+    int col = 0;
+    int row = 7;
+    int loc;
     for (size_t i = 0; i < fen.size(); i++) {
-        char c = fen[fen.size() - i - 1];
+        char c = fen[i];
         pc = 0;
         if (isdigit(c)) {
-            loc += c - '0'; // adds c onto loc
+            col += c - '0'; // adds c onto loc
         }
         else if (c == '/') {
-            continue;
+            row--;
+            col = 0;
         }
         else {
             if (isupper(c)) {
@@ -213,11 +241,13 @@ board_t *decode_fen(string fen, lut_t *luts) {
             else {
                 pc = pc | KING;
             }
+            loc = row * 8 + col;
             board->sq_board[loc] = pc;
             place_board = &board->piece_boards[bitboard_index_from_piece(pc)];
             *place_board = place_piece(*place_board, (square)loc, luts);
-            loc += 1;
+            col += 1;
         }
+
     }
     update_boards(board);
     return board;
@@ -353,11 +383,91 @@ void print_board(board_t *board) {
     return;
 }
 
+bitboard generate_knight_moves(bitboard knight, bitboard own_pieces, lut_t *luts) {
+    bitboard spot_1_clip = luts->clear_file[FILE_A] & luts->clear_file[FILE_B];
+    bitboard spot_2_clip = luts->clear_file[FILE_A];
+    bitboard spot_3_clip = luts->clear_file[FILE_H];
+    bitboard spot_4_clip = luts->clear_file[FILE_H] & luts->clear_file[FILE_G];
+
+    // exploiting symmetry in knight moves
+    bitboard spot_5_clip = spot_4_clip;
+    bitboard spot_6_clip = spot_3_clip;
+    bitboard spot_7_clip = spot_2_clip;
+    bitboard spot_8_clip = spot_1_clip;
+
+    bitboard spot_1 = (knight & spot_1_clip) >> 6;
+    bitboard spot_2 = (knight & spot_2_clip) >> 15;
+    bitboard spot_3 = (knight & spot_3_clip) >> 17;
+    bitboard spot_4 = (knight & spot_4_clip) >> 10;
+
+    bitboard spot_5 = (knight & spot_5_clip) << 6;
+    bitboard spot_6 = (knight & spot_6_clip) << 15;
+    bitboard spot_7 = (knight & spot_7_clip) << 17;
+    bitboard spot_8 = (knight & spot_8_clip) << 10;
+
+    bitboard knight_moves = spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |
+                            spot_7 | spot_8;
+
+    return knight_moves & ~own_pieces;           
+}
+
+// generates the moves in the position given the turn and returns number of moves in a position
+size_t generate_moves(board_t *board, move_t *move_list, lut_t *luts, turn t) {
+    size_t curr_move = 0;
+    
+    bitboard own_pieces;
+    if (t == W) own_pieces = board->white_pieces;
+    else        own_pieces = board->black_pieces;
+
+    // generate knight moves
+    bitboard knights;
+    if (t == W) knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
+    else        knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
+
+    bitboard knight_attacks;
+    bitboard one_knight;
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+    while(knights) {
+        pc_loc = first_set_bit(knights);
+        one_knight = luts->pieces[pc_loc];
+        knight_attacks = generate_knight_moves(one_knight, own_pieces, luts);
+        
+        while(knight_attacks) {
+            tar_loc = first_set_bit(knight_attacks);
+            move_list[curr_move].start = (square)pc_loc;
+            move_list[curr_move].target = (square)tar_loc;
+            print_bitboard(knight_attacks);
+            knight_attacks = rem_first_bit(knight_attacks);
+            curr_move++;
+        }
+        knights = rem_first_bit(knights);
+    }
+
+    return curr_move;
+}
+
+void print_moves(move_t *move_list, size_t num_moves) {
+    for(size_t i = 0; i < num_moves; i++) {
+        cout << move_list[i].start << "->" << move_list[i].target << endl;
+    }
+    return;
+}
+
 int main(){
     lut_t *luts = init_LUT();
     board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", luts);
-
+    move_t *move_list = (move_t *) malloc(sizeof(move_t) * MAX_MOVES);
     print_board(board);
+
+    size_t num_moves = generate_moves(board, move_list, luts, W);
+    cout << endl << endl << num_moves << endl;
+    print_moves(move_list, num_moves);
+
+    cout << endl; 
+    print_bitboard(rem_first_bit(0x000000000000FFF0));
+
+    // print_bitboard(generate_knight_moves(luts->pieces[6], board->white_pieces, luts));
 
     int x;
     cin >> x;
@@ -367,7 +477,6 @@ int main(){
 }
 
 /*
-
     Notes:
         - Maybe have a move struct and then store an array of moves in a 
           given position. Then you only need to malloc one array.
@@ -398,7 +507,9 @@ int main(){
           search. Note about the non-fixed depth due to completing capture
           chains.
         - Read the wiki page... need to do bitscanning
-
-
-
+        - in terms of searching, the array positions will be sequentially 
+          ordered by board history. So board[0] would be the starting position.
+        - tomorrow start with knight moves LUT generation
+        - consider using stacks for the board history
+        - unmake move would just be popping from the stack
 */

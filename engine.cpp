@@ -76,18 +76,54 @@ typedef struct LUTs {
     bitboard king_moves[64];
     bitboard pawn_moves[64];
     bitboard knight_moves[64];
+
+    bitboard rank_attacks[64][256]; 
+    bitboard file_attacks[64][256];
 } lut_t;
 
 typedef struct move_struct {
     square start;
     square target;
 } move_t;
+// stolen from chessprogramming wiki
+bitboard flip_vertical(bitboard b) {
+    return  ((b << 56)                          ) |
+            ((b << 40) & bitboard(0x00ff000000000000)) |
+            ((b << 24) & bitboard(0x0000ff0000000000)) |
+            ((b <<  8) & bitboard(0x000000ff00000000)) |
+            ((b >>  8) & bitboard(0x00000000ff000000)) |
+            ((b >> 24) & bitboard(0x0000000000ff0000)) |
+            ((b >> 40) & bitboard(0x000000000000ff00)) |
+            ((b >> 56));
+}
+// stolen from chessprogramming wiki
+bitboard flip_diag_a1_h8(bitboard b) {
+    bitboard t;
+    const bitboard k1 = bitboard(0x5500550055005500);
+    const bitboard k2 = bitboard(0x3333000033330000);
+    const bitboard k4 = bitboard(0x0F0F0F0F00000000);
+    t = k4 & (b ^ (b << 28));
+    b ^= t ^ (t >> 28);
+    t = k2 & (b ^ (b << 14));
+    b ^= t ^ (t >> 14);
+    t = k1 & (b ^ (b << 7));
+    b ^= t ^ (t >> 7);
+    return b;
+}
+
+bitboard rotate_90_anti_clockwise(bitboard b) {
+    return flip_diag_a1_h8(flip_vertical(b));
+}
+
+bitboard rotate_90_clockwise(bitboard b) {
+    return flip_vertical(flip_diag_a1_h8(b));
+}
 
 lut_t *init_LUT () {
     lut_t *luts = (lut_t *) malloc(sizeof(lut_t));
 
     bitboard rank = 0x00000000000000FF;
-    bitboard file = 0x8080808080808080;
+    bitboard file = 0x0101010101010101;
 
     for(size_t i = 0; i < 8; i++) {
         luts->mask_rank[i] = rank;
@@ -96,7 +132,7 @@ lut_t *init_LUT () {
         luts->clear_file[i] = ~file;
 
         rank = rank << 8;
-        file = file >> 1;
+        file = file << 1;
     }
 
     bitboard piece = 0x0000000000000001;
@@ -105,8 +141,42 @@ lut_t *init_LUT () {
         piece = piece << 1;
     }
 
-    // creating knight move LUT
+    /* creating rank_attacks LUT */
+    
+    size_t LSB_to_first_1;
+    size_t LSB_to_second_1;
+    bitboard mask_1 = 0x1;
+    bitboard rank_attack_mask = 0xFF; // shift this at end to get attacks
+    for(size_t sq = 0; sq < 64; sq++) {
+        size_t file = sq % 8; // will have to multiply later to shift the bitboard into the right spot
+        for(size_t pattern = 0; pattern < 256; pattern++) {
+            LSB_to_first_1 = 0;
+            LSB_to_second_1 = 7;
+            for(size_t i = 0; i < file; i++) {
+                if((pattern >> i) & mask_1 == 1) {
+                    LSB_to_first_1 = i;
+                }
+            }
+            for(size_t i = file + 1; i < 8; i++) {
+                if((pattern >> i) & mask_1 == 1) {
+                    LSB_to_second_1 = i;
+                    break;
+                }
+            }
+            bitboard unplaced_mask = rank_attack_mask >> (7 - (LSB_to_second_1 - LSB_to_first_1));
+            luts->rank_attacks[sq][pattern] = unplaced_mask << (sq - (file - LSB_to_first_1));
+        }
+    }
 
+    /* creating file_attacks LUT */
+    for(size_t i = 0; i < 8; i++) {
+        for(size_t j = 0; j < 8; j++){
+            for(size_t pattern = 0; pattern < 256; pattern++) {
+                luts->file_attacks[i*8 + j][pattern] = rotate_90_clockwise(luts->rank_attacks[j*8 + (7-i)][pattern]);
+            }
+        }
+        
+    }
 
     return luts;
 }
@@ -389,16 +459,16 @@ void print_board(board_t *board) {
     return;
 }
 
-// might be worth doing this at the beginning and then using an LUT
+// !!!! might be worth doing this at the beginning and then using an LUT !!!!
 bitboard generate_knight_moves(bitboard knight, board_t *board, lut_t *luts) {
     bitboard own_pieces;
     if(board->t == W) own_pieces = board->white_pieces;
     else              own_pieces = board->black_pieces;
     
-    bitboard spot_1_clip = luts->clear_file[FILE_A] & luts->clear_file[FILE_B];
-    bitboard spot_2_clip = luts->clear_file[FILE_A];
-    bitboard spot_3_clip = luts->clear_file[FILE_H];
-    bitboard spot_4_clip = luts->clear_file[FILE_H] & luts->clear_file[FILE_G];
+    bitboard spot_1_clip = luts->clear_file[FILE_H] & luts->clear_file[FILE_G];
+    bitboard spot_2_clip = luts->clear_file[FILE_H];
+    bitboard spot_3_clip = luts->clear_file[FILE_A];
+    bitboard spot_4_clip = luts->clear_file[FILE_A] & luts->clear_file[FILE_B];
 
     // exploiting symmetry in knight moves
     bitboard spot_5_clip = spot_4_clip;
@@ -428,13 +498,13 @@ bitboard generate_king_moves(bitboard king, board_t *board, lut_t *luts) {
     if(board->t == W) own_pieces = board->white_pieces;
     else              own_pieces = board->black_pieces;
     
-    bitboard spot_1_clip = luts->clear_file[FILE_H];
-    bitboard spot_3_clip = luts->clear_file[FILE_A];
-    bitboard spot_4_clip = luts->clear_file[FILE_A];
+    bitboard spot_1_clip = luts->clear_file[FILE_A];
+    bitboard spot_3_clip = luts->clear_file[FILE_H];
+    bitboard spot_4_clip = luts->clear_file[FILE_H];
 
-    bitboard spot_5_clip = luts->clear_file[FILE_A];
-    bitboard spot_7_clip = luts->clear_file[FILE_H];
-    bitboard spot_8_clip = luts->clear_file[FILE_H];
+    bitboard spot_5_clip = luts->clear_file[FILE_H];
+    bitboard spot_7_clip = luts->clear_file[FILE_A];
+    bitboard spot_8_clip = luts->clear_file[FILE_A];
 
     bitboard spot_1 = (king & spot_1_clip) << 7;
     bitboard spot_2 = king << 8;
@@ -457,8 +527,8 @@ bitboard generate_pawn_moves(bitboard pawn, board_t *board, lut_t *luts) {
     // generate capture moves first
     bitboard enemy_pieces;
     bitboard all_pieces = board->all_pieces;
-    bitboard spot_1_clip = luts->clear_file[FILE_H];
-    bitboard spot_4_clip = luts->clear_file[FILE_A];
+    bitboard spot_1_clip = luts->clear_file[FILE_A];
+    bitboard spot_4_clip = luts->clear_file[FILE_H];
 
     bitboard white_mask_rank = luts->mask_rank[RANK_2];
     bitboard black_mask_rank = luts->mask_rank[RANK_7];
@@ -493,6 +563,21 @@ bitboard generate_pawn_moves(bitboard pawn, board_t *board, lut_t *luts) {
     }
 
     return captures | forward_moves;
+}
+
+bitboard generate_rook_moves(square rook, board_t *board, lut_t *luts) {
+    bitboard all_pieces = board->all_pieces;
+    bitboard own_pieces;
+    if(board->t == W) own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
+
+    size_t rook_rank = (size_t)rook / 8;
+    size_t rook_file = (size_t)rook % 8;
+    bitboard rank_pattern = (board->all_pieces & luts->mask_rank[rook_rank]) >> (rook_rank * 8);
+    bitboard file_pattern = rotate_90_anti_clockwise(board->all_pieces & luts->mask_file[rook_file]) >> (rook_file * 8);
+    return (luts->rank_attacks[rook][rank_pattern] | 
+           luts->file_attacks[rook][file_pattern]) &
+           ~own_pieces;
 }
 
 // generates the moves in the position given the turn and returns number of moves in a position
@@ -567,6 +652,26 @@ size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
         }
         pawns = rem_first_bit(pawns);
     }
+
+    // generate rook moves
+    bitboard rooks;
+    if (board->t == W) rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+    else               rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+
+    bitboard rooks_attacks;
+    while(rooks) {
+        pc_loc = first_set_bit(rooks);
+        rooks_attacks = generate_rook_moves((square)pc_loc, board, luts);
+        
+        while(rooks_attacks) {
+            tar_loc = first_set_bit(rooks_attacks);
+            move_list[curr_move].start = (square)pc_loc;
+            move_list[curr_move].target = (square)tar_loc;
+            rooks_attacks = rem_first_bit(rooks_attacks);
+            curr_move++;
+        }
+        rooks = rem_first_bit(rooks);
+    }
     return curr_move;
 }
 
@@ -577,9 +682,13 @@ void print_moves(move_t *move_list, size_t num_moves) {
     return;
 }
 
-int main(){
+int main() {
     lut_t *luts = init_LUT();
-    board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", luts);
+    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; // 20 moves
+    string rook_pos = "8/8/8/2R2R2/8/2r2R2/8/8"; // 25 moves
+    string rook_knight_pos = "7N/8/8/2R2R2/3N4/2r2R2/8/1N6"; // 36 moves
+    string clogged_rook_pos = "RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRrRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR"; // 4 moves
+    board_t *board = decode_fen(clogged_rook_pos, luts);
     // board->t = B;
     move_t *move_list = (move_t *) malloc(sizeof(move_t) * MAX_MOVES);
     print_board(board);
@@ -590,6 +699,17 @@ int main(){
 
     // print_bitboard(generate_pawn_moves(luts->pieces[16], board, luts));
     // print_bitboard(board->piece_boards[BLACK_PAWNS_INDEX]);
+    // for(size_t i = 0; i < 64; i++) {
+    //     print_bitboard(luts->file_attacks[i][8]);
+    //     cout << endl;
+    // }
+    // print_bitboard((bitboard)0x0101000000000101);
+    // cout << endl;
+    // print_bitboard(rotate_90_anti_clockwise((bitboard)0x0101000000000101));
+    // cout << endl;
+    // print_bitboard(rotate_90_clockwise((bitboard)0x0101000000000101));
+    // cout << endl;
+    
 
     int x;
     cin >> x;

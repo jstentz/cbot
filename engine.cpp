@@ -71,6 +71,8 @@ typedef struct LUTs {
     bitboard mask_rank[8];
     bitboard clear_file[8];
     bitboard mask_file[8];
+    bitboard mask_diagonal[15]; // only 15 diagonals, 8th is for alignment
+    bitboard mask_antidiagonal[15];
     bitboard pieces[64];
 
     bitboard king_moves[64];
@@ -79,6 +81,8 @@ typedef struct LUTs {
 
     bitboard rank_attacks[64][256]; 
     bitboard file_attacks[64][256];
+    bitboard diagonal_attacks[64][256]; // a1 to h8 diagonal
+    bitboard antidiagonal_attacks[64][256]; // a8 to h1 diagonal
 } lut_t;
 
 typedef struct move_struct {
@@ -111,7 +115,7 @@ bitboard flip_diag_a1_h8(bitboard b) {
     return b;
 }
 
-bitboard rotate_90_anti_clockwise(bitboard b) {
+bitboard rotate_90_anticlockwise(bitboard b) {
     return flip_diag_a1_h8(flip_vertical(b));
 }
 
@@ -119,12 +123,63 @@ bitboard rotate_90_clockwise(bitboard b) {
     return flip_vertical(flip_diag_a1_h8(b));
 }
 
+/*
+ * Like bit shifting but it wraps around the number
+ * Also stolen from chessprogramming wiki
+*/
+bitboard rotate_left(bitboard b, int s) {return (b << s) | (b >> (64 - s));}
+bitboard rotate_right(bitboard b, int s) {return (b >> s) | (b << (64 - s));}
+
+/* 
+ * Rotates the board by 45 degrees clockwise
+ * Stolen from chessprogramming wiki 
+*/
+bitboard pseudo_rotate_45_clockwise(bitboard b) {
+    const bitboard k1 = bitboard(0xAAAAAAAAAAAAAAAA);
+    const bitboard k2 = bitboard(0xCCCCCCCCCCCCCCCC);
+    const bitboard k4 = bitboard(0xF0F0F0F0F0F0F0F0);
+    
+    b ^= k1 & (b ^ rotate_right(b, 8));
+    b ^= k2 & (b ^ rotate_right(b, 16));
+    b ^= k4 & (b ^ rotate_right(b, 32));
+    return b;
+}
+
+bitboard undo_pseudo_rotate_45_clockwise(bitboard b) {
+    for (size_t i = 0; i < 7; i++) {
+        b = pseudo_rotate_45_clockwise(b);
+    }
+    return b;
+}
+
+/* 
+ * Rotates the board by 45 degrees anti-clockwise
+ * Stolen from chessprogramming wiki 
+*/
+bitboard pseudo_rotate_45_anticlockwise(bitboard b) {
+    const bitboard k1 = bitboard(0x5555555555555555);
+    const bitboard k2 = bitboard(0x3333333333333333);
+    const bitboard k4 = bitboard(0x0F0F0F0F0F0F0F0F);
+    
+    b ^= k1 & (b ^ rotate_right(b, 8));
+    b ^= k2 & (b ^ rotate_right(b, 16));
+    b ^= k4 & (b ^ rotate_right(b, 32));
+    return b;
+}
+
+bitboard undo_pseudo_rotate_45_anticlockwise(bitboard b) {
+    for (size_t i = 0; i < 7; i++) {
+        b = pseudo_rotate_45_anticlockwise(b);
+    }
+    return b;
+}
+
 lut_t *init_LUT () {
     lut_t *luts = (lut_t *) malloc(sizeof(lut_t));
 
     bitboard rank = 0x00000000000000FF;
     bitboard file = 0x0101010101010101;
-
+    /* creating rank and file masks and clears */
     for(size_t i = 0; i < 8; i++) {
         luts->mask_rank[i] = rank;
         luts->clear_rank[i] = ~rank;
@@ -135,14 +190,50 @@ lut_t *init_LUT () {
         file = file << 1;
     }
 
+    /* creating diagonal masks */
+    /* a diagonal is identified by file - rank if file >= rank else 15 - (rank - file) */
+    luts->mask_diagonal[0] = 0x8040201008040201;
+    luts->mask_diagonal[1] = 0x0080402010080402;
+    luts->mask_diagonal[2] = 0x0000804020100804;
+    luts->mask_diagonal[3] = 0x0000008040201008;
+    luts->mask_diagonal[4] = 0x0000000080402010;
+    luts->mask_diagonal[5] = 0x0000000000804020;
+    luts->mask_diagonal[6] = 0x0000000000008040;
+    luts->mask_diagonal[7] = 0x0000000000000080;
+    luts->mask_diagonal[8] = 0x0100000000000000;
+    luts->mask_diagonal[9] = 0x0201000000000000;
+    luts->mask_diagonal[10] = 0x0402010000000000;
+    luts->mask_diagonal[11] = 0x0804020100000000;
+    luts->mask_diagonal[12] = 0x1008040201000000;
+    luts->mask_diagonal[13] = 0x2010080402010000;
+    luts->mask_diagonal[14] = 0x4020100804020100;
+
+    /* creating antidiagonal masks */
+    /* an antidiagonal is identified by (7 - file) - rank if file >= rank else rank - (7 - file) + 1*/
+    luts->mask_antidiagonal[0] = 0x0102040810204080;
+    luts->mask_antidiagonal[1] = 0x0001020408102040;
+    luts->mask_antidiagonal[2] = 0x0000010204081020;
+    luts->mask_antidiagonal[3] = 0x0000000102040810; 
+    luts->mask_antidiagonal[4] = 0x0000000001020408;
+    luts->mask_antidiagonal[5] = 0x0000000000010204;
+    luts->mask_antidiagonal[6] = 0x0000000000000102;
+    luts->mask_antidiagonal[7] = 0x0000000000000001;
+    luts->mask_antidiagonal[8] = 0x8000000000000000;
+    luts->mask_antidiagonal[9] = 0x4080000000000000;
+    luts->mask_antidiagonal[10] = 0x2040800000000000;
+    luts->mask_antidiagonal[11] = 0x1020408000000000;
+    luts->mask_antidiagonal[12] = 0x0810204080000000;
+    luts->mask_antidiagonal[13] = 0x0408102040800000;
+    luts->mask_antidiagonal[14] = 0x0204081020408000;
+
+    /* creating piece masks */
     bitboard piece = 0x0000000000000001;
     for(size_t i = 0; i < 64; i++) {
         luts->pieces[i] = piece;
         piece = piece << 1;
     }
 
-    /* creating rank_attacks LUT */
-    
+    /* creating rank_attacks LUT */  
     size_t LSB_to_first_1;
     size_t LSB_to_second_1;
     bitboard mask_1 = 0x1;
@@ -173,6 +264,46 @@ lut_t *init_LUT () {
         for(size_t j = 0; j < 8; j++){
             for(size_t pattern = 0; pattern < 256; pattern++) {
                 luts->file_attacks[i*8 + j][pattern] = rotate_90_clockwise(luts->rank_attacks[j*8 + (7-i)][pattern]);
+            }
+        }
+        
+    }
+
+    /* creating diagonal_attacks LUT */
+    size_t rotated_rank;
+    size_t rotated_sq;
+    size_t diag;
+    for(size_t i = 0; i < 8; i++) {
+        for(size_t j = 0; j < 8; j++){
+            if(i >= j) rotated_rank = i - j;
+            else       rotated_rank = 8 - (j - i);
+            rotated_sq = rotated_rank * 8 + j;
+            if(j >= i) diag = j - i;
+            else       diag = 15 - (i - j);
+            for(size_t pattern = 0; pattern < 256; pattern++) {
+                /* still need to mask the correct diagonal */
+                luts->diagonal_attacks[i * 8 + j][pattern] = 
+                    undo_pseudo_rotate_45_clockwise(luts->rank_attacks[rotated_sq][pattern])
+                    & luts->mask_diagonal[diag];
+            }
+        }
+        
+    }
+
+    /* creating antidiagonal_attacks LUT */
+    for(size_t i = 0; i < 8; i++) {
+        for(size_t j = 0; j < 8; j++){
+            if(j > (7 - i)) diag = 15 - (j - (7 - i));
+            else             diag = (7 - i) - j;
+            if(diag == 0)     rotated_rank = 0;
+            else if(diag <= 7) rotated_rank = 8 - diag;
+            else              rotated_rank = 8 - (diag - 7);
+            rotated_sq = rotated_rank * 8 + j;
+            for(size_t pattern = 0; pattern < 256; pattern++) {
+                /* still need to mask the correct diagonal */
+                luts->antidiagonal_attacks[i * 8 + j][pattern] = 
+                    undo_pseudo_rotate_45_anticlockwise(luts->rank_attacks[rotated_sq][pattern])
+                    & luts->mask_antidiagonal[diag];
             }
         }
         
@@ -574,10 +705,43 @@ bitboard generate_rook_moves(square rook, board_t *board, lut_t *luts) {
     size_t rook_rank = (size_t)rook / 8;
     size_t rook_file = (size_t)rook % 8;
     bitboard rank_pattern = (board->all_pieces & luts->mask_rank[rook_rank]) >> (rook_rank * 8);
-    bitboard file_pattern = rotate_90_anti_clockwise(board->all_pieces & luts->mask_file[rook_file]) >> (rook_file * 8);
+    bitboard file_pattern = rotate_90_anticlockwise(board->all_pieces & luts->mask_file[rook_file]) >> (rook_file * 8);
     return (luts->rank_attacks[rook][rank_pattern] | 
            luts->file_attacks[rook][file_pattern]) &
            ~own_pieces;
+}
+
+bitboard generate_bishop_moves(square bishop, board_t * board, lut_t *luts) {
+    bitboard all_pieces = board->all_pieces;
+    bitboard own_pieces;
+
+    if(board->t == W) own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
+
+
+    size_t bishop_rank = (size_t)bishop / 8;
+    size_t bishop_file = (size_t)bishop % 8;
+    size_t bishop_diag;
+    if(bishop_file >= bishop_rank) bishop_diag = bishop_file - bishop_rank;
+    else                           bishop_diag = 15 - (bishop_rank - bishop_file);
+    // do same for antidiag
+    size_t bishop_antidiag;
+    if(bishop_file > (7 - bishop_rank)) bishop_antidiag = 15 - (bishop_file - (7 - bishop_rank));
+    else                                bishop_antidiag = (7 - bishop_rank) - bishop_file;
+
+    size_t rotated_rank;
+    if(bishop_diag == 0) rotated_rank = 0;
+    else if (bishop_diag < 8) rotated_rank = 8 - bishop_diag;
+    else rotated_rank = 8 - (bishop_diag - 7);
+    bitboard diag_pattern = pseudo_rotate_45_clockwise(board->all_pieces & luts->mask_diagonal[bishop_diag]) >> (8 * rotated_rank);
+    size_t antirotated_rank;
+    if(bishop_antidiag == 0)      antirotated_rank = 0;
+    else if(bishop_antidiag < 8)  antirotated_rank = 8 - bishop_antidiag;
+    else                          antirotated_rank = 8 - (bishop_antidiag - 7);
+    bitboard antidiag_pattern = pseudo_rotate_45_anticlockwise(board->all_pieces & luts->mask_antidiagonal[bishop_antidiag]) >> (8 * antirotated_rank);
+    return  ( luts->diagonal_attacks[bishop][diag_pattern]
+            | luts->antidiagonal_attacks[bishop][antidiag_pattern]) 
+            & ~own_pieces;
 }
 
 // generates the moves in the position given the turn and returns number of moves in a position
@@ -652,7 +816,15 @@ size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
         }
         pawns = rem_first_bit(pawns);
     }
+    return curr_move;
+}
 
+size_t generate_sliding_moves(board_t *board, move_t *move_list, lut_t *luts) {
+    // restrict move generation due to check in this function
+    size_t curr_move = 0;
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+    
     // generate rook moves
     bitboard rooks;
     if (board->t == W) rooks = board->piece_boards[WHITE_ROOKS_INDEX];
@@ -672,7 +844,32 @@ size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
         }
         rooks = rem_first_bit(rooks);
     }
+
+    // generate bishop moves
+    bitboard bishops;
+    if (board->t == W) bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+    else               bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+
+    bitboard bishops_attacks;
+    while(bishops) {
+        pc_loc = first_set_bit(bishops);
+        bishops_attacks = generate_bishop_moves((square)pc_loc, board, luts);
+        
+        while(bishops_attacks) {
+            tar_loc = first_set_bit(bishops_attacks);
+            move_list[curr_move].start = (square)pc_loc;
+            move_list[curr_move].target = (square)tar_loc;
+            bishops_attacks = rem_first_bit(bishops_attacks);
+            curr_move++;
+        }
+        bishops = rem_first_bit(bishops);
+    }
     return curr_move;
+}
+
+size_t generate_moves(board_t *board, move_t *move_list, lut_t *luts) {
+    return generate_leaping_moves(board, move_list, luts) +
+           generate_sliding_moves(board, move_list, luts);
 }
 
 void print_moves(move_t *move_list, size_t num_moves) {
@@ -684,31 +881,47 @@ void print_moves(move_t *move_list, size_t num_moves) {
 
 int main() {
     lut_t *luts = init_LUT();
-    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; // 20 moves
-    string rook_pos = "8/8/8/2R2R2/8/2r2R2/8/8"; // 25 moves
-    string rook_knight_pos = "7N/8/8/2R2R2/3N4/2r2R2/8/1N6"; // 36 moves
-    string clogged_rook_pos = "RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRrRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR"; // 4 moves
-    board_t *board = decode_fen(clogged_rook_pos, luts);
+    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; // 20 black and white
+    string rook_pos = "8/8/8/2R2R2/8/2r2R2/8/8"; // 25 white, 9 black
+    string rook_knight_pos = "7N/8/8/2R2R2/3N4/2r2R2/8/1N6"; // 36 white, 9 black
+    string clogged_rook_pos = "RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRrRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR"; // 4 moves white and black
+    string non_diag_test = "7k/pn1prp2/P3Pn2/3N4/8/5R2/4P3/3K2R1"; // 39 white, 19 black
+    string bishop_test = "7b/8/8/2r5/1B6/8/6B1/B7"; // 22 white, 21 black
+    board_t *board = decode_fen(bishop_test, luts);
     // board->t = B;
     move_t *move_list = (move_t *) malloc(sizeof(move_t) * MAX_MOVES);
     print_board(board);
 
-    size_t num_moves = generate_leaping_moves(board, move_list, luts);
+    size_t num_moves = generate_moves(board, move_list, luts);
     cout << endl << endl << num_moves << endl;
     print_moves(move_list, num_moves);
 
     // print_bitboard(generate_pawn_moves(luts->pieces[16], board, luts));
     // print_bitboard(board->piece_boards[BLACK_PAWNS_INDEX]);
     // for(size_t i = 0; i < 64; i++) {
-    //     print_bitboard(luts->file_attacks[i][8]);
+    //     print_bitboard(luts->antidiagonal_attacks[i][0]);
     //     cout << endl;
     // }
     // print_bitboard((bitboard)0x0101000000000101);
     // cout << endl;
-    // print_bitboard(rotate_90_anti_clockwise((bitboard)0x0101000000000101));
+    // print_bitboard(rotate_90_anticlockwise((bitboard)0x0101000000000101));
     // cout << endl;
     // print_bitboard(rotate_90_clockwise((bitboard)0x0101000000000101));
     // cout << endl;
+    // for(size_t i = 0; i < 15; i++) {
+    //     print_bitboard(luts->mask_antidiagonal[i]);
+    //     cout << endl;
+    // }
+
+    // bitboard test = 0xFF000000000000FF;
+    // print_bitboard(test);
+    // cout << endl;
+    // for(size_t i = 0; i < 8; i++) {
+    //     test = pseudo_rotate_45_clockwise(test);
+    //     print_bitboard(test);
+    //     cout << endl;
+    // }
+    
     
 
     int x;
@@ -758,4 +971,8 @@ int main() {
           squares that are being attacked to deal with check
         - I think I want the board struct to hold the turn and castling rights
           info. So I have to move the turn into that.
+        - Use memcpy when making a move
+        - rotate 45 degrees, look at rank_attacks for given pattern, mask
+          either the diagonal or antidiagonal
+        - after queens are implemented, do a lot of code cleaning and commenting
 */

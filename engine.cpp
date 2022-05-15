@@ -711,7 +711,7 @@ bitboard generate_rook_moves(square rook, board_t *board, lut_t *luts) {
            ~own_pieces;
 }
 
-bitboard generate_bishop_moves(square bishop, board_t * board, lut_t *luts) {
+bitboard generate_bishop_moves(square bishop, board_t *board, lut_t *luts) {
     bitboard all_pieces = board->all_pieces;
     bitboard own_pieces;
 
@@ -744,6 +744,10 @@ bitboard generate_bishop_moves(square bishop, board_t * board, lut_t *luts) {
             & ~own_pieces;
 }
 
+bitboard generate_queen_moves(square queen, board_t *board, lut_t *luts) {
+    return   generate_rook_moves(queen, board, luts)
+           | generate_bishop_moves(queen, board, luts);
+}
 // generates the moves in the position given the turn and returns number of moves in a position
 size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
     // restrict move generation due to check in this function
@@ -864,6 +868,26 @@ size_t generate_sliding_moves(board_t *board, move_t *move_list, lut_t *luts) {
         }
         bishops = rem_first_bit(bishops);
     }
+
+    // generate bishop moves
+    bitboard queens;
+    if (board->t == W) queens = board->piece_boards[WHITE_QUEENS_INDEX];
+    else               queens = board->piece_boards[BLACK_QUEENS_INDEX];
+
+    bitboard queens_attacks;
+    while(queens) {
+        pc_loc = first_set_bit(queens);
+        queens_attacks = generate_queen_moves((square)pc_loc, board, luts);
+        
+        while(queens_attacks) {
+            tar_loc = first_set_bit(queens_attacks);
+            move_list[curr_move].start = (square)pc_loc;
+            move_list[curr_move].target = (square)tar_loc;
+            queens_attacks = rem_first_bit(queens_attacks);
+            curr_move++;
+        }
+        queens = rem_first_bit(queens);
+    }
     return curr_move;
 }
 
@@ -887,7 +911,8 @@ int main() {
     string clogged_rook_pos = "RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRrRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR"; // 4 moves white and black
     string non_diag_test = "7k/pn1prp2/P3Pn2/3N4/8/5R2/4P3/3K2R1"; // 39 white, 19 black
     string bishop_test = "7b/8/8/2r5/1B6/8/6B1/B7"; // 22 white, 21 black
-    board_t *board = decode_fen(bishop_test, luts);
+    string queen_test = "7Q/8/2q5/3QQ3/8/8/8/8"; // 59 white, 21 black
+    board_t *board = decode_fen(starting_pos, luts);
     // board->t = B;
     move_t *move_list = (move_t *) malloc(sizeof(move_t) * MAX_MOVES);
     print_board(board);
@@ -895,35 +920,7 @@ int main() {
     size_t num_moves = generate_moves(board, move_list, luts);
     cout << endl << endl << num_moves << endl;
     print_moves(move_list, num_moves);
-
-    // print_bitboard(generate_pawn_moves(luts->pieces[16], board, luts));
-    // print_bitboard(board->piece_boards[BLACK_PAWNS_INDEX]);
-    // for(size_t i = 0; i < 64; i++) {
-    //     print_bitboard(luts->antidiagonal_attacks[i][0]);
-    //     cout << endl;
-    // }
-    // print_bitboard((bitboard)0x0101000000000101);
-    // cout << endl;
-    // print_bitboard(rotate_90_anticlockwise((bitboard)0x0101000000000101));
-    // cout << endl;
-    // print_bitboard(rotate_90_clockwise((bitboard)0x0101000000000101));
-    // cout << endl;
-    // for(size_t i = 0; i < 15; i++) {
-    //     print_bitboard(luts->mask_antidiagonal[i]);
-    //     cout << endl;
-    // }
-
-    // bitboard test = 0xFF000000000000FF;
-    // print_bitboard(test);
-    // cout << endl;
-    // for(size_t i = 0; i < 8; i++) {
-    //     test = pseudo_rotate_45_clockwise(test);
-    //     print_bitboard(test);
-    //     cout << endl;
-    // }
     
-    
-
     int x;
     cin >> x;
     free(board);
@@ -975,4 +972,5 @@ int main() {
         - rotate 45 degrees, look at rank_attacks for given pattern, mask
           either the diagonal or antidiagonal
         - after queens are implemented, do a lot of code cleaning and commenting
+          and precalculate knights, bishops, and pawns (maybe delay this)
 */

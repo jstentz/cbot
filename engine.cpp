@@ -407,6 +407,21 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     board.sq_board[start] = EMPTY;
     board.sq_board[target] = mv_piece;
 
+    /* check for en passant move to remove the pawn being captured en passant */
+    if(board.t == W && mv_piece == WHITE | PAWN && target == board.en_passant) {
+        bitboard *black_pawns = &board.piece_boards[BLACK_PAWNS_INDEX];
+        square pawn_square = (square)((int)board.en_passant - 8);
+        *black_pawns = rem_piece(*black_pawns, pawn_square, luts);
+        board.sq_board[pawn_square] = EMPTY;
+    }
+    else if(board.t == B && mv_piece == BLACK | PAWN && target == board.en_passant) {
+        bitboard *white_pawns = &board.piece_boards[WHITE_PAWNS_INDEX];
+        square pawn_square = (square)((int)board.en_passant + 8);
+        *white_pawns = rem_piece(*white_pawns, pawn_square, luts);
+        board.sq_board[pawn_square] = EMPTY;
+    }
+
+
     /* Update en passant squares */
     if(mv_piece = WHITE | PAWN && target - start == 16) {
         board.en_passant = (square)(start + 8);
@@ -696,12 +711,19 @@ bitboard generate_pawn_moves(bitboard pawn, board_t board, lut_t *luts) {
 
     bitboard captures;
     bitboard forward_moves;
+    bitboard en_passant_capture;
+    square en_passant_sq = board.en_passant;
+    bitboard en_passant_bit = 0; // default it to zero
+    if(en_passant_sq != NONE) {
+        en_passant_bit =  luts->pieces[en_passant_sq]; // used to and with attack pattern
+    }
 
     if(board.t == W) {
         enemy_pieces = board.black_pieces;
         spot_1 = (pawn & spot_1_clip) << 7;
         spot_4 = (pawn & spot_4_clip) << 9;
         captures = (spot_1 | spot_4) & enemy_pieces;
+        en_passant_capture = (spot_1 | spot_4) & en_passant_bit;
 
         spot_2 = (pawn << 8) & ~all_pieces;
         spot_3 = ((((pawn & white_mask_rank) << 8) & ~all_pieces) << 8) & ~all_pieces;
@@ -712,13 +734,14 @@ bitboard generate_pawn_moves(bitboard pawn, board_t board, lut_t *luts) {
         spot_1 = (pawn & spot_4_clip) >> 7;
         spot_4 = (pawn & spot_1_clip) >> 9;
         captures = (spot_1 | spot_4) & enemy_pieces;
+        en_passant_capture = (spot_1 | spot_4) & en_passant_bit;
 
         spot_2 = (pawn >> 8) & ~all_pieces;
         spot_3 = ((((pawn & black_mask_rank) >> 8) & ~all_pieces) >> 8) & ~all_pieces;
         forward_moves = spot_2 | spot_3;
     }
 
-    return captures | forward_moves;
+    return captures | forward_moves | en_passant_capture;
 }
 
 bitboard generate_rook_moves(square rook, board_t board, lut_t *luts) {
@@ -932,14 +955,15 @@ size_t num_moves(stack<board_t> board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
     board_t curr_board = board.top();
     board_t next_board;
-    size_t total_moves = 0;
     print_squarewise(curr_board.sq_board);
-    moves = generate_moves(curr_board, luts);
+    
     if(depth == 0) {
-        return moves.size();
+        return 1;
     }
 
-    for(move_t move : moves){
+    size_t total_moves = 0;
+    moves = generate_moves(curr_board, luts);
+    for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
         total_moves += num_moves(board, depth - 1, luts); 
@@ -958,12 +982,13 @@ int main() {
     string bishop_test = "7b/8/8/2r5/1B6/8/6B1/B7"; // 22 white, 21 black
     string queen_test = "7Q/8/2q5/3QQ3/8/8/8/8"; // 59 white, 21 black
     string weird_test = "8/8/6Q1/8/2NbR3/2NB4/1PPP4/1B4R1";
-    board_t board = decode_fen(starting_pos, luts);
+    string en_passant_test = "k7/5p2/8/8/4P3/8/8/K7";
+    board_t board = decode_fen(en_passant_test, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
     // print_board(board);
 
-    cout << endl << num_moves(board_stack, 4, luts);
+    cout << endl << num_moves(board_stack, 4, luts) << endl;
     // vector<move_t> moves = generate_moves(board, luts);
     // cout << endl << moves.size() << endl;
     // print_moves(moves);

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <string>
 #include <bitset>
+#include <vector>
+#include <stack>
 
 using namespace std;
 
@@ -749,10 +751,9 @@ bitboard generate_queen_moves(square queen, board_t *board, lut_t *luts) {
            | generate_bishop_moves(queen, board, luts);
 }
 // generates the moves in the position given the turn and returns number of moves in a position
-size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
-    // restrict move generation due to check in this function
-    size_t curr_move = 0;
-
+vector<move_t> generate_leaping_moves(board_t *board, vector<move_t> move_vector, lut_t *luts) {
+    
+    move_t curr_move;
     // generate knight moves
     bitboard knights;
     if (board->t == W) knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
@@ -769,10 +770,10 @@ size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
         
         while(knight_attacks) {
             tar_loc = first_set_bit(knight_attacks);
-            move_list[curr_move].start = (square)pc_loc;
-            move_list[curr_move].target = (square)tar_loc;
+            curr_move.start = (square)pc_loc;
+            curr_move.target = (square)tar_loc;
+            move_vector.push_back(curr_move);
             knight_attacks = rem_first_bit(knight_attacks);
-            curr_move++;
         }
         knights = rem_first_bit(knights);
     }
@@ -791,10 +792,10 @@ size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
         
         while(kings_attacks) {
             tar_loc = first_set_bit(kings_attacks);
-            move_list[curr_move].start = (square)pc_loc;
-            move_list[curr_move].target = (square)tar_loc;
+            curr_move.start = (square)pc_loc;
+            curr_move.target = (square)tar_loc;
+            move_vector.push_back(curr_move);
             kings_attacks = rem_first_bit(kings_attacks);
-            curr_move++;
         }
         kings = rem_first_bit(kings);
     }
@@ -813,21 +814,21 @@ size_t generate_leaping_moves(board_t *board, move_t *move_list, lut_t *luts) {
         
         while(pawns_attacks) {
             tar_loc = first_set_bit(pawns_attacks);
-            move_list[curr_move].start = (square)pc_loc;
-            move_list[curr_move].target = (square)tar_loc;
+            curr_move.start = (square)pc_loc;
+            curr_move.target = (square)tar_loc;
+            move_vector.push_back(curr_move);
             pawns_attacks = rem_first_bit(pawns_attacks);
-            curr_move++;
         }
         pawns = rem_first_bit(pawns);
     }
-    return curr_move;
+    return move_vector;
 }
 
-size_t generate_sliding_moves(board_t *board, move_t *move_list, lut_t *luts) {
-    // restrict move generation due to check in this function
-    size_t curr_move = 0;
+vector<move_t> generate_sliding_moves(board_t *board, vector<move_t> move_vector, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
+
+    move_t curr_move;
     
     // generate rook moves
     bitboard rooks;
@@ -841,10 +842,10 @@ size_t generate_sliding_moves(board_t *board, move_t *move_list, lut_t *luts) {
         
         while(rooks_attacks) {
             tar_loc = first_set_bit(rooks_attacks);
-            move_list[curr_move].start = (square)pc_loc;
-            move_list[curr_move].target = (square)tar_loc;
+            curr_move.start = (square)pc_loc;
+            curr_move.target = (square)tar_loc;
+            move_vector.push_back(curr_move);
             rooks_attacks = rem_first_bit(rooks_attacks);
-            curr_move++;
         }
         rooks = rem_first_bit(rooks);
     }
@@ -861,10 +862,10 @@ size_t generate_sliding_moves(board_t *board, move_t *move_list, lut_t *luts) {
         
         while(bishops_attacks) {
             tar_loc = first_set_bit(bishops_attacks);
-            move_list[curr_move].start = (square)pc_loc;
-            move_list[curr_move].target = (square)tar_loc;
+            curr_move.start = (square)pc_loc;
+            curr_move.target = (square)tar_loc;
+            move_vector.push_back(curr_move);
             bishops_attacks = rem_first_bit(bishops_attacks);
-            curr_move++;
         }
         bishops = rem_first_bit(bishops);
     }
@@ -881,24 +882,25 @@ size_t generate_sliding_moves(board_t *board, move_t *move_list, lut_t *luts) {
         
         while(queens_attacks) {
             tar_loc = first_set_bit(queens_attacks);
-            move_list[curr_move].start = (square)pc_loc;
-            move_list[curr_move].target = (square)tar_loc;
+            curr_move.start = (square)pc_loc;
+            curr_move.target = (square)tar_loc;
+            move_vector.push_back(curr_move);
             queens_attacks = rem_first_bit(queens_attacks);
-            curr_move++;
         }
         queens = rem_first_bit(queens);
     }
-    return curr_move;
+    return move_vector;
 }
 
-size_t generate_moves(board_t *board, move_t *move_list, lut_t *luts) {
-    return generate_leaping_moves(board, move_list, luts) +
-           generate_sliding_moves(board, move_list, luts);
+vector<move_t> generate_moves(board_t *board, lut_t *luts) {
+    vector<move_t> empty_vector;
+    vector<move_t> leaping_moves = generate_leaping_moves(board, empty_vector, luts);
+    return generate_sliding_moves(board, leaping_moves, luts);
 }
 
-void print_moves(move_t *move_list, size_t num_moves) {
-    for(size_t i = 0; i < num_moves; i++) {
-        cout << move_list[i].start << "->" << move_list[i].target << endl;
+void print_moves(vector<move_t> move_vector) {
+    for(size_t i = 0; i < move_vector.size(); i++) {
+        cout << move_vector[i].start << "->" << move_vector[i].target << endl;
     }
     return;
 }
@@ -912,14 +914,14 @@ int main() {
     string non_diag_test = "7k/pn1prp2/P3Pn2/3N4/8/5R2/4P3/3K2R1"; // 39 white, 19 black
     string bishop_test = "7b/8/8/2r5/1B6/8/6B1/B7"; // 22 white, 21 black
     string queen_test = "7Q/8/2q5/3QQ3/8/8/8/8"; // 59 white, 21 black
-    board_t *board = decode_fen(starting_pos, luts);
-    // board->t = B;
-    move_t *move_list = (move_t *) malloc(sizeof(move_t) * MAX_MOVES);
+    string weird_test = "8/8/6Q1/8/2NbR3/2NB4/1PPP4/1B4R1";
+    board_t *board = decode_fen(weird_test, luts);
+    stack<board_t> board_stack;
     print_board(board);
 
-    size_t num_moves = generate_moves(board, move_list, luts);
-    cout << endl << endl << num_moves << endl;
-    print_moves(move_list, num_moves);
+    vector<move_t> moves = generate_moves(board, luts);
+    cout << endl << moves.size() << endl;
+    print_moves(moves);
     
     int x;
     cin >> x;
@@ -932,7 +934,6 @@ int main() {
     Notes:
         - Maybe have a move struct and then store an array of moves in a 
           given position. Then you only need to malloc one array.
-        - Draw things out on iPad
         - Have a piece-wise representation in order to figure out what piece is
           captured.
         - Have the make move function not even check for legality, that should

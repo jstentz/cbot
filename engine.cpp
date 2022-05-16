@@ -50,7 +50,7 @@ enum square { A1, B1, C1, D1, E1, F1, G1, H1,
               A5, B5, C5, D5, E5, F5, G5, H5,
               A6, B6, C6, D6, E6, F6, G6, H6,
               A7, B7, C7, D7, E7, F7, G7, H7,
-              A8, B8, C8, D8, E8, F8, G8, H8 };
+              A8, B8, C8, D8, E8, F8, G8, H8, NONE };
 
 enum rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 enum file { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
@@ -66,6 +66,7 @@ typedef struct Board
     piece sq_board[64];
 
     turn t;
+    square en_passant;
 } board_t;
 
 typedef struct LUTs {
@@ -77,7 +78,7 @@ typedef struct LUTs {
     bitboard mask_antidiagonal[15];
     bitboard pieces[64];
 
-    bitboard king_moves[64];
+    bitboard king_moves[64]; // these are currently unused
     bitboard pawn_moves[64];
     bitboard knight_moves[64];
 
@@ -87,6 +88,10 @@ typedef struct LUTs {
     bitboard antidiagonal_attacks[64][256]; // a8 to h1 diagonal
 } lut_t;
 
+/* 
+   Might be worth having the move struct hold info like is_en_passant, 
+   captured piece, and moving piece.
+*/
 typedef struct move_struct {
     square start;
     square target;
@@ -334,6 +339,7 @@ board_t zero_board() {
     }
 
     board.t = W;
+    board.en_passant = NONE;
     return board;
 }
 
@@ -398,8 +404,20 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *captured_board = rem_piece(*captured_board, target, luts);
     }
 
-    board.sq_board[move.start] = EMPTY;
-    board.sq_board[move.target] = mv_piece;
+    board.sq_board[start] = EMPTY;
+    board.sq_board[target] = mv_piece;
+
+    /* Update en passant squares */
+    if(mv_piece = WHITE | PAWN && target - start == 16) {
+        board.en_passant = (square)(start + 8);
+    }
+    else if(mv_piece = BLACK | PAWN && start - target == 16) {
+        board.en_passant = (square)(target + 8);
+    }
+    else {
+        board.en_passant = NONE;
+    }
+
     board.t = !board.t;
     return update_boards(board);
 }
@@ -474,6 +492,61 @@ void print_bitboard (bitboard b) {
         cout << endl;
     }
 }
+
+void print_squarewise(piece sqs[64]) {
+    char c;
+    piece pc;
+    for (size_t i = 0; i < 8; i++) {
+        for (size_t j = 0; j < 8; j++) {
+            pc = sqs[(7-i)*8 + j];
+            switch (pc) {
+                case (WHITE | PAWN) :
+                    c = 'P';
+                    break;
+                case (BLACK | PAWN) :
+                    c = 'p';
+                    break;
+                case (WHITE | KNIGHT) :
+                    c = 'N';
+                    break;
+                case (BLACK | KNIGHT) :
+                    c = 'n';
+                    break;
+                case (WHITE | BISHOP) :
+                    c = 'B';
+                    break;
+                case (BLACK | BISHOP) :
+                    c = 'b';
+                    break;
+                case (WHITE | ROOK) :
+                    c = 'R';
+                    break;
+                case (BLACK | ROOK) :
+                    c = 'r';
+                    break;
+                case (WHITE | QUEEN) :
+                    c = 'Q';
+                    break;
+                case (BLACK | QUEEN) :
+                    c = 'q';
+                    break;
+                case (WHITE | KING) :
+                    c = 'K';
+                    break;
+                case (BLACK | KING) :
+                    c = 'k';
+                    break;
+                default:
+                    c = '*';
+                    break;
+            }
+            cout << c;
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
+
 // make print_bitboard function
 void print_board(board_t board) {
     bitboard all_pieces = (board.all_pieces);
@@ -492,9 +565,6 @@ void print_board(board_t board) {
     bitboard black_queens = (board.piece_boards[9]);
     bitboard white_kings = (board.piece_boards[10]);
     bitboard black_kings = (board.piece_boards[11]);
-
-    piece *sqs = board.sq_board;
-    piece pc;
 
     cout << "All Pieces" << endl;
     print_bitboard(all_pieces);
@@ -542,56 +612,7 @@ void print_board(board_t board) {
     print_bitboard(black_kings);
 
     cout << endl <<  "Square-wise" << endl;
-    char c;
-    for (size_t i = 0; i < 8; i++) {
-        for (size_t j = 0; j < 8; j++) {
-            pc = sqs[(7-i)*8 + j];
-
-            switch (pc) {
-                case (WHITE | PAWN) :
-                    c = 'P';
-                    break;
-                case (BLACK | PAWN) :
-                    c = 'p';
-                    break;
-                case (WHITE | KNIGHT) :
-                    c = 'N';
-                    break;
-                case (BLACK | KNIGHT) :
-                    c = 'n';
-                    break;
-                case (WHITE | BISHOP) :
-                    c = 'B';
-                    break;
-                case (BLACK | BISHOP) :
-                    c = 'b';
-                    break;
-                case (WHITE | ROOK) :
-                    c = 'R';
-                    break;
-                case (BLACK | ROOK) :
-                    c = 'r';
-                    break;
-                case (WHITE | QUEEN) :
-                    c = 'Q';
-                    break;
-                case (BLACK | QUEEN) :
-                    c = 'q';
-                    break;
-                case (WHITE | KING) :
-                    c = 'K';
-                    break;
-                case (BLACK | KING) :
-                    c = 'k';
-                    break;
-                default:
-                    c = '*';
-                    break;
-            }
-            cout << c;
-        }
-        cout << endl;
-    }
+    print_squarewise(board.sq_board);
     return;
 }
 
@@ -660,7 +681,6 @@ bitboard generate_king_moves(bitboard king, board_t board, lut_t *luts) {
 
 bitboard generate_pawn_moves(bitboard pawn, board_t board, lut_t *luts) {
     // will need to add en passant later
-    // generate capture moves first
     bitboard enemy_pieces;
     bitboard all_pieces = board.all_pieces;
     bitboard spot_1_clip = luts->clear_file[FILE_A];
@@ -913,6 +933,7 @@ size_t num_moves(stack<board_t> board, size_t depth, lut_t *luts) {
     board_t curr_board = board.top();
     board_t next_board;
     size_t total_moves = 0;
+    print_squarewise(curr_board.sq_board);
     moves = generate_moves(curr_board, luts);
     if(depth == 0) {
         return moves.size();
@@ -940,9 +961,9 @@ int main() {
     board_t board = decode_fen(starting_pos, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
-    print_board(board);
+    // print_board(board);
 
-    cout << endl << num_moves(board_stack, 2, luts);
+    cout << endl << num_moves(board_stack, 4, luts);
     // vector<move_t> moves = generate_moves(board, luts);
     // cout << endl << moves.size() << endl;
     // print_moves(moves);
@@ -997,4 +1018,7 @@ int main() {
           either the diagonal or antidiagonal
         - after queens are implemented, do a lot of code cleaning and commenting
           and precalculate knights, bishops, and pawns (maybe delay this)
+        - next up is en passant, pawn promotion, and castling (assume pseudolegal for now)
+        - still need to update make_move function and pawn move generation function
+        - do knight generation in an LUT
 */

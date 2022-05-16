@@ -394,10 +394,23 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     piece tar_piece = board.sq_board[target];
 
     bitboard *mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
-    bitboard *landing_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
     
+    // always remove the piece from its board no matter what
     *mv_board = rem_piece(*mv_board, start, luts);
-    *landing_board = place_piece(*landing_board, target, luts);
+
+    /* check if promoting move */
+    if(board.t == W && mv_piece == WHITE | PAWN && (target >= A8 && target <= H8)) {
+           mv_piece = WHITE | QUEEN; // auto queen right now
+           /* update the bitboard to the queen bitboard */
+           mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
+    }
+    else if(board.t == B && mv_piece == BLACK | PAWN && (target >= A1 && target <= H1)) {
+        mv_piece = BLACK | QUEEN; // auto queen right now
+        /* update the bitboard to the queen bitboard */
+        mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
+    }
+    
+    *mv_board = place_piece(*mv_board, target, luts);
 
     if(tar_piece != EMPTY) {
         bitboard *captured_board = &board.piece_boards[bitboard_index_from_piece(tar_piece)];
@@ -405,7 +418,7 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     }
 
     board.sq_board[start] = EMPTY;
-    board.sq_board[target] = mv_piece;
+    board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
 
     /* check for en passant move to remove the pawn being captured en passant */
     if(board.t == W && mv_piece == WHITE | PAWN && target == board.en_passant) {
@@ -951,13 +964,13 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_moves(stack<board_t> board, size_t depth, lut_t *luts) {
+size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
     board_t curr_board = board.top();
     board_t next_board;
-    print_squarewise(curr_board.sq_board);
     
     if(depth == 0) {
+        // print_squarewise(curr_board.sq_board); // prints the final node
         return 1;
     }
 
@@ -966,7 +979,7 @@ size_t num_moves(stack<board_t> board, size_t depth, lut_t *luts) {
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
-        total_moves += num_moves(board, depth - 1, luts); 
+        total_moves += num_nodes(board, depth - 1, luts); 
         board.pop();
     }
     return total_moves;
@@ -983,12 +996,15 @@ int main() {
     string queen_test = "7Q/8/2q5/3QQ3/8/8/8/8"; // 59 white, 21 black
     string weird_test = "8/8/6Q1/8/2NbR3/2NB4/1PPP4/1B4R1";
     string en_passant_test = "k7/5p2/8/8/4P3/8/8/K7";
-    board_t board = decode_fen(en_passant_test, luts);
+    string promotion_test = "8/8/5P2/8/8/6p1/8/8";
+    string capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
+    string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
+    board_t board = decode_fen(many_pawns_test, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
     // print_board(board);
 
-    cout << endl << num_moves(board_stack, 4, luts) << endl;
+    cout << endl << num_nodes(board_stack, 8, luts) << endl;
     // vector<move_t> moves = generate_moves(board, luts);
     // cout << endl << moves.size() << endl;
     // print_moves(moves);
@@ -1046,4 +1062,9 @@ int main() {
         - next up is en passant, pawn promotion, and castling (assume pseudolegal for now)
         - still need to update make_move function and pawn move generation function
         - do knight generation in an LUT
+        - my num moves function is correct. It should be called num nodes,
+          because it really tells me how many nodes there are at depth = 0
+        - pawn moves might currently be slow, maybe have two lookup tables,
+          one for pawn captures and one for pawn pushes. Then just do en passant
+          for the given pawn during the game.
 */

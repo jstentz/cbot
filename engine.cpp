@@ -442,7 +442,6 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         board.sq_board[pawn_square] = EMPTY;
     }
 
-
     /* Update en passant squares */
     if(mv_piece = WHITE | PAWN && target - start == 16) {
         board.en_passant = (square)(start + 8);
@@ -711,7 +710,7 @@ bitboard generate_knight_moves(bitboard knight, board_t board, lut_t *luts) {
 bitboard generate_king_moves(bitboard king, board_t board, lut_t *luts) {
     // still need to add castling... will have to take in info from the board for that
     bitboard own_pieces;
-    if(board.t == W) own_pieces = board.white_pieces;
+    if(board.t == W)  own_pieces = board.white_pieces;
     else              own_pieces = board.black_pieces;
     
     bitboard spot_1_clip = luts->clear_file[FILE_A];

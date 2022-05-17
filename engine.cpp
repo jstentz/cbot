@@ -1084,6 +1084,8 @@ vector<move_t> generate_moves(board_t board, lut_t *luts) {
  * legal moves in the position, and the state of the board.
  */
 string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) {
+    // conflicting doesn't work for knights right now
+    // need to update for check (+) and checkmate (#)
     vector<move_t> conflicting_moves;
     for (move_t single_move : all_moves) {
         if(single_move.target == move.target     && 
@@ -1115,7 +1117,7 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) 
     if(piece_name == 'P' && capture) {
         str_move.push_back(start_file);
     }
-    else if (piece_name != 'P') {
+    else if(piece_name != 'P' && piece_name != 'N') {
         str_move.push_back(piece_name);
         for(move_t single_move : conflicting_moves) {
             conflict_file_num = single_move.start % 8;
@@ -1123,8 +1125,22 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) 
             if(conflict_file_num == start_file_num) file_conflict = true;
             else if(conflict_rank_num == start_rank_num) rank_conflict = true;
         }
-        if(file_conflict) str_move.push_back(start_file);
-        if(rank_conflict) str_move.push_back(start_rank);
+        if(file_conflict) str_move.push_back(start_rank);
+        if(rank_conflict) str_move.push_back(start_file);
+    }
+    else if(piece_name == 'N') {
+        str_move.push_back(piece_name);
+        for(move_t single_move : conflicting_moves) {
+            conflict_file_num = single_move.start % 8;
+            conflict_rank_num = single_move.start / 8;
+            if(conflict_file_num == start_file_num) file_conflict = true;
+            else if(conflict_rank_num == start_rank_num) rank_conflict = true;
+        }
+        if(file_conflict) str_move.push_back(start_rank);
+        if(rank_conflict) str_move.push_back(start_file);
+        if(!file_conflict && !rank_conflict && conflicting_moves.size() > 0) {
+            str_move.push_back(start_file);
+        }
     }
 
     if(capture) str_move.push_back('x');
@@ -1187,7 +1203,8 @@ int main() {
     string white_capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
     string black_capture_promo_test = "8/8/8/8/8/8/4p3/5N2";
     string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
-    board_t board = decode_fen(en_passant_test, luts);
+    string temp_test = "k7/8/8/2N5/8/8/8/2N3NK";
+    board_t board = decode_fen(temp_test, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
     // print_board(board);

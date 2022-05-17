@@ -102,6 +102,7 @@ typedef struct LUTs {
 typedef struct move_struct {
     square start;
     square target;
+    piece promotion_piece;
 } move_t;
 
 // stolen from chessprogramming wiki
@@ -515,17 +516,11 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     *mv_board = rem_piece(*mv_board, start, luts);
 
     /* check if promoting move */
-    if(board.t == W && mv_piece == WHITE | PAWN && (target >= A8 && target <= H8)) {
-           mv_piece = WHITE | QUEEN; // auto queen right now
-           /* update the bitboard to the queen bitboard */
-           mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
-    }
-    else if(board.t == B && mv_piece == BLACK | PAWN && (target >= A1 && target <= H1)) {
-        mv_piece = BLACK | QUEEN; // auto queen right now
-        /* update the bitboard to the queen bitboard */
+    if(move.promotion_piece != EMPTY) {
+        mv_piece = move.promotion_piece;
         mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
     }
-    
+
     *mv_board = place_piece(*mv_board, target, luts);
 
     if(tar_piece != EMPTY) {
@@ -903,6 +898,7 @@ bitboard generate_queen_moves(square queen, board_t board, lut_t *luts) {
 vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector, lut_t *luts) {
     
     move_t curr_move;
+    curr_move.promotion_piece = EMPTY; // default to empty for knights and kings
     // generate knight moves
     bitboard knights;
     if (board.t == W)  knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
@@ -953,12 +949,29 @@ vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector,
     while(pawns) {
         pc_loc = first_set_bit(pawns);
         pawns_moves = generate_pawn_moves((square)pc_loc, board, luts);
-        
+        // deal with promotion to different pieces in here, not in the 
+        // make_move function. In there, I will have the move struct store
+        // the promotion piece, and it will be updated there.
         while(pawns_moves) {
             tar_loc = first_set_bit(pawns_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
-            move_vector.push_back(curr_move);
+            size_t tar_rank = tar_loc / 8;
+            if(tar_rank == RANK_8 || tar_rank == RANK_1) {
+                piece color = (tar_rank == RANK_8) ? WHITE : BLACK;
+                curr_move.promotion_piece = color | KNIGHT;
+                move_vector.push_back(curr_move);
+                curr_move.promotion_piece = color | BISHOP;
+                move_vector.push_back(curr_move);
+                curr_move.promotion_piece = color | ROOK;
+                move_vector.push_back(curr_move);
+                curr_move.promotion_piece = color | QUEEN;
+                move_vector.push_back(curr_move);
+            }
+            else{
+                curr_move.promotion_piece = EMPTY;
+                move_vector.push_back(curr_move);
+            }
             pawns_moves = rem_first_bit(pawns_moves);
         }
         pawns = rem_first_bit(pawns);
@@ -971,6 +984,7 @@ vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector,
     uint16_t tar_loc;
 
     move_t curr_move;
+    curr_move.promotion_piece = EMPTY; // default to empty for sliding pieces
     
     // generate rook moves
     bitboard rooks;
@@ -1080,7 +1094,8 @@ int main() {
     string weird_test = "8/8/6Q1/8/2NbR3/2NB4/1PPP4/1B4R1";
     string en_passant_test = "k7/5p2/8/8/4P3/8/8/K7";
     string promotion_test = "8/8/5P2/8/8/6p1/8/8";
-    string capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
+    string white_capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
+    string black_capture_promo_test = "8/8/8/8/8/8/4p3/5N2";
     string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
     board_t board = decode_fen(starting_pos, luts);
     stack<board_t> board_stack;
@@ -1170,6 +1185,9 @@ int main() {
            ^^^ don't need these, just use the pawn attacks and see if you are
            attacking an en passant square
         use these LUTs to make the attack map for white and black
+
+        next up:
+            
 
 
 */

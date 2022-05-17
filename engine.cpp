@@ -102,6 +102,8 @@ typedef struct LUTs {
 typedef struct move_struct {
     square start;
     square target;
+    piece mv_piece;
+    piece tar_piece;
     piece promotion_piece;
 } move_t;
 
@@ -507,8 +509,8 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     square start = move.start;
     square target = move.target;
 
-    piece mv_piece = board.sq_board[start];
-    piece tar_piece = board.sq_board[target];
+    piece mv_piece = move.mv_piece;
+    piece tar_piece = move.tar_piece;
 
     bitboard *mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
     
@@ -898,15 +900,28 @@ bitboard generate_queen_moves(square queen, board_t board, lut_t *luts) {
 vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector, lut_t *luts) {
     
     move_t curr_move;
+    uint16_t pc_loc;
+    uint16_t tar_loc;
     curr_move.promotion_piece = EMPTY; // default to empty for knights and kings
     // generate knight moves
     bitboard knights;
-    if (board.t == W)  knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
-    else               knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
+    bitboard kings;
+    bitboard pawns;           
+    piece color;
+    if (board.t == W) {
+        knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
+        kings = board.piece_boards[WHITE_KINGS_INDEX];
+        pawns = board.piece_boards[WHITE_PAWNS_INDEX];
+        color = WHITE;
+    }
+    else {
+        knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
+        kings = board.piece_boards[BLACK_KINGS_INDEX];
+        pawns = board.piece_boards[BLACK_PAWNS_INDEX];
+        color = BLACK;
+    }
 
     bitboard knight_moves;
-    uint16_t pc_loc;
-    uint16_t tar_loc;
     while(knights) {
         pc_loc = first_set_bit(knights);
         knight_moves = generate_knight_moves((square)pc_loc, board, luts);
@@ -914,6 +929,8 @@ vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector,
             tar_loc = first_set_bit(knight_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
+            curr_move.mv_piece = color | KNIGHT;
+            curr_move.tar_piece = board.sq_board[tar_loc];
             move_vector.push_back(curr_move);
             knight_moves = rem_first_bit(knight_moves);
         }
@@ -921,10 +938,6 @@ vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector,
     }
 
     // generate king moves
-    bitboard kings;
-    if (board.t == W)  kings = board.piece_boards[WHITE_KINGS_INDEX];
-    else               kings = board.piece_boards[BLACK_KINGS_INDEX];
-
     bitboard king_moves;
     while(kings) {
         pc_loc = first_set_bit(kings);
@@ -934,6 +947,8 @@ vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector,
             tar_loc = first_set_bit(king_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
+            curr_move.mv_piece = color | KING;
+            curr_move.tar_piece = board.sq_board[tar_loc];
             move_vector.push_back(curr_move);
             king_moves = rem_first_bit(king_moves);
         }
@@ -941,21 +956,19 @@ vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector,
     }
 
     // generate pawn moves
-    bitboard pawns;
-    if (board.t == W)  pawns = board.piece_boards[WHITE_PAWNS_INDEX];
-    else               pawns = board.piece_boards[BLACK_PAWNS_INDEX];
-
-    bitboard pawns_moves;
+    bitboard pawn_moves;
     while(pawns) {
         pc_loc = first_set_bit(pawns);
-        pawns_moves = generate_pawn_moves((square)pc_loc, board, luts);
+        pawn_moves = generate_pawn_moves((square)pc_loc, board, luts);
         // deal with promotion to different pieces in here, not in the 
         // make_move function. In there, I will have the move struct store
         // the promotion piece, and it will be updated there.
-        while(pawns_moves) {
-            tar_loc = first_set_bit(pawns_moves);
+        while(pawn_moves) {
+            tar_loc = first_set_bit(pawn_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
+            curr_move.mv_piece = color | PAWN;
+            curr_move.tar_piece = board.sq_board[tar_loc];
             size_t tar_rank = tar_loc / 8;
             if(tar_rank == RANK_8 || tar_rank == RANK_1) {
                 piece color = (tar_rank == RANK_8) ? WHITE : BLACK;
@@ -972,7 +985,7 @@ vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector,
                 curr_move.promotion_piece = EMPTY;
                 move_vector.push_back(curr_move);
             }
-            pawns_moves = rem_first_bit(pawns_moves);
+            pawn_moves = rem_first_bit(pawn_moves);
         }
         pawns = rem_first_bit(pawns);
     }
@@ -988,60 +1001,72 @@ vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector,
     
     // generate rook moves
     bitboard rooks;
-    if (board.t == W)  rooks = board.piece_boards[WHITE_ROOKS_INDEX];
-    else               rooks = board.piece_boards[BLACK_ROOKS_INDEX];
+    bitboard bishops;
+    bitboard queens;           
+    piece color;
+    if (board.t == W) {
+        rooks = board.piece_boards[WHITE_ROOKS_INDEX];
+        bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
+        queens = board.piece_boards[WHITE_QUEENS_INDEX];
+        color = WHITE;
+    }
+    else {
+        rooks = board.piece_boards[BLACK_ROOKS_INDEX];
+        bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
+        queens = board.piece_boards[BLACK_QUEENS_INDEX];
+        color = BLACK;
+    }
 
-    bitboard rooks_attacks;
+    // generate rook moves
+    bitboard rook_moves;
     while(rooks) {
         pc_loc = first_set_bit(rooks);
-        rooks_attacks = generate_rook_moves((square)pc_loc, board, luts);
+        rook_moves = generate_rook_moves((square)pc_loc, board, luts);
         
-        while(rooks_attacks) {
-            tar_loc = first_set_bit(rooks_attacks);
+        while(rook_moves) {
+            tar_loc = first_set_bit(rook_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
+            curr_move.mv_piece = color | ROOK;
+            curr_move.tar_piece = board.sq_board[tar_loc];
             move_vector.push_back(curr_move);
-            rooks_attacks = rem_first_bit(rooks_attacks);
+            rook_moves = rem_first_bit(rook_moves);
         }
         rooks = rem_first_bit(rooks);
     }
 
     // generate bishop moves
-    bitboard bishops;
-    if (board.t == W)  bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
-    else               bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
-
-    bitboard bishops_attacks;
+    bitboard bishop_moves;
     while(bishops) {
         pc_loc = first_set_bit(bishops);
-        bishops_attacks = generate_bishop_moves((square)pc_loc, board, luts);
+        bishop_moves = generate_bishop_moves((square)pc_loc, board, luts);
         
-        while(bishops_attacks) {
-            tar_loc = first_set_bit(bishops_attacks);
+        while(bishop_moves) {
+            tar_loc = first_set_bit(bishop_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
+            curr_move.mv_piece = color | BISHOP;
+            curr_move.tar_piece = board.sq_board[tar_loc];
             move_vector.push_back(curr_move);
-            bishops_attacks = rem_first_bit(bishops_attacks);
+            bishop_moves = rem_first_bit(bishop_moves);
         }
         bishops = rem_first_bit(bishops);
     }
 
     // generate bishop moves
-    bitboard queens;
-    if (board.t == W)  queens = board.piece_boards[WHITE_QUEENS_INDEX];
-    else               queens = board.piece_boards[BLACK_QUEENS_INDEX];
-
-    bitboard queens_attacks;
+    bitboard queen_moves;
     while(queens) {
         pc_loc = first_set_bit(queens);
-        queens_attacks = generate_queen_moves((square)pc_loc, board, luts);
+        queen_moves = generate_queen_moves((square)pc_loc, board, luts);
         
-        while(queens_attacks) {
-            tar_loc = first_set_bit(queens_attacks);
+        while(queen_moves) {
+            tar_loc = first_set_bit(queen_moves);
             curr_move.start = (square)pc_loc;
             curr_move.target = (square)tar_loc;
+            curr_move.mv_piece = color | QUEEN;
+            curr_move.tar_piece = board.sq_board[tar_loc];
             move_vector.push_back(curr_move);
-            queens_attacks = rem_first_bit(queens_attacks);
+            queen_moves = rem_first_bit(queen_moves);
         }
         queens = rem_first_bit(queens);
     }
@@ -1053,6 +1078,70 @@ vector<move_t> generate_moves(board_t board, lut_t *luts) {
     vector<move_t> leaping_moves = generate_leaping_moves(board, empty_vector, luts);
     return generate_sliding_moves(board, leaping_moves, luts);
 }
+
+/*
+ * Goes from a move struct to the correct notation, given a move, a list of 
+ * legal moves in the position, and the state of the board.
+ */
+string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) {
+    vector<move_t> conflicting_moves;
+    for (move_t single_move : all_moves) {
+        if(single_move.target == move.target     && 
+           single_move.mv_piece == move.mv_piece &&
+           single_move.start != move.start) 
+        conflicting_moves.push_back(single_move);
+    }
+    const string files = "abcdefgh";
+    const string ranks = "12345678";
+    const string pieces = "PNBRQK";
+    string str_move;
+    char piece_name = pieces[bitboard_index_from_piece(move.mv_piece) / 2];
+    bool capture = (move.tar_piece == EMPTY) ? false : true;
+    if(move.target == board.en_passant) capture = true;
+    bool promotion = (move.promotion_piece == EMPTY) ? false : true;
+    size_t start_file_num = move.start % 8;
+    size_t start_rank_num = move.start / 8;
+    size_t tar_file_num = move.target % 8;
+    size_t tar_rank_num = move.target / 8;
+    char start_file = files[start_file_num];
+    char start_rank = ranks[start_rank_num];
+    char tar_file = files[tar_file_num];
+    char tar_rank = ranks[tar_rank_num];
+    bool file_conflict = false;
+    bool rank_conflict = false;
+    size_t conflict_file_num;
+    size_t conflict_rank_num;
+
+    if(piece_name == 'P' && capture) {
+        str_move.push_back(start_file);
+    }
+    else if (piece_name != 'P') {
+        str_move.push_back(piece_name);
+        for(move_t single_move : conflicting_moves) {
+            conflict_file_num = single_move.start % 8;
+            conflict_rank_num = single_move.start / 8;
+            if(conflict_file_num == start_file_num) file_conflict = true;
+            else if(conflict_rank_num == start_rank_num) rank_conflict = true;
+        }
+        if(file_conflict) str_move.push_back(start_file);
+        if(rank_conflict) str_move.push_back(start_rank);
+    }
+
+    if(capture) str_move.push_back('x');
+    str_move.push_back(tar_file);
+    str_move.push_back(tar_rank);
+    if(promotion) {
+        str_move.push_back('=');
+        str_move.push_back(
+                pieces[bitboard_index_from_piece(move.promotion_piece) / 2]);
+    }
+    return str_move;
+}
+
+// not complete... probably the more useful function
+// move_t move_from_notation(string str_move, vector<move_t> all_moves, board_t board) {
+//     return;
+// }
 
 void print_moves(vector<move_t> move_vector) {
     for(size_t i = 0; i < move_vector.size(); i++) {
@@ -1067,7 +1156,7 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     board_t next_board;
     
     if(depth == 0) {
-        // print_squarewise(curr_board.sq_board); // prints the final node
+        print_squarewise(curr_board.sq_board); // prints the final node
         return 1;
     }
 
@@ -1076,6 +1165,7 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
+        cout << endl << notation_from_move(move, moves, curr_board) << endl;
         total_moves += num_nodes(board, depth - 1, luts); 
         board.pop();
     }
@@ -1097,7 +1187,7 @@ int main() {
     string white_capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
     string black_capture_promo_test = "8/8/8/8/8/8/4p3/5N2";
     string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
-    board_t board = decode_fen(starting_pos, luts);
+    board_t board = decode_fen(en_passant_test, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
     // print_board(board);
@@ -1187,6 +1277,15 @@ int main() {
         use these LUTs to make the attack map for white and black
 
         next up:
+        castling...
+        1. make the threat map using the LUTs given a position, maybe do this
+           where you pass in all pieces except the king.
+
+
+
+        Ideas for efficiency:
+            - throw out updated boards and instead incrementally update the boards
+              inside of make_move.
             
 
 

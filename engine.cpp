@@ -67,6 +67,10 @@ typedef struct Board
 
     turn t;
     square en_passant;
+    bool white_king_side;
+    bool white_queen_side;
+    bool black_king_side;
+    bool black_queen_side;
 } board_t;
 
 typedef struct LUTs {
@@ -340,6 +344,10 @@ board_t zero_board() {
 
     board.t = W;
     board.en_passant = NONE;
+    board.white_king_side = true;
+    board.white_queen_side = true;
+    board.black_king_side = true;
+    board.black_queen_side = true;
     return board;
 }
 
@@ -444,6 +452,29 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     }
     else {
         board.en_passant = NONE;
+    }
+
+    /* Update castling rights for king moves */
+    if(mv_piece == WHITE | KING) {
+        board.white_king_side = false;
+        board.white_queen_side = false;
+    }
+    else if(mv_piece == BLACK | KING) {
+        board.black_king_side = false;
+        board.black_queen_side = false;
+    }
+    /* Update castling rights for rook moves */
+    else if(mv_piece == WHITE | ROOK && start == H1) {
+        board.white_king_side = false;
+    }
+    else if(mv_piece == WHITE | ROOK && start == A1) {
+        board.white_queen_side = false;
+    }
+    else if(mv_piece == BLACK | ROOK && start == H8) {
+        board.black_king_side = false;
+    }
+    else if(mv_piece == BLACK | ROOK && start == A8) {
+        board.black_queen_side = false;
     }
 
     board.t = !board.t;
@@ -999,18 +1030,23 @@ int main() {
     string promotion_test = "8/8/5P2/8/8/6p1/8/8";
     string capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
     string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
-    board_t board = decode_fen(many_pawns_test, luts);
+    board_t board = decode_fen(starting_pos, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
     // print_board(board);
 
-    cout << endl << num_nodes(board_stack, 8, luts) << endl;
+    
     // vector<move_t> moves = generate_moves(board, luts);
     // cout << endl << moves.size() << endl;
     // print_moves(moves);
     
-    int x;
-    cin >> x;
+    size_t depth;
+    while(true) {
+        cout << endl << "Enter depth: ";
+        cin >> depth;
+        cout << endl << num_nodes(board_stack, depth, luts) << endl;
+    }
+    
     free(luts);
     return 0;
 }

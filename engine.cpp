@@ -380,7 +380,8 @@ lut_t *init_LUT () {
                 }
             }
             bitboard unplaced_mask = rank_attack_mask >> (7 - (LSB_to_second_1 - LSB_to_first_1));
-            luts->rank_attacks[sq][pattern] = unplaced_mask << (sq - (file - LSB_to_first_1));
+            luts->rank_attacks[sq][pattern] = (unplaced_mask << (sq - (file - LSB_to_first_1))) 
+                                              & ~luts->pieces[sq]; // removes piece square
         }
     }
 
@@ -405,11 +406,12 @@ lut_t *init_LUT () {
             rotated_sq = rotated_rank * 8 + j;
             if(j >= i) diag = j - i;
             else       diag = 15 - (i - j);
+            size_t sq = i * 8 + j;
             for(size_t pattern = 0; pattern < 256; pattern++) {
                 /* still need to mask the correct diagonal */
-                luts->diagonal_attacks[i * 8 + j][pattern] = 
+                luts->diagonal_attacks[sq][pattern] = 
                     undo_pseudo_rotate_45_clockwise(luts->rank_attacks[rotated_sq][pattern])
-                    & luts->mask_diagonal[diag];
+                    & luts->mask_diagonal[diag] & ~luts->pieces[sq]; // removes piece square
             }
         }
         
@@ -424,16 +426,16 @@ lut_t *init_LUT () {
             else if(diag <= 7) rotated_rank = 8 - diag;
             else              rotated_rank = 8 - (diag - 7);
             rotated_sq = rotated_rank * 8 + j;
+            size_t sq = i * 8 + j;
             for(size_t pattern = 0; pattern < 256; pattern++) {
                 /* still need to mask the correct diagonal */
-                luts->antidiagonal_attacks[i * 8 + j][pattern] = 
+                luts->antidiagonal_attacks[sq][pattern] = 
                     undo_pseudo_rotate_45_anticlockwise(luts->rank_attacks[rotated_sq][pattern])
-                    & luts->mask_antidiagonal[diag];
+                    & luts->mask_antidiagonal[diag] & ~luts->pieces[sq]; // removes piece square
             }
         }
         
     }
-
     return luts;
 }
 
@@ -537,13 +539,13 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
 
     /* check for en passant move to remove the pawn being captured en passant */
-    if(board.t == W && mv_piece == WHITE | PAWN && target == board.en_passant) {
+    if(board.t == W && mv_piece == (WHITE | PAWN) && target == board.en_passant) {
         bitboard *black_pawns = &board.piece_boards[BLACK_PAWNS_INDEX];
         square pawn_square = (square)((int)board.en_passant - 8);
         *black_pawns = rem_piece(*black_pawns, pawn_square, luts);
         board.sq_board[pawn_square] = EMPTY;
     }
-    else if(board.t == B && mv_piece == BLACK | PAWN && target == board.en_passant) {
+    else if(board.t == B && mv_piece == (BLACK | PAWN) && target == board.en_passant) {
         bitboard *white_pawns = &board.piece_boards[WHITE_PAWNS_INDEX];
         square pawn_square = (square)((int)board.en_passant + 8);
         *white_pawns = rem_piece(*white_pawns, pawn_square, luts);
@@ -551,10 +553,10 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     }
 
     /* Update en passant squares */
-    if(mv_piece = WHITE | PAWN && target - start == 16) {
+    if(mv_piece == (WHITE | PAWN) && target - start == 16) {
         board.en_passant = (square)(start + 8);
     }
-    else if(mv_piece = BLACK | PAWN && start - target == 16) {
+    else if(mv_piece == (BLACK | PAWN) && start - target == 16) {
         board.en_passant = (square)(target + 8);
     }
     else {
@@ -562,25 +564,25 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
     }
 
     /* Update castling rights for king moves */
-    if(mv_piece == WHITE | KING) {
+    if(mv_piece == (WHITE | KING)) {
         board.white_king_side = false;
         board.white_queen_side = false;
     }
-    else if(mv_piece == BLACK | KING) {
+    else if(mv_piece == (BLACK | KING)) {
         board.black_king_side = false;
         board.black_queen_side = false;
     }
     /* Update castling rights for rook moves */
-    else if(mv_piece == WHITE | ROOK && start == H1) {
+    else if(mv_piece == (WHITE | ROOK) && start == H1) {
         board.white_king_side = false;
     }
-    else if(mv_piece == WHITE | ROOK && start == A1) {
+    else if(mv_piece == (WHITE | ROOK) && start == A1) {
         board.white_queen_side = false;
     }
-    else if(mv_piece == BLACK | ROOK && start == H8) {
+    else if(mv_piece == (BLACK | ROOK) && start == H8) {
         board.black_king_side = false;
     }
-    else if(mv_piece == BLACK | ROOK && start == A8) {
+    else if(mv_piece == (BLACK | ROOK) && start == A8) {
         board.black_queen_side = false;
     }
 
@@ -1122,36 +1124,42 @@ bitboard generate_attack_map(board_t board, turn side, lut_t *luts) {
     bitboard color_pieces;
     bitboard all_pieces_no_king;
     piece curr_piece;
-    piece piece_mask = 0xE;
+    piece color;
     if(side == W) {
         all_pieces_no_king = board.all_pieces & 
                             ~board.piece_boards[BLACK_KINGS_INDEX];
         color_pieces = board.white_pieces;
+        color = WHITE;
     }
     else {
         all_pieces_no_king = board.all_pieces & 
                             ~board.piece_boards[WHITE_KINGS_INDEX];
         color_pieces = board.black_pieces;
+        color = BLACK;
     }
 
     while(color_pieces) {
         pc_loc = first_set_bit(color_pieces);
         curr_piece = board.sq_board[pc_loc];
-        if(curr_piece == EMPTY) cout << "something fucked up";
-        switch (curr_piece & piece_mask) {
-            case (PAWN) :
-                attack_map |= get_pawn_attacks((square)pc_loc, side, luts);
-            case (KNIGHT) :
-                attack_map |= get_knight_attacks((square)pc_loc, luts);
-            case (BISHOP) :
-                attack_map |= get_bishop_attacks((square)pc_loc, all_pieces_no_king, luts);
-            case (ROOK) :
-                attack_map |= get_rook_attacks((square)pc_loc, all_pieces_no_king, luts);
-            case (QUEEN) : 
-                attack_map |= get_queen_attacks((square)pc_loc, all_pieces_no_king, luts);
-            case (KING) :
-                attack_map |= get_king_attacks((square)pc_loc, luts);
+        if(curr_piece == (color | PAWN)) {
+            attack_map |= get_pawn_attacks((square)pc_loc, side, luts);
         }
+        else if(curr_piece == (color | KNIGHT)) {
+            attack_map |= get_knight_attacks((square)pc_loc, luts);
+        }
+        else if(curr_piece == (color | BISHOP)) {
+            attack_map |= get_bishop_attacks((square)pc_loc, all_pieces_no_king, luts);
+        }
+        else if(curr_piece == (color | ROOK)) {
+            attack_map |= get_rook_attacks((square)pc_loc, all_pieces_no_king, luts);
+        }
+        else if(curr_piece == (color | QUEEN)) {
+            attack_map |= get_queen_attacks((square)pc_loc, all_pieces_no_king, luts);
+        }
+        else if(curr_piece == (color | KING)) {
+            attack_map |= get_king_attacks((square)pc_loc, luts);
+        }
+        color_pieces = rem_first_bit(color_pieces);
     }
     return attack_map;
 }
@@ -1276,10 +1284,14 @@ int main() {
     board_stack.push(board);
     // print_board(board);
 
+    print_bitboard(generate_attack_map(board, W, luts));
+
     // for(size_t sq = 0; sq < 64; sq++) {
-    //     print_bitboard(luts->white_pawn_pushes[sq]);
+    //     print_bitboard(luts->knight_attacks[sq]);
     //     cout << endl;
     // }
+
+    // print_bitboard(get_bishop_attacks(E5, board.all_pieces, luts));
     
 
     // vector<move_t> moves = generate_moves(board, luts);
@@ -1368,4 +1380,6 @@ int main() {
         Ideas for efficiency:
             - throw out updated boards and instead incrementally update the boards
               inside of make_move.
+
+        Make it so rooks and bishops do not attack the square they are on
 */

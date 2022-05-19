@@ -634,7 +634,6 @@ bitboard rem_piece(bitboard board, square sq, lut_t *luts) {
     return board & ~(luts->pieces[sq]);
 }
 
-// need to make this push onto the stack and also should change the turn
 board_t make_move(board_t board, move_t move, lut_t *luts) {
     square start = move.start;
     square target = move.target;
@@ -871,7 +870,6 @@ void print_squarewise(piece sqs[64]) {
     cout << endl;
 }
 
-// make print_bitboard function
 void print_board(board_t board) {
     bitboard all_pieces = (board.all_pieces);
     bitboard white_pieces = (board.white_pieces);
@@ -941,7 +939,7 @@ void print_board(board_t board) {
 }
 
 
-bitboard generate_knight_moves(square knight, board_t board, lut_t *luts) {
+bitboard generate_knight_move_bitboard(square knight, board_t board, lut_t *luts) {
     bitboard own_pieces;
     if(board.t == W)  own_pieces = board.white_pieces;
     else              own_pieces = board.black_pieces;
@@ -951,11 +949,18 @@ bitboard generate_knight_moves(square knight, board_t board, lut_t *luts) {
     return knight_attacks & ~own_pieces;
 }
 
-bitboard generate_king_moves(square king, board_t board, lut_t *luts) {
+bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
     // still need to add castling... will have to take in info from the board for that
     bitboard own_pieces;
-    if(board.t == W)  own_pieces = board.white_pieces;
-    else              own_pieces = board.black_pieces;
+    bitboard attacked_squares;
+    if(board.t == W)  {
+        own_pieces = board.white_pieces; 
+        attacked_squares = board.black_attack_map;
+    }
+    else {
+        own_pieces = board.black_pieces; 
+        attacked_squares = board.white_attack_map;
+    }
     
     bitboard king_attacks = luts->king_attacks[king];
 
@@ -1000,10 +1005,10 @@ bitboard generate_king_moves(square king, board_t board, lut_t *luts) {
           ((board.white_attack_map & b_queen_side_attack) == 0))
           king_castle |= b_queen_side_castle;
     }
-    return (king_attacks & ~own_pieces) | king_castle;           
+    return (king_attacks & ~own_pieces & ~attacked_squares) | king_castle;           
 }
 
-bitboard generate_pawn_moves(square pawn, board_t board, lut_t *luts) {
+bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
     // will need to add en passant later
     bitboard enemy_pieces;
     bitboard all_pieces = board.all_pieces;
@@ -1046,7 +1051,7 @@ bitboard generate_pawn_moves(square pawn, board_t board, lut_t *luts) {
     return captures | forward_moves | en_passant_capture;
 }
 
-bitboard generate_rook_moves(square rook, board_t board, lut_t *luts) {
+bitboard generate_rook_move_bitboard(square rook, board_t board, lut_t *luts) {
     bitboard all_pieces = board.all_pieces;
     bitboard own_pieces;
     if(board.t == W)  own_pieces = board.white_pieces;
@@ -1056,7 +1061,7 @@ bitboard generate_rook_moves(square rook, board_t board, lut_t *luts) {
     return rook_attacks & ~own_pieces;
 }
 
-bitboard generate_bishop_moves(square bishop, board_t board, lut_t *luts) {
+bitboard generate_bishop_move_bitboard(square bishop, board_t board, lut_t *luts) {
     bitboard all_pieces = board.all_pieces;
     bitboard own_pieces;
 
@@ -1068,104 +1073,236 @@ bitboard generate_bishop_moves(square bishop, board_t board, lut_t *luts) {
     return  bishop_attacks & ~own_pieces;
 }
 
-bitboard generate_queen_moves(square queen, board_t board, lut_t *luts) {
-    return   generate_rook_moves(queen, board, luts)
-           | generate_bishop_moves(queen, board, luts);
+bitboard generate_queen_move_bitboard(square queen, board_t board, lut_t *luts) {
+    return   generate_rook_move_bitboard(queen, board, luts)
+           | generate_bishop_move_bitboard(queen, board, luts);
 }
-// generates the moves in the position given the turn and returns number of moves in a position
-vector<move_t> generate_leaping_moves(board_t board, vector<move_t> move_vector, lut_t *luts) {
-    
-    move_t curr_move;
+
+vector<move_t> generate_knight_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+    move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
-    curr_move.promotion_piece = EMPTY; // default to empty for knights and kings
-    // generate knight moves
-    bitboard knights;
-    bitboard kings;
-    bitboard pawns;           
+    move.promotion_piece = EMPTY;
+    bitboard knights;       
     piece color;
     if (board.t == W) {
         knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
-        kings = board.piece_boards[WHITE_KINGS_INDEX];
-        pawns = board.piece_boards[WHITE_PAWNS_INDEX];
         color = WHITE;
     }
     else {
         knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
-        kings = board.piece_boards[BLACK_KINGS_INDEX];
-        pawns = board.piece_boards[BLACK_PAWNS_INDEX];
         color = BLACK;
     }
-
     bitboard knight_moves;
     while(knights) {
         pc_loc = first_set_bit(knights);
-        knight_moves = generate_knight_moves((square)pc_loc, board, luts);
+        knight_moves = generate_knight_move_bitboard((square)pc_loc, board, luts);
         while(knight_moves) {
             tar_loc = first_set_bit(knight_moves);
-            curr_move.start = (square)pc_loc;
-            curr_move.target = (square)tar_loc;
-            curr_move.mv_piece = color | KNIGHT;
-            curr_move.tar_piece = board.sq_board[tar_loc];
-            move_vector.push_back(curr_move);
+            move.start = (square)pc_loc;
+            move.target = (square)tar_loc;
+            move.mv_piece = color | KNIGHT;
+            move.tar_piece = board.sq_board[tar_loc];
+            curr_moves.push_back(move);
             knight_moves = rem_first_bit(knight_moves);
         }
         knights = rem_first_bit(knights);
     }
+    return curr_moves;
+}
 
-    // generate king moves
+vector<move_t> generate_king_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+    move_t move;
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+    move.promotion_piece = EMPTY;
+    bitboard kings;       
+    piece color;
+    if (board.t == W) {
+        kings = board.piece_boards[WHITE_KINGS_INDEX];
+        color = WHITE;
+    }
+    else {
+        kings = board.piece_boards[BLACK_KINGS_INDEX];
+        color = BLACK;
+    }
     bitboard king_moves;
     while(kings) {
         pc_loc = first_set_bit(kings);
-        king_moves = generate_king_moves((square)pc_loc, board, luts);
+        king_moves = generate_king_move_bitboard((square)pc_loc, board, luts);
         
         while(king_moves) {
             tar_loc = first_set_bit(king_moves);
-            curr_move.start = (square)pc_loc;
-            curr_move.target = (square)tar_loc;
-            curr_move.mv_piece = color | KING;
-            curr_move.tar_piece = board.sq_board[tar_loc];
-            move_vector.push_back(curr_move);
+            move.start = (square)pc_loc;
+            move.target = (square)tar_loc;
+            move.mv_piece = color | KING;
+            move.tar_piece = board.sq_board[tar_loc];
+            curr_moves.push_back(move);
             king_moves = rem_first_bit(king_moves);
         }
         kings = rem_first_bit(kings);
     }
+    return curr_moves;
+}
 
-    // generate pawn moves
+vector<move_t> generate_pawn_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+    move_t move;
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+    move.promotion_piece = EMPTY;
+    bitboard pawns;       
+    piece color;
+    if (board.t == W) {
+        pawns = board.piece_boards[WHITE_PAWNS_INDEX];
+        color = WHITE;
+    }
+    else {
+        pawns = board.piece_boards[BLACK_PAWNS_INDEX];
+        color = BLACK;
+    }
     bitboard pawn_moves;
     while(pawns) {
         pc_loc = first_set_bit(pawns);
-        pawn_moves = generate_pawn_moves((square)pc_loc, board, luts);
+        pawn_moves = generate_pawn_move_bitboard((square)pc_loc, board, luts);
         // deal with promotion to different pieces in here, not in the 
         // make_move function. In there, I will have the move struct store
         // the promotion piece, and it will be updated there.
         while(pawn_moves) {
             tar_loc = first_set_bit(pawn_moves);
-            curr_move.start = (square)pc_loc;
-            curr_move.target = (square)tar_loc;
-            curr_move.mv_piece = color | PAWN;
-            curr_move.tar_piece = board.sq_board[tar_loc];
+            move.start = (square)pc_loc;
+            move.target = (square)tar_loc;
+            move.mv_piece = color | PAWN;
+            move.tar_piece = board.sq_board[tar_loc];
             size_t tar_rank = tar_loc / 8;
             if(tar_rank == RANK_8 || tar_rank == RANK_1) {
                 piece color = (tar_rank == RANK_8) ? WHITE : BLACK;
-                curr_move.promotion_piece = color | KNIGHT;
-                move_vector.push_back(curr_move);
-                curr_move.promotion_piece = color | BISHOP;
-                move_vector.push_back(curr_move);
-                curr_move.promotion_piece = color | ROOK;
-                move_vector.push_back(curr_move);
-                curr_move.promotion_piece = color | QUEEN;
-                move_vector.push_back(curr_move);
+                move.promotion_piece = color | KNIGHT;
+                curr_moves.push_back(move);
+                move.promotion_piece = color | BISHOP;
+                curr_moves.push_back(move);
+                move.promotion_piece = color | ROOK;
+                curr_moves.push_back(move);
+                move.promotion_piece = color | QUEEN;
+                curr_moves.push_back(move);
             }
             else{
-                curr_move.promotion_piece = EMPTY;
-                move_vector.push_back(curr_move);
+                move.promotion_piece = EMPTY;
+                curr_moves.push_back(move);
             }
             pawn_moves = rem_first_bit(pawn_moves);
         }
         pawns = rem_first_bit(pawns);
     }
-    return move_vector;
+    return curr_moves;
+
+}
+
+vector<move_t> generate_rook_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+
+    move_t move;
+    move.promotion_piece = EMPTY; // default to empty for sliding pieces
+    bitboard rooks;          
+    piece color;
+    if (board.t == W) {
+        rooks = board.piece_boards[WHITE_ROOKS_INDEX];
+        color = WHITE;
+    }
+    else {
+        rooks = board.piece_boards[BLACK_ROOKS_INDEX];
+        color = BLACK;
+    }
+
+    bitboard rook_moves;
+    while(rooks) {
+        pc_loc = first_set_bit(rooks);
+        rook_moves = generate_rook_move_bitboard((square)pc_loc, board, luts);
+        
+        while(rook_moves) {
+            tar_loc = first_set_bit(rook_moves);
+            move.start = (square)pc_loc;
+            move.target = (square)tar_loc;
+            move.mv_piece = color | ROOK;
+            move.tar_piece = board.sq_board[tar_loc];
+            curr_moves.push_back(move);
+            rook_moves = rem_first_bit(rook_moves);
+        }
+        rooks = rem_first_bit(rooks);
+    }
+    return curr_moves;
+}
+
+vector<move_t> generate_bishop_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+
+    move_t move;
+    move.promotion_piece = EMPTY; // default to empty for sliding pieces
+    bitboard bishops;          
+    piece color;
+    if (board.t == W) {
+        bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
+        color = WHITE;
+    }
+    else {
+        bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
+        color = BLACK;
+    }
+
+    bitboard bishop_moves;
+    while(bishops) {
+        pc_loc = first_set_bit(bishops);
+        bishop_moves = generate_bishop_move_bitboard((square)pc_loc, board, luts);
+        
+        while(bishop_moves) {
+            tar_loc = first_set_bit(bishop_moves);
+            move.start = (square)pc_loc;
+            move.target = (square)tar_loc;
+            move.mv_piece = color | BISHOP;
+            move.tar_piece = board.sq_board[tar_loc];
+            curr_moves.push_back(move);
+            bishop_moves = rem_first_bit(bishop_moves);
+        }
+        bishops = rem_first_bit(bishops);
+    }
+    return curr_moves;
+}
+
+vector<move_t> generate_queen_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+    uint16_t pc_loc;
+    uint16_t tar_loc;
+
+    move_t move;
+    move.promotion_piece = EMPTY; // default to empty for sliding pieces
+    bitboard queens;          
+    piece color;
+    if (board.t == W) {
+        queens = board.piece_boards[WHITE_QUEENS_INDEX];
+        color = WHITE;
+    }
+    else {
+        queens = board.piece_boards[BLACK_QUEENS_INDEX];
+        color = BLACK;
+    }
+
+    bitboard queen_moves;
+    while(queens) {
+        pc_loc = first_set_bit(queens);
+        queen_moves = generate_queen_move_bitboard((square)pc_loc, board, luts);
+        
+        while(queen_moves) {
+            tar_loc = first_set_bit(queen_moves);
+            move.start = (square)pc_loc;
+            move.target = (square)tar_loc;
+            move.mv_piece = color | QUEEN;
+            move.tar_piece = board.sq_board[tar_loc];
+            curr_moves.push_back(move);
+            queen_moves = rem_first_bit(queen_moves);
+        }
+        queens = rem_first_bit(queens);
+    }
+    return curr_moves;
 }
 
 vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector, lut_t *luts) {
@@ -1197,7 +1334,7 @@ vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector,
     bitboard rook_moves;
     while(rooks) {
         pc_loc = first_set_bit(rooks);
-        rook_moves = generate_rook_moves((square)pc_loc, board, luts);
+        rook_moves = generate_rook_move_bitboard((square)pc_loc, board, luts);
         
         while(rook_moves) {
             tar_loc = first_set_bit(rook_moves);
@@ -1215,7 +1352,7 @@ vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector,
     bitboard bishop_moves;
     while(bishops) {
         pc_loc = first_set_bit(bishops);
-        bishop_moves = generate_bishop_moves((square)pc_loc, board, luts);
+        bishop_moves = generate_bishop_move_bitboard((square)pc_loc, board, luts);
         
         while(bishop_moves) {
             tar_loc = first_set_bit(bishop_moves);
@@ -1229,11 +1366,11 @@ vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector,
         bishops = rem_first_bit(bishops);
     }
 
-    // generate bishop moves
+    // generate queen moves
     bitboard queen_moves;
     while(queens) {
         pc_loc = first_set_bit(queens);
-        queen_moves = generate_queen_moves((square)pc_loc, board, luts);
+        queen_moves = generate_queen_move_bitboard((square)pc_loc, board, luts);
         
         while(queen_moves) {
             tar_loc = first_set_bit(queen_moves);
@@ -1251,8 +1388,13 @@ vector<move_t> generate_sliding_moves(board_t board, vector<move_t> move_vector,
 
 vector<move_t> generate_moves(board_t board, lut_t *luts) {
     vector<move_t> empty_vector;
-    vector<move_t> leaping_moves = generate_leaping_moves(board, empty_vector, luts);
-    return generate_sliding_moves(board, leaping_moves, luts);
+    vector<move_t> knight_moves = generate_knight_moves(board, empty_vector, luts);
+    vector<move_t> king_moves = generate_king_moves(board, knight_moves, luts);
+    vector<move_t> pawn_moves = generate_pawn_moves(board, king_moves, luts);
+    vector<move_t> rook_moves = generate_rook_moves(board, pawn_moves, luts);
+    vector<move_t> bishop_moves = generate_bishop_moves(board, rook_moves, luts);
+    vector<move_t> queen_moves = generate_queen_moves(board, bishop_moves, luts);
+    return queen_moves;
 }
 
 /*
@@ -1381,25 +1523,11 @@ int main() {
     string black_capture_promo_test = "8/8/8/8/8/8/4p3/5N2";
     string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
     string castling_test = "r3k2r/8/8/8/8/8/8/R3K2R";
-    string temp_test = "k7/8/8/2N5/8/8/8/2N3NK";
-    board_t board = decode_fen(castling_test, luts);
+    string king_move_test = "4k3/8/2r5/8/8/2K5/8/8"; // 6 legal white
+    string temp_test = "4k3/8/2r5/8/8/2K5/8/8";
+    board_t board = decode_fen(king_move_test, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
-    // print_board(board);
-
-    // print_bitboard(board.white_attack_map);
-
-    // for(size_t sq = 0; sq < 64; sq++) {
-    //     print_bitboard(luts->knight_attacks[sq]);
-    //     cout << endl;
-    // }
-
-    // print_bitboard(get_bishop_attacks(E5, board.all_pieces, luts));
-    
-
-    // vector<move_t> moves = generate_moves(board, luts);
-    // cout << endl << moves.size() << endl;
-    // print_moves(moves);
     
     size_t depth;
     while(true) {
@@ -1481,10 +1609,16 @@ int main() {
            where you pass in all pieces except the king.
 
         Ideas for efficiency:
+            - make a function to actually test efficiency
             - throw out updated boards and instead incrementally update the boards
               inside of make_move.
             - update the attack maps incrementally
             - castling move generation is ugly and probably bad
+            - change sliding piece move generation
+            - switch to magic bitboards
+            - look over the bookmarked tabs to explore options
+            - change representation of moves to a 32 bit integer
+            - a lot of speed has to do with a good eval function
 
         Make it so rooks and bishops do not attack the square they are on
         store the black and white king positions in the board
@@ -1497,4 +1631,34 @@ int main() {
 
             im also not sure if I need to update black AND white's attack maps
             after every move... maybe only update the side that just moved?
+
+        I should definitely differentiate between king_danger_squares and 
+        attacked squares with two different bitboards stored in the board, only
+        updating each when I need them. When do I need the attacked squares bitboard?
+        
+        should separate the generate_leaping_moves into each of the pieces
+        so I can call them specifically when in check / double check.
+        do this first ^^^^^
+        actually im dumb I do have these seperate functions, but the actual
+        move vector versions don't exist
+
+        maybe a faster way to do checks is to put each piece type on the kings
+        square (also keep track of kings square in board) and then see if any of
+        the moves actually land on the piece we put there.
+        do this ^^ and return the square being checked from
+        also maybe have is_double_check function to do first
+
+        make generate_blocking_moves
+
+        I would still need to update the king's danger squares pretty often...
+
+        definitely need to incrementally update the attack maps
+
+        game plan... make it work, then make it faster
+
+        run a function that returns a vector of pieces attacking a square
+        maybe make a struct called attacker that stores the piece and the 
+        square it is attacking from
+
+        ^^ actually just return a bitboard of the attackers on a given square
 */

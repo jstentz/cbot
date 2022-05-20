@@ -724,6 +724,7 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *black_pawns = rem_piece(*black_pawns, pawn_square, luts);
         board.sq_board[pawn_square] = EMPTY;
         en_passant_moves++; // DEBUGGING
+        capture_moves++; // DEBUGGING
     }
     else if(mv_piece == (BLACK | PAWN) && target == board.en_passant) {
         bitboard *white_pawns = &board.piece_boards[WHITE_PAWNS_INDEX];
@@ -731,6 +732,7 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *white_pawns = rem_piece(*white_pawns, pawn_square, luts);
         board.sq_board[pawn_square] = EMPTY;
         en_passant_moves++; // DEBUGGING
+        capture_moves++; // DEBUGGING
     }
 
     /* Update en passant squares */
@@ -1489,8 +1491,22 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
     bitboard bishop_attacks;
     bitboard queen_attacks;
     square pc_loc;
+    int pc_rank;
+    int pc_file;
+    int pc_diag;
+    int pc_antidiag;
+    int king_rank = friendly_king_loc / 8;
+    int king_file = friendly_king_loc % 8;
+    int king_diag = king_rank - king_file;
+    int king_antidiag = king_rank + king_file;
     while(opponent_rooks) {
         pc_loc = (square)first_set_bit(opponent_rooks);
+        pc_rank = pc_loc / 8;
+        pc_file = pc_loc % 8;
+        if(!(pc_rank == king_rank || pc_file == king_file)) {
+            opponent_rooks = rem_first_bit(opponent_rooks);
+            continue;
+        }
         rook_attacks = get_rook_attacks(pc_loc, board.all_pieces, luts);
         curr_pin = rook_attacks & king_rook_attacks & friendly_pieces;
         if(curr_pin){
@@ -1502,6 +1518,14 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
     }
     while(opponent_bishops) {
         pc_loc = (square)first_set_bit(opponent_bishops);
+        pc_rank = pc_loc / 8;
+        pc_file = pc_loc % 8;
+        pc_diag = pc_rank - pc_file;
+        pc_antidiag = pc_rank + pc_file;
+        if(!(pc_diag == king_diag || pc_antidiag == king_antidiag)) {
+            opponent_bishops = rem_first_bit(opponent_bishops);
+            continue;
+        }
         bishop_attacks = get_bishop_attacks(pc_loc, board.all_pieces, luts);
         curr_pin = bishop_attacks & king_bishop_attacks & friendly_pieces;
         if(curr_pin){
@@ -1513,7 +1537,11 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
     }
     while(opponent_queens) {
         pc_loc = (square)first_set_bit(opponent_queens);
-        if((pc_loc % 8 == friendly_king_loc % 8) || (pc_loc / 8 == friendly_king_loc / 8)) {
+        pc_rank = pc_loc / 8;
+        pc_file = pc_loc % 8;
+        pc_diag = pc_rank - pc_file;
+        pc_antidiag = pc_rank + pc_file;
+        if(pc_rank == king_rank || pc_file == king_file) {
             queen_attacks = get_rook_attacks(pc_loc, board.all_pieces, luts);
             curr_pin = queen_attacks & king_rook_attacks & friendly_pieces;
             if(curr_pin){
@@ -1522,7 +1550,7 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
                 pin.ray_at_sq[pinned_piece_loc] = get_ray_from_rook_to_king(pc_loc, friendly_king_loc, luts);
             }
         }
-        else {
+        else if(pc_diag == king_diag || pc_antidiag == king_antidiag){
             queen_attacks = get_bishop_attacks(pc_loc, board.all_pieces, luts);
             curr_pin = queen_attacks & king_bishop_attacks & friendly_pieces;
             if(curr_pin){
@@ -1594,7 +1622,7 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) 
     string str_move;
     char piece_name = pieces[bitboard_index_from_piece(move.mv_piece) / 2];
     bool capture = (move.tar_piece == EMPTY) ? false : true;
-    if(move.target == board.en_passant) capture = true;
+    if(move.target == board.en_passant && (move.mv_piece & 0xE) == PAWN) capture = true;
     bool promotion = (move.promotion_piece == EMPTY) ? false : true;
     size_t start_file_num = move.start % 8;
     size_t start_rank_num = move.start / 8;
@@ -1661,14 +1689,15 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_nodes(stack<board_t> board, size_t depth, string curr_not, lut_t *luts) {
+size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
     board_t curr_board = board.top();
     board_t next_board;
     if(depth == 0) {
-        // print_squarewise(curr_board.sq_board); // prints the final node
         // cout << endl << "Done with this branch!" << endl;
-        cout << curr_not << endl;
+        // cout << curr_not << endl;
+        // print_squarewise(curr_board.sq_board); // prints the final node
+        // cout << endl;
         return 1;
     }
 
@@ -1677,47 +1706,47 @@ size_t num_nodes(stack<board_t> board, size_t depth, string curr_not, lut_t *lut
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
-        string next = curr_not + notation_from_move(move, moves, curr_board) + (string)"->";
+        // string next = curr_not + notation_from_move(move, moves, curr_board) + (string)"->";
         // print_squarewise(next_board.sq_board);
-        total_moves += num_nodes(board, depth - 1, next, luts); 
+        total_moves += num_nodes(board, depth - 1, luts); 
         board.pop();
     }
     return total_moves;
 }
 
-// void speed_test(string pos, lut_t *luts) {
-//     board_t board = decode_fen(pos, luts);
-//     board.t = W;
-//     stack<board_t> board_stack;
-//     board_stack.push(board);
-//     size_t max_depth;
-//     clock_t tStart;
-//     clock_t tStop;
-//     double time_elapsed;
-//     size_t nodes;
-//     cout << endl << "Max depth: ";
-//     cin >> max_depth;
-//     cout << endl << "Testing for speed and correctness with a max depth of " 
-//          << max_depth << "..." << endl << endl;
-//     for (size_t depth = 0; depth <= max_depth; depth++) {
-//         cout << "Depth = " << depth << endl;
-//         tStart = clock();
-//         nodes = num_nodes(board_stack, depth, luts);
-//         tStop = clock();
-//         time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-//         cout << "Nodes reached: " << nodes << endl;
-//         cout << "Captures: " << capture_moves << endl;
-//         cout << "En passants: " << en_passant_moves << endl;
-//         cout << "Castles: " << castle_moves << endl;
-//         cout << "Promotions: " << promotion_moves << endl;
-//         cout << "Checks: " << checks << endl;
-//         cout << "Double Checks: " << double_checks << endl;
+void speed_test(string pos, lut_t *luts) {
+    board_t board = decode_fen(pos, luts);
+    board.t = W;
+    stack<board_t> board_stack;
+    board_stack.push(board);
+    size_t max_depth;
+    clock_t tStart;
+    clock_t tStop;
+    double time_elapsed;
+    size_t nodes;
+    cout << endl << "Max depth: ";
+    cin >> max_depth;
+    cout << endl << "Testing for speed and correctness with a max depth of " 
+         << max_depth << "..." << endl << endl;
+    for (size_t depth = 0; depth <= max_depth; depth++) {
+        cout << "Depth = " << depth << endl;
+        tStart = clock();
+        nodes = num_nodes(board_stack, depth, luts);
+        tStop = clock();
+        time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+        cout << "Nodes reached: " << nodes << endl;
+        cout << "Captures: " << capture_moves << endl;
+        cout << "En passants: " << en_passant_moves << endl;
+        cout << "Castles: " << castle_moves << endl;
+        cout << "Promotions: " << promotion_moves << endl;
+        cout << "Checks: " << checks << endl;
+        cout << "Double Checks: " << double_checks << endl;
 
-//         cout << "Time elapsed: " << time_elapsed << endl;
-//         cout << "Nodes per second: " << ((double)nodes / time_elapsed) << endl << endl;
-//     }
-//     return;
-// }
+        cout << "Time elapsed: " << time_elapsed << endl;
+        cout << "Nodes per second: " << ((double)nodes / time_elapsed) << endl << endl;
+    }
+    return;
+}
 
 int main() {
     lut_t *luts = init_LUT();
@@ -1737,26 +1766,28 @@ int main() {
     string castling_test = "r3k2r/8/8/8/8/8/8/R3K2R";
     string king_move_test = "4k3/8/2r5/8/8/2K5/8/8"; // 6 legal white
     string double_check_test = "k2r4/8/8/8/4Q3/5N2/2b5/3K4";
-    string temp_test = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
-    board_t board = decode_fen(starting_pos, luts);
-    stack<board_t> board_stack;
-    board_stack.push(board);
+    string temp_test = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1";
+    string temp_2 = "3k4/8/1b6/8/8/8/4P3/4K3";
+    string cant_take_pinning_piece = "3k4/8/1b6/2B5/1q6/8/8/6K1";
+    // board_t board = decode_fen(cant_take_pinning_piece, luts);
+    // stack<board_t> board_stack;
+    // board_stack.push(board);
 
-    // print_bitboard(get_pinned_pieces(board, E4, luts).ray_at_sq[C4]);
+    // print_bitboard(get_pinned_pieces(board, G1, luts).ray_at_sq[C5]);
 
     // print_bitboard(get_ray_from_queen_to_king(E1, A5, luts));
     // print_bitboard(get_pinned_pieces(board, B1, luts));
 
     // print_bitboard(checking_pieces(board, luts));
 
-    // speed_test(starting_pos, luts);
+    speed_test(starting_pos, luts);
 
-    size_t depth;
-    while(true) {
-        cout << endl << "Enter depth: ";
-        cin >> depth;
-        cout << endl << num_nodes(board_stack, depth, "", luts) << endl;
-    }
+    // size_t depth;
+    // while(true) {
+    //     cout << endl << "Enter depth: ";
+    //     cin >> depth;
+    //     cout << endl << num_nodes(board_stack, depth, "", luts) << endl;
+    // }
 
     int test;
     cin >> test;

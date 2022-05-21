@@ -1735,7 +1735,7 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     return total_moves;
 }
 
-void perft(board_t board, size_t depth, lut_t *luts) {
+size_t perft(board_t board, size_t depth, lut_t *luts) {
     vector<move_t> moves = generate_moves(board, luts);
     stack<board_t> board_stack;
     board_stack.push(board);
@@ -1750,7 +1750,7 @@ void perft(board_t board, size_t depth, lut_t *luts) {
         board_stack.pop();
     }
     cout << "Nodes searched: " << total_nodes << endl;
-    return;
+    return total_nodes;
 }
 
 void speed_test(string pos, lut_t *luts) {
@@ -1828,8 +1828,6 @@ int main() {
     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R";
     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1";
 
-    // string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/2KR3R";
-
     board_t board_1 = decode_fen(test_pos_1, luts);
     board_t board_2 = decode_fen(test_pos_2, luts);
     board_t board_3 = decode_fen(test_pos_3, luts);
@@ -1839,180 +1837,92 @@ int main() {
 
 
     size_t depth;
+    // while(true) {
+    //     cout << endl << "Enter depth: ";
+    //     cin >> depth;
+
+    //     cout << "Test 1 at depth " << depth << endl;
+    //     perft(board_1, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 2 at depth " << depth << endl;
+    //     perft(board_2, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 3 at depth " << depth << endl;
+    //     perft(board_3, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 4 at depth " << depth << endl;
+    //     perft(board_4, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 5 at depth " << depth << endl;
+    //     perft(board_5, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 6 at depth " << depth << endl;
+    //     perft(board_6, depth, luts);
+    //     cout << endl;
+    // }
+
+    size_t total_nodes;
+    clock_t tStart;
+    clock_t tStop;
+    double time_elapsed;
+
+    stack<board_t> board_1_stack;
+    stack<board_t> board_2_stack;
+    stack<board_t> board_3_stack;
+    stack<board_t> board_4_stack;
+    stack<board_t> board_5_stack;
+    stack<board_t> board_6_stack;
+    board_1_stack.push(board_1);
+    board_2_stack.push(board_2);
+    board_3_stack.push(board_3);
+    board_4_stack.push(board_4);
+    board_5_stack.push(board_5);
+    board_6_stack.push(board_6);
     while(true) {
         cout << endl << "Enter depth: ";
         cin >> depth;
-
-        cout << "Test 1 at depth " << depth << endl;
-        perft(board_1, depth, luts);
-        cout << endl;
-
-        cout << "Test 2 at depth " << depth << endl;
-        perft(board_2, depth, luts);
-        cout << endl;
-
-        cout << "Test 3 at depth " << depth << endl;
-        perft(board_3, depth, luts);
-        cout << endl;
-
-        cout << "Test 4 at depth " << depth << endl;
-        perft(board_4, depth, luts);
-        cout << endl;
-
-        cout << "Test 5 at depth " << depth << endl;
-        perft(board_5, depth, luts);
-        cout << endl;
-
-        cout << "Test 6 at depth " << depth << endl;
-        perft(board_6, depth, luts);
-        cout << endl;
+        total_nodes = 0;
+        tStart = clock();
+        total_nodes += num_nodes(board_1_stack, depth, luts);
+        total_nodes += num_nodes(board_2_stack, depth, luts);
+        total_nodes += num_nodes(board_3_stack, depth, luts);
+        total_nodes += num_nodes(board_4_stack, depth, luts);
+        total_nodes += num_nodes(board_5_stack, depth, luts);
+        total_nodes += num_nodes(board_6_stack, depth, luts);
+        tStop = clock();
+        time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+        cout << "Time elapsed: " << time_elapsed << endl;
+        cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
     }
     
     free(luts);
     return 0;
 }
-
-/* still need to deal with en passant check evasions 
-   now that I have the pinned pieces, pass that on to move generation...
-   if its a knight, just temporarily remove it from the board when calculating knight moves
-   if its a bishop or queen or rook or pawn, remove it from the board temporarily
-   and make a new function to get the ray between the king and another piece
-
-   pass in the pinned bishops to generate bishop_moves etc...
-
-   get_ray_from_bishop_to_king(square bishop, square king, lut_t *luts)
-   get_ray_from_rook_to_king(square rook, square king, lut_t *luts)
-
-   ignoring all possible obstructing pieces (don't take in the board as an argument)
-
-   fix en passant checks and blocking
-
-   en passant pin from side
-
-   using stockfish...
-   position fen <string>
-   go perft <depth>
-*/
-
 /*
-    Notes:
-        - Maybe have a move struct and then store an array of moves in a 
-          given position. Then you only need to malloc one array.
-        - Have a piece-wise representation in order to figure out what piece is
-          captured.
-        - Have the make move function not even check for legality, that should
-          be the job of the move generation.
-        - Store the moves from generation in a vector (need to import library?)
-        - DON'T create new copies of the board, instead make the move struct
-          hold enough info to be able to undo the move
-        - ^^^ need to be sure to undo the move in recursive calls
-        - make LUT on the stack cuz it doesn't change
-        - ^^^ maybe not tho cuz its large
-        - for dealing with captured pieces, maybe make the board struct hold
-          the most recent captured pieces (NONE if none captured) in order to 
-          undo the move. Other stuff would also need to be stored for this to 
-          work.
-        - make FEN -> board function
-        - I should have a better way of representing pieces in the piece array
-        - 01000 = white
-        - 10000 = black
-        - 00001 = pawn
-        - change the way that I store the twelve bitboards... maybe an array
-          that is indexed by the enums?
-        - I think I will need to create a new board for every new move...
-        - However, I can simply an array of a fuckton of boards = depth of the
-          search. Note about the non-fixed depth due to completing capture
-          chains.
-        - Read the wiki page... need to do bitscanning
-        - in terms of searching, the array positions will be sequentially 
-          ordered by board history. So board[0] would be the starting position.
-        - tomorrow start with knight moves LUT generation
-        - consider using stacks for the board history
-        - unmake move would just be popping from the stack
-        - do all pseudo-legal moves now, then cycle back once I have all the
-          squares that are being attacked to deal with check
-        - I think I want the board struct to hold the turn and castling rights
-          info. So I have to move the turn into that.
-        - Use memcpy when making a move
-        - rotate 45 degrees, look at rank_attacks for given pattern, mask
-          either the diagonal or antidiagonal
-        - after queens are implemented, do a lot of code cleaning and commenting
-          and precalculate knights, bishops, and pawns (maybe delay this)
-        - next up is en passant, pawn promotion, and castling (assume pseudolegal for now)
-        - still need to update make_move function and pawn move generation function
-        - do knight generation in an LUT
-        - my num moves function is correct. It should be called num nodes,
-          because it really tells me how many nodes there are at depth = 0
-        - pawn moves might currently be slow, maybe have two lookup tables,
-          one for pawn captures and one for pawn pushes. Then just do en passant
-          for the given pawn during the game.
-        1. create the knight_attacks LUT done
-        2. create the king_attacks LUT done 
-           might also be worth doing a castling lut here then in generate_king_moves,
-           give the rank and it can check to see if castling is legal
-        3. create the pawn_attacks_white and pawn_attacks_black LUTs
-           create the white_pawn_pushes
-           create the white_en_passant and black_en_passant LUTs
-           ^^^ don't need these, just use the pawn attacks and see if you are
-           attacking an en passant square
-        use these LUTs to make the attack map for white and black
+    Ideas for efficiency:
+        - make a function to actually test efficiency
+        - throw out updated boards and instead incrementally update the boards
+            inside of make_move.
+        - update the attack maps incrementally
+        - don't update them at all... for king moves just look up the 
+            pseudolegal move squares and see if they are attacked
+        - castling move generation is ugly and probably bad
+        - change sliding piece move generation
+        - switch to magic bitboards
+        - look over the bookmarked tabs to explore options
+        - change representation of moves to a 32 bit integer
+        - a lot of speed has to do with a good eval function
+        - magic bitboards?
 
-        next up:
-        castling...
-        1. make the threat map using the LUTs given a position, maybe do this
-           where you pass in all pieces except the king.
+    Next up:
+        - make benchmark test for speed
 
-        Ideas for efficiency:
-            - make a function to actually test efficiency
-            - throw out updated boards and instead incrementally update the boards
-              inside of make_move.
-            - update the attack maps incrementally
-            - castling move generation is ugly and probably bad
-            - change sliding piece move generation
-            - switch to magic bitboards
-            - look over the bookmarked tabs to explore options
-            - change representation of moves to a 32 bit integer
-            - a lot of speed has to do with a good eval function
+    SPEED DATA:
+    - at 414077 nodes/second at depth 4
 
-        Make it so rooks and bishops do not attack the square they are on
-        store the black and white king positions in the board
-
-        RECALTULATING THE ATTACK MAPS IS REALLLLLYYYYY TIME CONSUMING
-        HIGHLY CONSIDER MAKING A REMAP FUNCTION THAT TAKES IN A MOVE AND UPDATES
-        IT
-            for this you can probably just recalculate the pieces on the file,
-            rank, diagonal, and antidiagonal you are on
-
-            im also not sure if I need to update black AND white's attack maps
-            after every move... maybe only update the side that just moved?
-
-        I should definitely differentiate between king_danger_squares and 
-        attacked squares with two different bitboards stored in the board, only
-        updating each when I need them. When do I need the attacked squares bitboard?
-        
-        should separate the generate_leaping_moves into each of the pieces
-        so I can call them specifically when in check / double check.
-        do this first ^^^^^
-        actually im dumb I do have these seperate functions, but the actual
-        move vector versions don't exist
-
-        maybe a faster way to do checks is to put each piece type on the kings
-        square (also keep track of kings square in board) and then see if any of
-        the moves actually land on the piece we put there.
-        do this ^^ and return the square being checked from
-        also maybe have is_double_check function to do first
-
-        make generate_blocking_moves
-
-        I would still need to update the king's danger squares pretty often...
-
-        definitely need to incrementally update the attack maps
-
-        game plan... make it work, then make it faster
-
-        run a function that returns a vector of pieces attacking a square
-        maybe make a struct called attacker that stores the piece and the 
-        square it is attacking from
-
-        ^^ actually just return a bitboard of the attackers on a given square
 */

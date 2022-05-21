@@ -674,7 +674,6 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         board.sq_board[H1] = EMPTY;
         board.sq_board[F1] = WHITE | ROOK;
         board.white_king_side = false;
-        board.white_queen_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
@@ -683,8 +682,7 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *castling_rook = place_piece(*castling_rook, D1, luts);
         board.sq_board[A1] = EMPTY;
         board.sq_board[D1] = WHITE | ROOK;
-        board.black_king_side = false;
-        board.black_queen_side = false;
+        board.white_queen_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
@@ -693,6 +691,7 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *castling_rook = place_piece(*castling_rook, F8, luts);
         board.sq_board[H8] = EMPTY;
         board.sq_board[F8] = BLACK | ROOK;
+        board.black_king_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
@@ -701,6 +700,7 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *castling_rook = place_piece(*castling_rook, D8, luts);
         board.sq_board[A8] = EMPTY;
         board.sq_board[D8] = BLACK | ROOK;
+        board.black_queen_side = false;
         castle_moves++; // DEBUGGING
     }
 
@@ -1820,20 +1820,53 @@ int main() {
     string temp_test_Nd4_b1R_Qe1_Rb2 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/Pr1P2PP/R3QRK1"; // white
     
     string en_passant_side = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
-    // this one is WRONG at depth 5... try fixing en passant thingy
-    board_t board = decode_fen(en_passant_side, luts);
 
-    // speed_test(starting_pos, luts);
+    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
+    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
+    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1";
+    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R";
+    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1";
+
+    // string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/2KR3R";
+
+    board_t board_1 = decode_fen(test_pos_1, luts);
+    board_t board_2 = decode_fen(test_pos_2, luts);
+    board_t board_3 = decode_fen(test_pos_3, luts);
+    board_t board_4 = decode_fen(test_pos_4, luts);
+    board_t board_5 = decode_fen(test_pos_5, luts);
+    board_t board_6 = decode_fen(test_pos_6, luts);
+
 
     size_t depth;
     while(true) {
         cout << endl << "Enter depth: ";
         cin >> depth;
-        perft(board, depth, luts);
-    }
 
-    int test;
-    cin >> test;
+        cout << "Test 1 at depth " << depth << endl;
+        perft(board_1, depth, luts);
+        cout << endl;
+
+        cout << "Test 2 at depth " << depth << endl;
+        perft(board_2, depth, luts);
+        cout << endl;
+
+        cout << "Test 3 at depth " << depth << endl;
+        perft(board_3, depth, luts);
+        cout << endl;
+
+        cout << "Test 4 at depth " << depth << endl;
+        perft(board_4, depth, luts);
+        cout << endl;
+
+        cout << "Test 5 at depth " << depth << endl;
+        perft(board_5, depth, luts);
+        cout << endl;
+
+        cout << "Test 6 at depth " << depth << endl;
+        perft(board_6, depth, luts);
+        cout << endl;
+    }
     
     free(luts);
     return 0;

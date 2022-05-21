@@ -972,6 +972,32 @@ void print_board(board_t board) {
     return;
 }
 
+bitboard get_ray_from_bishop_to_king(square bishop, square king, lut_t *luts) {
+    bitboard board = luts->pieces[bishop] | luts->pieces[king];
+    bitboard bishop_attacks_from_bishop = get_bishop_attacks(bishop, board, luts);
+    bitboard bishop_attacks_from_king = get_bishop_attacks(king, board, luts);
+    return (bishop_attacks_from_bishop & bishop_attacks_from_king) | board;
+}
+
+bitboard get_ray_from_rook_to_king(square rook, square king, lut_t *luts) {
+    // assume the board is empty for calculating the rays
+    bitboard board = luts->pieces[rook] | luts->pieces[king];
+    bitboard rook_attacks_from_rook = get_rook_attacks(rook, board, luts);
+    bitboard rook_attacks_from_king = get_rook_attacks(king, board, luts);
+    return (rook_attacks_from_rook & rook_attacks_from_king) | board;
+}
+
+bitboard get_ray_from_queen_to_king(square queen, square king, lut_t *luts) {
+    if((queen % 8 == king % 8) || (queen / 8 == king / 8)) {
+        return get_ray_from_rook_to_king(queen, king, luts); // if on the same rank or file, treat the queen as a rook
+    }
+    return get_ray_from_bishop_to_king(queen, king, luts); // if on the same diagonal, treat the queen as a bishop
+}
+
+bitboard get_ray_from_sq_to_sq(square start, square target, lut_t *luts) {
+    return get_ray_from_queen_to_king(start, target, luts);
+}
+
 bitboard generate_knight_move_bitboard(square knight, board_t board, lut_t *luts) {
     bitboard own_pieces;
     if(board.t == W)  own_pieces = board.white_pieces;
@@ -1056,7 +1082,11 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
     square en_passant_sq = board.en_passant;
     bitboard en_passant_bit = 0; // default it to zero
     size_t rank = pawn / 8;
-    
+    bitboard opponent_rooks;
+    bitboard opponent_queens;
+    bitboard attackers;
+    bitboard board_without_pawns;
+
     if(en_passant_sq != NONE) {
         en_passant_bit =  luts->pieces[en_passant_sq]; // used to and with attack pattern
     }
@@ -1070,7 +1100,17 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
             forward_two = luts->white_pawn_pushes[pawn + 8] & ~all_pieces;
         }
         forward_moves = forward_one | forward_two;
-        en_passant_capture = luts->white_pawn_attacks[pawn] & en_passant_bit;
+
+        en_passant_capture = 0;
+        if(en_passant_bit){
+            opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
+            opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
+            board_without_pawns = board.all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit >> 8);
+            attackers = get_rook_attacks(board.white_king_loc, board_without_pawns, luts) & (opponent_rooks | opponent_queens);
+            if(!attackers) {
+                en_passant_capture = luts->white_pawn_attacks[pawn] & en_passant_bit;
+            }
+        }
     }
     else {
         enemy_pieces = board.white_pieces;
@@ -1082,6 +1122,17 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
         }
         forward_moves = forward_one | forward_two;
         en_passant_capture = luts->black_pawn_attacks[pawn] & en_passant_bit;
+
+        en_passant_capture = 0;
+        if(en_passant_bit){
+            opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
+            opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
+            board_without_pawns = board.all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit << 8);
+            attackers = get_rook_attacks(board.black_king_loc, board_without_pawns, luts) & (opponent_rooks | opponent_queens);
+            if(!attackers) {
+                en_passant_capture = luts->black_pawn_attacks[pawn] & en_passant_bit;
+            }
+        }
     }
 
     return captures | forward_moves | en_passant_capture;
@@ -1112,32 +1163,6 @@ bitboard generate_bishop_move_bitboard(square bishop, board_t board, lut_t *luts
 bitboard generate_queen_move_bitboard(square queen, board_t board, lut_t *luts) {
     return   generate_rook_move_bitboard(queen, board, luts)
            | generate_bishop_move_bitboard(queen, board, luts);
-}
-
-bitboard get_ray_from_bishop_to_king(square bishop, square king, lut_t *luts) {
-    bitboard board = luts->pieces[bishop] | luts->pieces[king];
-    bitboard bishop_attacks_from_bishop = get_bishop_attacks(bishop, board, luts);
-    bitboard bishop_attacks_from_king = get_bishop_attacks(king, board, luts);
-    return (bishop_attacks_from_bishop & bishop_attacks_from_king) | board;
-}
-
-bitboard get_ray_from_rook_to_king(square rook, square king, lut_t *luts) {
-    // assume the board is empty for calculating the rays
-    bitboard board = luts->pieces[rook] | luts->pieces[king];
-    bitboard rook_attacks_from_rook = get_rook_attacks(rook, board, luts);
-    bitboard rook_attacks_from_king = get_rook_attacks(king, board, luts);
-    return (rook_attacks_from_rook & rook_attacks_from_king) | board;
-}
-
-bitboard get_ray_from_queen_to_king(square queen, square king, lut_t *luts) {
-    if((queen % 8 == king % 8) || (queen / 8 == king / 8)) {
-        return get_ray_from_rook_to_king(queen, king, luts); // if on the same rank or file, treat the queen as a rook
-    }
-    return get_ray_from_bishop_to_king(queen, king, luts); // if on the same diagonal, treat the queen as a bishop
-}
-
-bitboard get_ray_from_sq_to_sq(square start, square target, lut_t *luts) {
-    return get_ray_from_queen_to_king(start, target, luts);
 }
 
 vector<move_t> generate_knight_moves(board_t board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
@@ -1793,8 +1818,10 @@ int main() {
     string temp_test_Nd4_b1R = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/P2P2PP/Rr1Q1RK1"; // white
     string temp_test_Nd4_b1R_Qe1 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/P2P2PP/Rr2QRK1"; // black
     string temp_test_Nd4_b1R_Qe1_Rb2 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/Pr1P2PP/R3QRK1"; // white
+    
+    string en_passant_side = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
     // this one is WRONG at depth 5... try fixing en passant thingy
-    board_t board = decode_fen(temp_test, luts);
+    board_t board = decode_fen(en_passant_side, luts);
 
     // speed_test(starting_pos, luts);
 
@@ -1826,6 +1853,12 @@ int main() {
    ignoring all possible obstructing pieces (don't take in the board as an argument)
 
    fix en passant checks and blocking
+
+   en passant pin from side
+
+   using stockfish...
+   position fen <string>
+   go perft <depth>
 */
 
 /*

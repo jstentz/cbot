@@ -1,11 +1,12 @@
 #include <cstdio>
-#include <iostream>
 #include <cmath>
 #include <string>
 #include <bitset>
 #include <vector>
 #include <stack>
 #include <time.h>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -1588,10 +1589,7 @@ vector<move_t> generate_moves(board_t board, lut_t *luts) {
         }
     }
     bitboard check_mask = push_mask | capture_mask;
-    // bitboard check_mask = 0xFFFFFFFFFFFFFFFF;
     pin_t pin = get_pinned_pieces(board, friendly_king_loc, luts);
-    // pin_t pin;
-    // pin.pinned_pieces = 0;
     moves = generate_king_moves(board, moves, luts);
     moves = generate_knight_moves(board, moves, check_mask, pin, luts);
     moves = generate_pawn_moves(board, moves, check_mask, pin, luts);
@@ -1689,16 +1687,11 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_nodes(stack<board_t> board, size_t depth, string curr_not, lut_t *luts) {
+size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
     board_t curr_board = board.top();
     board_t next_board;
     if(depth == 0) {
-        // cout << endl << "Done with this branch!" << endl;
-        // cout << curr_not << endl;
-        // print_squarewise(curr_board.sq_board); // prints the final node
-        // cout << endl;
-        // generate_moves(curr_board, luts); // to get accurate checks
         return 1;
     }
 
@@ -1707,16 +1700,28 @@ size_t num_nodes(stack<board_t> board, size_t depth, string curr_not, lut_t *lut
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
-        // string next = curr_not + notation_from_move(move, moves, curr_board) + (string)"->";
-        // print_squarewise(next_board.sq_board);
-        // if((move.mv_piece == (WHITE | PAWN) || move.mv_piece == (BLACK | PAWN)) && (move.target == curr_board.en_passant)){
-        //     cout << notation_from_move(move, moves, curr_board) << endl;
-        // }
-        // cout << notation_from_move(move, moves, curr_board) << endl;
-        total_moves += num_nodes(board, depth - 1, "", luts); 
+        total_moves += num_nodes(board, depth - 1, luts); 
         board.pop();
     }
     return total_moves;
+}
+
+void perft(board_t board, size_t depth, lut_t *luts) {
+    vector<move_t> moves = generate_moves(board, luts);
+    stack<board_t> board_stack;
+    board_stack.push(board);
+    size_t total_nodes = 0;
+    size_t nodes_from_move = 0;
+    for(move_t move : moves) {
+        board_stack.push(make_move(board, move, luts));
+        cout << notation_from_move(move, moves, board) << ": ";
+        nodes_from_move = num_nodes(board_stack, depth - 1, luts);
+        total_nodes += nodes_from_move;
+        cout << nodes_from_move << endl;
+        board_stack.pop();
+    }
+    cout << "Nodes searched: " << total_nodes << endl;
+    return;
 }
 
 void speed_test(string pos, lut_t *luts) {
@@ -1741,7 +1746,7 @@ void speed_test(string pos, lut_t *luts) {
         double_checks = 0;
         cout << "Depth = " << depth << endl;
         tStart = clock();
-        nodes = num_nodes(board_stack, depth, "", luts);
+        nodes = num_nodes(board_stack, depth, luts);
         tStop = clock();
         time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
         cout << "Nodes reached: " << nodes << endl;
@@ -1778,12 +1783,11 @@ int main() {
     string double_check_test = "k2r4/8/8/8/4Q3/5N2/2b5/3K4";
     string en_passant_checker = "3k4/8/8/3Pp3/5K2/8/8/8";
     string en_passant_block = "4kq2/8/8/3pP3/1K6/8/8/8";
-    // board_t board = decode_fen(starting_pos, luts);
-    // board.en_passant = E6;
-    // stack<board_t> board_stack;
-    // board_stack.push(board);
+    board_t board = decode_fen(starting_pos, luts);
 
-    speed_test(starting_pos, luts);
+    // speed_test(starting_pos, luts);
+
+    perft(board, 6, luts);
 
     // size_t depth;
     // while(true) {

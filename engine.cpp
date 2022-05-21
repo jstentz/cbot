@@ -78,8 +78,8 @@ typedef struct Board
     bool black_king_side;
     bool black_queen_side;
 
-    bitboard white_attack_map;
-    bitboard black_attack_map;
+    // bitboard white_attack_map;
+    // bitboard black_attack_map;
 
     square white_king_loc;
     square black_king_loc;
@@ -493,13 +493,13 @@ board_t zero_board() {
 
     board.t = W;
     board.en_passant = NONE;
-    board.white_king_side = true;
-    board.white_queen_side = true;
-    board.black_king_side = true;
-    board.black_queen_side = true;
+    board.white_king_side = false; // default to false so I can change to true in decode_fen
+    board.white_queen_side = false;
+    board.black_king_side = false;
+    board.black_queen_side = false;
 
-    board.white_attack_map = 0;
-    board.black_attack_map = 0;
+    // board.white_attack_map = 0;
+    // board.black_attack_map = 0;
     return board;
 }
 
@@ -640,13 +640,13 @@ board_t update_boards(board_t board, lut_t *luts) {
                            board.piece_boards[8]  | board.piece_boards[10]);
 
     board.all_pieces = board.white_pieces | board.black_pieces;
-    if(board.t == W) {
-        // generate the opponents attack map for king moves
-        board.black_attack_map = generate_attack_map(board, B, luts);
-    }
-    else {
-        board.white_attack_map = generate_attack_map(board, W, luts);
-    }
+    // if(board.t == W) {
+    //     // generate the opponents attack map for king moves
+    //     board.black_attack_map = generate_attack_map(board, B, luts);
+    // }
+    // else {
+    //     board.white_attack_map = generate_attack_map(board, W, luts);
+    // }
     return board;
 }
 
@@ -805,8 +805,9 @@ board_t decode_fen(string fen, lut_t *luts) {
     int col = 0;
     int row = 7;
     int loc;
-    for (size_t i = 0; i < fen.size(); i++) {
-        char c = fen[i];
+    size_t i = 0;
+    char c = fen[i];
+    while(c != ' ') {
         pc = 0;
         loc = row * 8 + col;
         if (isdigit(c)) {
@@ -850,7 +851,20 @@ board_t decode_fen(string fen, lut_t *luts) {
             *place_board = place_piece(*place_board, (square)loc, luts);
             col += 1;
         }
-
+        i++;
+        c = fen[i];
+    }
+    i++;
+    if(fen[i] == 'w') board.t = W;
+    else              board.t = B;
+    i++;
+    while(i < fen.size()) {
+        c = fen[i];
+        if(c == 'K') board.white_king_side = true;
+        if(c == 'Q') board.white_queen_side = true;
+        if(c == 'k') board.black_king_side = true;
+        if(c == 'q') board.black_queen_side = true;
+        i++;
     }
     return update_boards(board, luts);
 }
@@ -1013,6 +1027,38 @@ bitboard get_ray_from_sq_to_sq(square start, square target, lut_t *luts) {
     return get_ray_from_queen_to_king(start, target, luts);
 }
 
+bool is_attacked(board_t board, square sq, bitboard blocking_pieces, lut_t *luts) {
+    bitboard opponent_knights;
+    bitboard opponent_kings;
+    bitboard opponent_pawns;
+    bitboard opponent_rooks;
+    bitboard opponent_bishops;
+    bitboard opponent_queens;
+    if(board.t == W) {
+        opponent_knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = board.piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = board.piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
+    }
+    else {
+        opponent_knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = board.piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = board.piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
+    }
+    if(get_bishop_attacks(sq, blocking_pieces, luts) & opponent_bishops) return true;
+    if(get_rook_attacks(sq, blocking_pieces, luts) & opponent_rooks) return true;
+    if(get_knight_attacks(sq, luts) & opponent_knights) return true;
+    if(get_pawn_attacks(sq, board.t, luts) & opponent_pawns) return true;
+    if(get_queen_attacks(sq, blocking_pieces, luts) & opponent_queens) return true;
+    if(get_king_attacks(sq, luts) & opponent_kings) return true;
+    return false;
+}
+
 bitboard generate_knight_move_bitboard(square knight, board_t board, lut_t *luts) {
     bitboard own_pieces;
     if(board.t == W)  own_pieces = board.white_pieces;
@@ -1024,65 +1070,90 @@ bitboard generate_knight_move_bitboard(square knight, board_t board, lut_t *luts
 }
 
 bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
-    // still need to add castling... will have to take in info from the board for that
     bitboard own_pieces;
-    bitboard attacked_squares;
     if(board.t == W)  {
         own_pieces = board.white_pieces; 
-        attacked_squares = board.black_attack_map;
     }
     else {
-        own_pieces = board.black_pieces; 
-        attacked_squares = board.white_attack_map;
+        own_pieces = board.black_pieces;
     }
     
     bitboard king_attacks = luts->king_attacks[king];
     bitboard king_pseudomoves = king_attacks & ~own_pieces;
 
-    if(!king_pseudomoves) return 0;
+    if(!king_pseudomoves) return 0; // if the king has no pseudolegal moves, it cannot castle
+
+    bitboard king_legal_moves = 0;
+    bitboard blocking_pieces = board.all_pieces & ~luts->pieces[king]; // the king cannot block the attack on a square behind it
+
+    while(king_pseudomoves) {
+        square loc = (square)first_set_bit(king_pseudomoves);
+        if(!is_attacked(board, loc, blocking_pieces, luts)) king_legal_moves |= luts->pieces[loc];
+        king_pseudomoves = rem_first_bit(king_pseudomoves);
+    }
 
     // generate castling moves
     // maybe move these to defined constants
-    const bitboard w_king_side_pieces = 0x60;
-    const bitboard w_queen_side_pieces = 0xE;
-    const bitboard b_king_side_pieces = 0x6000000000000000;
-    const bitboard b_queen_side_pieces = 0x0E00000000000000;
+    
     const bitboard w_king_side_castle = 0x40;
     const bitboard w_queen_side_castle = 0x4;
     const bitboard b_king_side_castle = 0x4000000000000000;
     const bitboard b_queen_side_castle = 0x0400000000000000;
-    const bitboard w_king_side_attack = 0x70;
-    const bitboard w_queen_side_attack = 0x1C;
-    const bitboard b_king_side_attack = 0x7000000000000000;
-    const bitboard b_queen_side_attack = 0x1C00000000000000;
+
+    square white_king_sq_1 = F1;
+    square white_king_sq_2 = G1;
+    square white_queen_sq_1 = D1;
+    square white_queen_sq_2 = C1;
+    square white_queen_sq_3 = B1; // this square is allowed to be attacked
+
+    square black_king_sq_1 = F8;
+    square black_king_sq_2 = G8;
+    square black_queen_sq_1 = D8;
+    square black_queen_sq_2 = C8;
+    square black_queen_sq_3 = B8; // this square is allowed to be attacked
+
     bitboard king_castle = 0;
-    if(board.t == W) {
-        if(board.white_king_side && board.white_king_loc == E1 &&
-          ((board.all_pieces & w_king_side_pieces) == 0) &&
-          (board.sq_board[H1] == (WHITE | ROOK)) && 
-          ((board.black_attack_map & w_king_side_attack) == 0))
-          king_castle |= w_king_side_castle;
+    if(board.t == W && board.white_king_loc == E1 && !is_attacked(board, E1, blocking_pieces, luts)) {
+        if(board.white_king_side && board.sq_board[H1] == (WHITE | ROOK)) {
+            if(board.sq_board[white_king_sq_1] == EMPTY &&
+               board.sq_board[white_king_sq_2] == EMPTY) {
+                   if(!is_attacked(board, white_king_sq_1, blocking_pieces, luts) &&
+                      !is_attacked(board, white_king_sq_2, blocking_pieces, luts))
+                        king_castle |= w_king_side_castle;
+               }
+        }
 
-        if(board.white_queen_side && board.white_king_loc == E1 &&
-          ((board.all_pieces & w_queen_side_pieces) == 0) &&
-          (board.sq_board[A1] == (WHITE | ROOK)) && 
-          ((board.black_attack_map & w_queen_side_attack) == 0))
-          king_castle |= w_queen_side_castle;
+        if(board.white_queen_side && board.sq_board[A1] == (WHITE | ROOK)) {
+            if(board.sq_board[white_queen_sq_1] == EMPTY &&
+               board.sq_board[white_queen_sq_2] == EMPTY &&
+               board.sq_board[white_queen_sq_3] == EMPTY) {
+                   if(!is_attacked(board, white_queen_sq_1, blocking_pieces, luts) &&
+                      !is_attacked(board, white_queen_sq_2, blocking_pieces, luts))
+                        king_castle |= w_queen_side_castle;
+               }
+        } 
     }
-    else {
-        if(board.black_king_side && board.black_king_loc == E8 &&
-          ((board.all_pieces & b_king_side_pieces) == 0) &&
-          (board.sq_board[H8] == (BLACK | ROOK)) && 
-          ((board.white_attack_map & b_king_side_attack) == 0))
-          king_castle |= b_king_side_castle;
+    else if (board.t == B && board.black_king_loc == E8 && !is_attacked(board, E8, blocking_pieces, luts)) {
+        if(board.black_king_side && board.sq_board[H8] == (BLACK | ROOK)) {
+            if(board.sq_board[black_king_sq_1] == EMPTY &&
+               board.sq_board[black_king_sq_2] == EMPTY) {
+                   if(!is_attacked(board, black_king_sq_1, blocking_pieces, luts) &&
+                      !is_attacked(board, black_king_sq_2, blocking_pieces, luts))
+                        king_castle |= b_king_side_castle;
+               }
+        }
 
-        if(board.black_queen_side && board.black_king_loc == E8 &&
-          ((board.all_pieces & b_queen_side_pieces) == 0) &&
-          (board.sq_board[A8] == (BLACK | ROOK)) &&
-          ((board.white_attack_map & b_queen_side_attack) == 0))
-          king_castle |= b_queen_side_castle;
+        if(board.black_queen_side && board.sq_board[A8] == (BLACK | ROOK)) {
+            if(board.sq_board[black_queen_sq_1] == EMPTY &&
+               board.sq_board[black_queen_sq_2] == EMPTY &&
+               board.sq_board[black_queen_sq_3] == EMPTY) {
+                   if(!is_attacked(board, black_queen_sq_1, blocking_pieces, luts) &&
+                      !is_attacked(board, black_queen_sq_2, blocking_pieces, luts))
+                        king_castle |= b_queen_side_castle;
+               }
+        } 
     }
-    return (king_pseudomoves & ~attacked_squares) | king_castle;           
+    return king_legal_moves | king_castle;           
 }
 
 bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
@@ -1869,14 +1940,14 @@ move_t find_best_move(board_t board, size_t depth, lut_t *luts) {
 
 int main() {
     lut_t *luts = init_LUT();
-    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
-    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
-    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1";
-    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R";
-    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1";
+    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
+    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
+    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
     board_t board_1 = decode_fen(test_pos_1, luts);
     board_t board_2 = decode_fen(test_pos_2, luts);
@@ -1885,7 +1956,7 @@ int main() {
     board_t board_5 = decode_fen(test_pos_5, luts);
     board_t board_6 = decode_fen(test_pos_6, luts);
 
-    cout << notation_from_move(find_best_move(board_4, 4, luts), generate_moves(board_4, luts), board_4) << endl;
+    // cout << notation_from_move(find_best_move(board_2, 4, luts), generate_moves(board_2, luts), board_2) << endl;
 
     size_t depth;
     // while(true) {

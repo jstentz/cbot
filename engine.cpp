@@ -673,6 +673,8 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *castling_rook = place_piece(*castling_rook, F1, luts);
         board.sq_board[H1] = EMPTY;
         board.sq_board[F1] = WHITE | ROOK;
+        board.white_king_side = false;
+        board.white_queen_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
@@ -681,6 +683,8 @@ board_t make_move(board_t board, move_t move, lut_t *luts) {
         *castling_rook = place_piece(*castling_rook, D1, luts);
         board.sq_board[A1] = EMPTY;
         board.sq_board[D1] = WHITE | ROOK;
+        board.black_king_side = false;
+        board.black_queen_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
@@ -1012,26 +1016,26 @@ bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
     const bitboard b_queen_side_attack = 0x1C00000000000000;
     bitboard king_castle = 0;
     if(board.t == W) {
-        if(board.white_king_side && 
+        if(board.white_king_side && board.white_king_loc == E1 &&
           ((board.all_pieces & w_king_side_pieces) == 0) &&
           (board.sq_board[H1] == (WHITE | ROOK)) && 
           ((board.black_attack_map & w_king_side_attack) == 0))
           king_castle |= w_king_side_castle;
 
-        if(board.white_queen_side && 
+        if(board.white_queen_side && board.white_king_loc == E1 &&
           ((board.all_pieces & w_queen_side_pieces) == 0) &&
           (board.sq_board[A1] == (WHITE | ROOK)) && 
           ((board.black_attack_map & w_queen_side_attack) == 0))
           king_castle |= w_queen_side_castle;
     }
     else {
-        if(board.black_king_side && 
+        if(board.black_king_side && board.black_king_loc == E8 &&
           ((board.all_pieces & b_king_side_pieces) == 0) &&
           (board.sq_board[H8] == (BLACK | ROOK)) && 
           ((board.white_attack_map & b_king_side_attack) == 0))
           king_castle |= b_king_side_castle;
 
-        if(board.black_queen_side && 
+        if(board.black_queen_side && board.black_king_loc == E8 &&
           ((board.all_pieces & b_queen_side_pieces) == 0) &&
           (board.sq_board[A8] == (BLACK | ROOK)) &&
           ((board.white_attack_map & b_queen_side_attack) == 0))
@@ -1783,18 +1787,23 @@ int main() {
     string double_check_test = "k2r4/8/8/8/4Q3/5N2/2b5/3K4";
     string en_passant_checker = "3k4/8/8/3Pp3/5K2/8/8/8";
     string en_passant_block = "4kq2/8/8/3pP3/1K6/8/8/8";
-    board_t board = decode_fen(starting_pos, luts);
+    
+    string temp_test = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1"; // white
+    string temp_test_Nd4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/Pp1P2PP/R2Q1RK1"; // black
+    string temp_test_Nd4_b1R = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/P2P2PP/Rr1Q1RK1"; // white
+    string temp_test_Nd4_b1R_Qe1 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/P2P2PP/Rr2QRK1"; // black
+    string temp_test_Nd4_b1R_Qe1_Rb2 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/Pr1P2PP/R3QRK1"; // white
+    // this one is WRONG at depth 5... try fixing en passant thingy
+    board_t board = decode_fen(temp_test, luts);
 
     // speed_test(starting_pos, luts);
 
-    perft(board, 6, luts);
-
-    // size_t depth;
-    // while(true) {
-    //     cout << endl << "Enter depth: ";
-    //     cin >> depth;
-    //     cout << endl << num_nodes(board_stack, depth, "", luts) << endl;
-    // }
+    size_t depth;
+    while(true) {
+        cout << endl << "Enter depth: ";
+        cin >> depth;
+        perft(board, depth, luts);
+    }
 
     int test;
     cin >> test;

@@ -7,6 +7,7 @@
 #include <time.h>
 #include <iostream>
 #include <fstream>
+#include <limits.h>
 
 using namespace std;
 
@@ -44,6 +45,9 @@ typedef bool turn;
 #define NO_CHECK 0x0
 #define SINGLE_CHECK 0x1
 #define DOUBLE_CHECK 0x2
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 enum square { A1, B1, C1, D1, E1, F1, G1, H1,
               A2, B2, C2, D2, E2, F2, G2, H2,
@@ -126,6 +130,17 @@ int castle_moves = 0;
 int promotion_moves = 0;
 int checks = 0;
 int double_checks = 0;
+
+const int piece_values[10] = {100, // white pawn
+                             -100, // black pawn
+                              300, // white knight
+                             -300, // black knight
+                              300, // white bishop
+                             -300, // black bishop
+                              500, // white rook
+                             -500, // black rook
+                              900, // white queen
+                             -900};// black queen
 
 
 // stolen from chessprogramming wiki
@@ -1704,11 +1719,6 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) 
     return str_move;
 }
 
-// not complete... probably the more useful function
-// move_t move_from_notation(string str_move, vector<move_t> all_moves, board_t board) {
-//     return;
-// }
-
 void print_moves(vector<move_t> move_vector) {
     for(size_t i = 0; i < move_vector.size(); i++) {
         cout << move_vector[i].start << "->" << move_vector[i].target << endl;
@@ -1792,34 +1802,74 @@ void speed_test(string pos, lut_t *luts) {
     return;
 }
 
+int material_count(board_t board) {
+    int count = 0;
+    bitboard piece_board;
+    for(size_t i = 0; i < 10; i++) { // there are 10 piece types excluding kings
+        piece_board = board.piece_boards[i];
+        while(piece_board) { // go through all of each piece type
+            count += piece_values[i];
+            piece_board = rem_first_bit(piece_board);
+        }
+    }
+    return count;
+}
+
+int evaluate(board_t board) {
+    int perspective = (board.t == W) ? 1 : -1;
+    return material_count(board) * perspective; // ahhh yes very fancy
+}
+
+int search_position(stack<board_t> board_stack, size_t depth, lut_t *luts) {
+    vector<move_t> moves;
+    board_t curr_board = board_stack.top();
+    board_t next_board;
+    if(depth == 0) {
+        return evaluate(curr_board);
+    }
+    
+    moves = generate_moves(curr_board, luts);
+    if(moves.size() == 0) {
+        if(checking_pieces(curr_board, luts)) {
+            return INT_MIN;
+        }
+        return 0;
+    }
+
+    int best_eval = INT_MIN;
+
+    for(move_t move : moves) {
+        next_board = make_move(curr_board, move, luts);
+        board_stack.push(next_board);
+        int evaluation = -search_position(board_stack, depth - 1, luts);
+        best_eval = MAX(evaluation, best_eval);
+        board_stack.pop();
+    }
+    return best_eval;
+}
+
+move_t find_best_move(board_t board, size_t depth, lut_t *luts) {
+    stack<board_t> board_stack;
+    board_stack.push(board);
+    vector<move_t> moves = generate_moves(board, luts);
+    move_t best_move;
+    int best_eval = INT_MIN;
+    for(move_t move : moves) {
+        board_stack.push(make_move(board, move, luts));
+        int eval = -search_position(board_stack, depth - 1, luts); // now its black's move
+
+        if(eval > best_eval) {
+            best_eval = eval;
+            best_move = move;
+        }
+        board_stack.pop();
+    }
+    return best_move;
+}
+
 int main() {
     lut_t *luts = init_LUT();
-    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; // 20 black and white
-    string rook_pos = "8/8/8/2R2R2/8/2r2R2/8/8"; // 25 white, 9 black
-    string rook_knight_pos = "7N/8/8/2R2R2/3N4/2r2R2/8/1N6"; // 36 white, 9 black
-    string clogged_rook_pos = "RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR/RRRrRRRR/RRRRRRRR/RRRRRRRR/RRRRRRRR"; // 4 moves white and black
-    string non_diag_test = "7k/pn1prp2/P3Pn2/3N4/8/5R2/4P3/3K2R1"; // 39 white, 19 black
-    string bishop_test = "7b/8/8/2r5/1B6/8/6B1/B7"; // 22 white, 21 black
-    string queen_test = "7Q/8/2q5/3QQ3/8/8/8/8"; // 59 white, 21 black
-    string weird_test = "8/8/6Q1/8/2NbR3/2NB4/1PPP4/1B4R1";
-    string en_passant_test = "k7/5p2/8/8/4P3/8/8/K7";
-    string promotion_test = "8/8/5P2/8/8/6p1/8/8";
-    string white_capture_promo_test = "5n2/4P3/8/8/8/8/8/8";
-    string black_capture_promo_test = "8/8/8/8/8/8/4p3/5N2";
-    string many_pawns_test = "8/4p1p1/2p5/pP1P2P1/4P2P/8/8/8";
-    string castling_test = "r3k2r/8/8/8/8/8/8/R3K2R";
-    string king_move_test = "4k3/8/2r5/8/8/2K5/8/8"; // 6 legal white
-    string double_check_test = "k2r4/8/8/8/4Q3/5N2/2b5/3K4";
-    string en_passant_checker = "3k4/8/8/3Pp3/5K2/8/8/8";
-    string en_passant_block = "4kq2/8/8/3pP3/1K6/8/8/8";
-    
-    string temp_test = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1"; // white
-    string temp_test_Nd4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/Pp1P2PP/R2Q1RK1"; // black
-    string temp_test_Nd4_b1R = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/P2P2PP/Rr1Q1RK1"; // white
-    string temp_test_Nd4_b1R_Qe1 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/P2P2PP/Rr2QRK1"; // black
-    string temp_test_Nd4_b1R_Qe1_Rb2 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBPNP3/q7/Pr1P2PP/R3QRK1"; // white
-    
-    string en_passant_side = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
+    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
@@ -1835,6 +1885,7 @@ int main() {
     board_t board_5 = decode_fen(test_pos_5, luts);
     board_t board_6 = decode_fen(test_pos_6, luts);
 
+    cout << notation_from_move(find_best_move(board_4, 4, luts), generate_moves(board_4, luts), board_4) << endl;
 
     size_t depth;
     // while(true) {
@@ -1905,7 +1956,6 @@ int main() {
 }
 /*
     Ideas for efficiency:
-        - make a function to actually test efficiency
         - throw out updated boards and instead incrementally update the boards
             inside of make_move.
         - update the attack maps incrementally
@@ -1918,9 +1968,13 @@ int main() {
         - change representation of moves to a 32 bit integer
         - a lot of speed has to do with a good eval function
         - magic bitboards?
+        - condense all of the if(board.t == W) into just the generate_moves
+          function and pass in the necessary info to each of the functions
+          such as opponent_bishops etc.
 
     Next up:
-        - make benchmark test for speed
+        - make benchmark test for speed DONE
+        - make improvements and comment code as I go
 
     SPEED DATA:
     - at 414077 nodes/second at depth 4

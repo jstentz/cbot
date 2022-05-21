@@ -1226,6 +1226,7 @@ vector<move_t> generate_pawn_moves(board_t board, vector<move_t> curr_moves, bit
     }
     bitboard pawn_moves;
     bitboard pawn_bit;
+    if(board.en_passant != NONE) check_mask |= luts->pieces[board.en_passant];
     while(pawns) {
         pc_loc = first_set_bit(pawns);
         pawn_bit = luts->pieces[pc_loc];
@@ -1408,7 +1409,7 @@ bitboard attackers_from_square(board_t board, square sq, lut_t *luts) {
     }
     attackers |= get_knight_attacks(sq, luts) & opponent_knights;
     attackers |= get_king_attacks(sq, luts) & opponent_kings;
-    attackers |= get_pawn_attacks(sq, !board.t, luts) & opponent_pawns;
+    attackers |= get_pawn_attacks(sq, board.t, luts) & opponent_pawns;
     attackers |= get_rook_attacks(sq, board.all_pieces, luts) & opponent_rooks;
     attackers |= get_bishop_attacks(sq, board.all_pieces, luts) & opponent_bishops;
     attackers |= get_queen_attacks(sq, board.all_pieces, luts) & opponent_queens;
@@ -1570,7 +1571,6 @@ vector<move_t> generate_moves(board_t board, lut_t *luts) {
     bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
     bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
     square friendly_king_loc = (board.t == W) ? board.white_king_loc : board.black_king_loc;
-    
     int check = in_check(check_pieces);
     if(check == DOUBLE_CHECK) {
         double_checks++; // DEBUGGING
@@ -1689,7 +1689,7 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
+size_t num_nodes(stack<board_t> board, size_t depth, string curr_not, lut_t *luts) {
     vector<move_t> moves;
     board_t curr_board = board.top();
     board_t next_board;
@@ -1698,6 +1698,7 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
         // cout << curr_not << endl;
         // print_squarewise(curr_board.sq_board); // prints the final node
         // cout << endl;
+        // generate_moves(curr_board, luts); // to get accurate checks
         return 1;
     }
 
@@ -1708,7 +1709,11 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
         board.push(next_board);
         // string next = curr_not + notation_from_move(move, moves, curr_board) + (string)"->";
         // print_squarewise(next_board.sq_board);
-        total_moves += num_nodes(board, depth - 1, luts); 
+        // if((move.mv_piece == (WHITE | PAWN) || move.mv_piece == (BLACK | PAWN)) && (move.target == curr_board.en_passant)){
+        //     cout << notation_from_move(move, moves, curr_board) << endl;
+        // }
+        // cout << notation_from_move(move, moves, curr_board) << endl;
+        total_moves += num_nodes(board, depth - 1, "", luts); 
         board.pop();
     }
     return total_moves;
@@ -1716,7 +1721,6 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
 
 void speed_test(string pos, lut_t *luts) {
     board_t board = decode_fen(pos, luts);
-    board.t = W;
     stack<board_t> board_stack;
     board_stack.push(board);
     size_t max_depth;
@@ -1729,9 +1733,15 @@ void speed_test(string pos, lut_t *luts) {
     cout << endl << "Testing for speed and correctness with a max depth of " 
          << max_depth << "..." << endl << endl;
     for (size_t depth = 0; depth <= max_depth; depth++) {
+        capture_moves = 0;
+        en_passant_moves = 0;
+        castle_moves = 0;
+        promotion_moves = 0;
+        checks = 0;
+        double_checks = 0;
         cout << "Depth = " << depth << endl;
         tStart = clock();
-        nodes = num_nodes(board_stack, depth, luts);
+        nodes = num_nodes(board_stack, depth, "", luts);
         tStop = clock();
         time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
         cout << "Nodes reached: " << nodes << endl;
@@ -1766,19 +1776,12 @@ int main() {
     string castling_test = "r3k2r/8/8/8/8/8/8/R3K2R";
     string king_move_test = "4k3/8/2r5/8/8/2K5/8/8"; // 6 legal white
     string double_check_test = "k2r4/8/8/8/4Q3/5N2/2b5/3K4";
-    string temp_test = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1";
-    string temp_2 = "3k4/8/1b6/8/8/8/4P3/4K3";
-    string cant_take_pinning_piece = "3k4/8/1b6/2B5/1q6/8/8/6K1";
-    // board_t board = decode_fen(cant_take_pinning_piece, luts);
+    string en_passant_checker = "3k4/8/8/3Pp3/5K2/8/8/8";
+    string en_passant_block = "4kq2/8/8/3pP3/1K6/8/8/8";
+    // board_t board = decode_fen(starting_pos, luts);
+    // board.en_passant = E6;
     // stack<board_t> board_stack;
     // board_stack.push(board);
-
-    // print_bitboard(get_pinned_pieces(board, G1, luts).ray_at_sq[C5]);
-
-    // print_bitboard(get_ray_from_queen_to_king(E1, A5, luts));
-    // print_bitboard(get_pinned_pieces(board, B1, luts));
-
-    // print_bitboard(checking_pieces(board, luts));
 
     speed_test(starting_pos, luts);
 
@@ -1808,6 +1811,8 @@ int main() {
    get_ray_from_rook_to_king(square rook, square king, lut_t *luts)
 
    ignoring all possible obstructing pieces (don't take in the board as an argument)
+
+   fix en passant checks and blocking
 */
 
 /*

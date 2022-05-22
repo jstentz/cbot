@@ -1250,7 +1250,7 @@ bitboard generate_queen_move_bitboard(square queen, board_t *board, lut_t *luts)
            | generate_bishop_move_bitboard(queen, board, luts);
 }
 
-vector<move_t> generate_knight_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
@@ -1281,15 +1281,15 @@ vector<move_t> generate_knight_moves(board_t *board, vector<move_t> curr_moves, 
             move.target = (square)tar_loc;
             move.mv_piece = color | KNIGHT;
             move.tar_piece = board->sq_board[tar_loc];
-            curr_moves.push_back(move);
+            (*curr_moves).push_back(move);
             knight_moves = rem_first_bit(knight_moves);
         }
         knights = rem_first_bit(knights);
     }
-    return curr_moves;
+    return;
 }
 
-vector<move_t> generate_king_moves(board_t *board, vector<move_t> curr_moves, lut_t *luts) {
+void generate_king_moves(board_t *board, vector<move_t> *curr_moves, lut_t *luts) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
@@ -1315,15 +1315,15 @@ vector<move_t> generate_king_moves(board_t *board, vector<move_t> curr_moves, lu
             move.target = (square)tar_loc;
             move.mv_piece = color | KING;
             move.tar_piece = board->sq_board[tar_loc];
-            curr_moves.push_back(move);
+            (*curr_moves).push_back(move);
             king_moves = rem_first_bit(king_moves);
         }
         kings = rem_first_bit(kings);
     }
-    return curr_moves;
+    return;
 }
 
-vector<move_t> generate_pawn_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
@@ -1358,27 +1358,26 @@ vector<move_t> generate_pawn_moves(board_t *board, vector<move_t> curr_moves, bi
             if(tar_rank == RANK_8 || tar_rank == RANK_1) {
                 piece color = (tar_rank == RANK_8) ? WHITE : BLACK;
                 move.promotion_piece = color | KNIGHT;
-                curr_moves.push_back(move);
+                (*curr_moves).push_back(move);
                 move.promotion_piece = color | BISHOP;
-                curr_moves.push_back(move);
+                (*curr_moves).push_back(move);
                 move.promotion_piece = color | ROOK;
-                curr_moves.push_back(move);
+                (*curr_moves).push_back(move);
                 move.promotion_piece = color | QUEEN;
-                curr_moves.push_back(move);
+                (*curr_moves).push_back(move);
             }
             else{
                 move.promotion_piece = EMPTY;
-                curr_moves.push_back(move);
+                (*curr_moves).push_back(move);
             }
             pawn_moves = rem_first_bit(pawn_moves);
         }
         pawns = rem_first_bit(pawns);
     }
-    return curr_moves;
-
+    return;
 }
 
-vector<move_t> generate_rook_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
@@ -1410,15 +1409,15 @@ vector<move_t> generate_rook_moves(board_t *board, vector<move_t> curr_moves, bi
             move.target = (square)tar_loc;
             move.mv_piece = color | ROOK;
             move.tar_piece = board->sq_board[tar_loc];
-            curr_moves.push_back(move);
+            (*curr_moves).push_back(move);
             rook_moves = rem_first_bit(rook_moves);
         }
         rooks = rem_first_bit(rooks);
     }
-    return curr_moves;
+    return;
 }
 
-vector<move_t> generate_bishop_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
@@ -1450,15 +1449,15 @@ vector<move_t> generate_bishop_moves(board_t *board, vector<move_t> curr_moves, 
             move.target = (square)tar_loc;
             move.mv_piece = color | BISHOP;
             move.tar_piece = board->sq_board[tar_loc];
-            curr_moves.push_back(move);
+            (*curr_moves).push_back(move);
             bishop_moves = rem_first_bit(bishop_moves);
         }
         bishops = rem_first_bit(bishops);
     }
-    return curr_moves;
+    return;
 }
 
-vector<move_t> generate_queen_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+void generate_queen_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
@@ -1490,12 +1489,12 @@ vector<move_t> generate_queen_moves(board_t *board, vector<move_t> curr_moves, b
             move.target = (square)tar_loc;
             move.mv_piece = color | QUEEN;
             move.tar_piece = board->sq_board[tar_loc];
-            curr_moves.push_back(move);
+            (*curr_moves).push_back(move);
             queen_moves = rem_first_bit(queen_moves);
         }
         queens = rem_first_bit(queens);
     }
-    return curr_moves;
+    return;
 }
 
 bitboard attackers_from_square(board_t *board, square sq, lut_t *luts) {
@@ -1676,8 +1675,7 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc, lut_t *luts) {
     return pin;
 }
 
-vector<move_t> generate_moves(board_t *board, lut_t *luts) {
-    vector<move_t> moves;
+void generate_moves(board_t *board, vector<move_t> *curr_moves, lut_t *luts) {
     bitboard check_pieces = checking_pieces(board, luts);
     bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
     bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
@@ -1685,7 +1683,8 @@ vector<move_t> generate_moves(board_t *board, lut_t *luts) {
     int check = in_check(check_pieces);
     if(check == DOUBLE_CHECK) {
         double_checks++; // DEBUGGING
-        return generate_king_moves(board, moves, luts);
+        generate_king_moves(board, curr_moves, luts);
+        return;
     }
     else if (check == SINGLE_CHECK) {
         checks++; // DEBUGGING
@@ -1700,13 +1699,13 @@ vector<move_t> generate_moves(board_t *board, lut_t *luts) {
     }
     bitboard check_mask = push_mask | capture_mask;
     pin_t pin = get_pinned_pieces(board, friendly_king_loc, luts);
-    moves = generate_king_moves(board, moves, luts);
-    moves = generate_knight_moves(board, moves, check_mask, pin, luts);
-    moves = generate_pawn_moves(board, moves, check_mask, pin, luts);
-    moves = generate_rook_moves(board, moves, check_mask, pin, luts);
-    moves = generate_bishop_moves(board, moves, check_mask, pin, luts);
-    moves = generate_queen_moves(board, moves, check_mask, pin, luts);
-    return moves;
+    generate_king_moves(board, curr_moves, luts);
+    generate_knight_moves(board, curr_moves, check_mask, pin, luts);
+    generate_pawn_moves(board, curr_moves, check_mask, pin, luts);
+    generate_rook_moves(board, curr_moves, check_mask, pin, luts);
+    generate_bishop_moves(board, curr_moves, check_mask, pin, luts);
+    generate_queen_moves(board, curr_moves, check_mask, pin, luts);
+    return;
 }
 
 /*
@@ -1792,10 +1791,11 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_nodes_bulk(stack<board_t *> board, size_t depth, lut_t *luts) {
-    board_t *curr_board = board.top();
+size_t num_nodes_bulk(stack<board_t *> *board, size_t depth, lut_t *luts) {
+    board_t *curr_board = (*board).top();
     board_t *next_board;
-    vector<move_t> moves = generate_moves(curr_board, luts);
+    vector<move_t> moves;
+    generate_moves(curr_board, &moves, luts);
     if(depth == 1) {
         return moves.size();
     }
@@ -1803,34 +1803,35 @@ size_t num_nodes_bulk(stack<board_t *> board, size_t depth, lut_t *luts) {
     size_t total_moves = 0;
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
-        board.push(next_board);
+        (*board).push(next_board);
         total_moves += num_nodes_bulk(board, depth - 1, luts); 
-        unmake_move(&board);
+        unmake_move(board);
     }
     return total_moves;
 }
 
-size_t num_nodes(stack<board_t *> board, size_t depth, lut_t *luts) {
+size_t num_nodes(stack<board_t *> *board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
-    board_t *curr_board = board.top();
+    board_t *curr_board = (*board).top();
     board_t *next_board;
     if(depth == 0) {
         return 1;
     }
 
     size_t total_moves = 0;
-    moves = generate_moves(curr_board, luts);
+    generate_moves(curr_board, &moves, luts);
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
-        board.push(next_board);
+        (*board).push(next_board);
         total_moves += num_nodes(board, depth - 1, luts); 
-        unmake_move(&board);
+        unmake_move(board);
     }
     return total_moves;
 }
 
 size_t perft(board_t *board, size_t depth, lut_t *luts) {
-    vector<move_t> moves = generate_moves(board, luts);
+    vector<move_t> moves;
+    generate_moves(board, &moves, luts);
     stack<board_t *> board_stack;
     board_stack.push(board);
     size_t total_nodes = 0;
@@ -1838,52 +1839,13 @@ size_t perft(board_t *board, size_t depth, lut_t *luts) {
     for(move_t move : moves) {
         board_stack.push(make_move(board, move, luts));
         cout << notation_from_move(move, moves, board) << ": ";
-        nodes_from_move = num_nodes(board_stack, depth - 1, luts);
+        nodes_from_move = num_nodes(&board_stack, depth - 1, luts);
         total_nodes += nodes_from_move;
         cout << nodes_from_move << endl;
         unmake_move(&board_stack);
     }
     cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
-}
-
-void speed_test(string pos, lut_t *luts) {
-    board_t *board = decode_fen(pos, luts);
-    stack<board_t *> board_stack;
-    board_stack.push(board);
-    size_t max_depth;
-    clock_t tStart;
-    clock_t tStop;
-    double time_elapsed;
-    size_t nodes;
-    cout << endl << "Max depth: ";
-    cin >> max_depth;
-    cout << endl << "Testing for speed and correctness with a max depth of " 
-         << max_depth << "..." << endl << endl;
-    for (size_t depth = 0; depth <= max_depth; depth++) {
-        capture_moves = 0;
-        en_passant_moves = 0;
-        castle_moves = 0;
-        promotion_moves = 0;
-        checks = 0;
-        double_checks = 0;
-        cout << "Depth = " << depth << endl;
-        tStart = clock();
-        nodes = num_nodes(board_stack, depth, luts);
-        tStop = clock();
-        time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-        cout << "Nodes reached: " << nodes << endl;
-        cout << "Captures: " << capture_moves << endl;
-        cout << "En passants: " << en_passant_moves << endl;
-        cout << "Castles: " << castle_moves << endl;
-        cout << "Promotions: " << promotion_moves << endl;
-        cout << "Checks: " << checks << endl;
-        cout << "Double Checks: " << double_checks << endl;
-
-        cout << "Time elapsed: " << time_elapsed << endl;
-        cout << "Nodes per second: " << ((double)nodes / time_elapsed) << endl << endl;
-    }
-    return;
 }
 
 int material_count(board_t *board) {
@@ -1904,15 +1866,15 @@ int evaluate(board_t *board) {
     return material_count(board) * perspective; // ahhh yes very fancy
 }
 
-int search_position(stack<board_t *> board_stack, size_t depth, lut_t *luts) {
+int search_position(stack<board_t *> *board_stack, size_t depth, lut_t *luts) {
     vector<move_t> moves;
-    board_t *curr_board = board_stack.top();
+    board_t *curr_board = (*board_stack).top();
     board_t *next_board;
     if(depth == 0) {
         return evaluate(curr_board);
     }
     
-    moves = generate_moves(curr_board, luts);
+    generate_moves(curr_board, &moves, luts);
     if(moves.size() == 0) {
         if(checking_pieces(curr_board, luts)) {
             return INT_MIN;
@@ -1924,10 +1886,10 @@ int search_position(stack<board_t *> board_stack, size_t depth, lut_t *luts) {
 
     for(move_t move : moves) {
         next_board = make_move(curr_board, move, luts);
-        board_stack.push(next_board);
+        (*board_stack).push(next_board);
         int evaluation = -search_position(board_stack, depth - 1, luts);
         best_eval = MAX(evaluation, best_eval);
-        unmake_move(&board_stack);
+        unmake_move(board_stack);
     }
     return best_eval;
 }
@@ -1939,12 +1901,13 @@ int search_position(stack<board_t *> board_stack, size_t depth, lut_t *luts) {
 move_t find_best_move(board_t *board, size_t depth, lut_t *luts) {
     stack<board_t *> board_stack;
     board_stack.push(board);
-    vector<move_t> moves = generate_moves(board, luts);
+    vector<move_t> moves;
+    generate_moves(board, &moves, luts);
     move_t best_move;
     int best_eval = INT_MIN;
     for(move_t move : moves) {
         board_stack.push(make_move(board, move, luts));
-        int eval = -search_position(board_stack, depth - 1, luts); // now its black's move
+        int eval = -search_position(&board_stack, depth - 1, luts); // now its black's move
 
         if(eval > best_eval) {
             best_eval = eval;
@@ -2027,12 +1990,12 @@ int main() {
     //     cin >> depth;
     //     total_nodes = 0;
     //     tStart = clock();
-    //     total_nodes += num_nodes_bulk(board_1_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_2_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_3_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_4_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_5_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_6_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(&board_1_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(&board_2_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(&board_3_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(&board_4_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(&board_5_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(&board_6_stack, depth, luts);
     //     tStop = clock();
     //     time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
     //     cout << "Total nodes: " << total_nodes << endl;
@@ -2041,6 +2004,12 @@ int main() {
     // }
     
     free(luts);
+    free(board_1);
+    free(board_2);
+    free(board_3);
+    free(board_4);
+    free(board_5);
+    free(board_6);
     return 0;
 }
 /*
@@ -2075,5 +2044,6 @@ int main() {
     - with bulk we are at 3.5 million per second
     - with heap-allocated board, we are at 4 million per second
     - with unmake_move taking a pointer to stack, 4.3 million per second
-
+    - by passing around a pointer to the move vector, we have 6.3 million per second
+    - now passing a pointer to stack-allocated board stack, we have 6.7 million per second
 */

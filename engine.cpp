@@ -790,10 +790,10 @@ board_t *make_move(board_t *board, move_t move, lut_t *luts) {
     return next_board;
 }
 
-stack<board_t *> unmake_move(stack<board_t *> boards) {
-    free(boards.top());
-    boards.pop();
-    return boards;
+void unmake_move(stack<board_t *> *boards) {
+    free((*boards).top());
+    (*boards).pop();
+    return;
 }
 
 board_t *decode_fen(string fen, lut_t *luts) {
@@ -1805,7 +1805,7 @@ size_t num_nodes_bulk(stack<board_t *> board, size_t depth, lut_t *luts) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
         total_moves += num_nodes_bulk(board, depth - 1, luts); 
-        board = unmake_move(board);
+        unmake_move(&board);
     }
     return total_moves;
 }
@@ -1824,7 +1824,7 @@ size_t num_nodes(stack<board_t *> board, size_t depth, lut_t *luts) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
         total_moves += num_nodes(board, depth - 1, luts); 
-        board = unmake_move(board);
+        unmake_move(&board);
     }
     return total_moves;
 }
@@ -1841,7 +1841,7 @@ size_t perft(board_t *board, size_t depth, lut_t *luts) {
         nodes_from_move = num_nodes(board_stack, depth - 1, luts);
         total_nodes += nodes_from_move;
         cout << nodes_from_move << endl;
-        board_stack = unmake_move(board_stack);
+        unmake_move(&board_stack);
     }
     cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
@@ -1927,7 +1927,7 @@ int search_position(stack<board_t *> board_stack, size_t depth, lut_t *luts) {
         board_stack.push(next_board);
         int evaluation = -search_position(board_stack, depth - 1, luts);
         best_eval = MAX(evaluation, best_eval);
-        board_stack = unmake_move(board_stack);
+        unmake_move(&board_stack);
     }
     return best_eval;
 }
@@ -1976,69 +1976,69 @@ int main() {
     // cout << notation_from_move(find_best_move(board_2, 4, luts), generate_moves(board_2, luts), board_2) << endl;
 
     size_t depth;
-    // while(true) {
-    //     cout << endl << "Enter depth: ";
-    //     cin >> depth;
-
-    //     cout << "Test 1 at depth " << depth << endl;
-    //     perft(board_1, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 2 at depth " << depth << endl;
-    //     perft(board_2, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 3 at depth " << depth << endl;
-    //     perft(board_3, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 4 at depth " << depth << endl;
-    //     perft(board_4, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 5 at depth " << depth << endl;
-    //     perft(board_5, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 6 at depth " << depth << endl;
-    //     perft(board_6, depth, luts);
-    //     cout << endl;
-    // }
-
-    size_t total_nodes;
-    clock_t tStart;
-    clock_t tStop;
-    double time_elapsed;
-
-    stack<board_t *> board_1_stack;
-    stack<board_t *> board_2_stack;
-    stack<board_t *> board_3_stack;
-    stack<board_t *> board_4_stack;
-    stack<board_t *> board_5_stack;
-    stack<board_t *> board_6_stack;
-    board_1_stack.push(board_1);
-    board_2_stack.push(board_2);
-    board_3_stack.push(board_3);
-    board_4_stack.push(board_4);
-    board_5_stack.push(board_5);
-    board_6_stack.push(board_6);
     while(true) {
         cout << endl << "Enter depth: ";
         cin >> depth;
-        total_nodes = 0;
-        tStart = clock();
-        total_nodes += num_nodes_bulk(board_1_stack, depth, luts);
-        total_nodes += num_nodes_bulk(board_2_stack, depth, luts);
-        total_nodes += num_nodes_bulk(board_3_stack, depth, luts);
-        total_nodes += num_nodes_bulk(board_4_stack, depth, luts);
-        total_nodes += num_nodes_bulk(board_5_stack, depth, luts);
-        total_nodes += num_nodes_bulk(board_6_stack, depth, luts);
-        tStop = clock();
-        time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-        cout << "Total nodes: " << total_nodes << endl;
-        cout << "Time elapsed: " << time_elapsed << endl;
-        cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+
+        cout << "Test 1 at depth " << depth << endl;
+        perft(board_1, depth, luts);
+        cout << endl;
+
+        cout << "Test 2 at depth " << depth << endl;
+        perft(board_2, depth, luts);
+        cout << endl;
+
+        cout << "Test 3 at depth " << depth << endl;
+        perft(board_3, depth, luts);
+        cout << endl;
+
+        cout << "Test 4 at depth " << depth << endl;
+        perft(board_4, depth, luts);
+        cout << endl;
+
+        cout << "Test 5 at depth " << depth << endl;
+        perft(board_5, depth, luts);
+        cout << endl;
+
+        cout << "Test 6 at depth " << depth << endl;
+        perft(board_6, depth, luts);
+        cout << endl;
     }
+
+    // size_t total_nodes;
+    // clock_t tStart;
+    // clock_t tStop;
+    // double time_elapsed;
+
+    // stack<board_t *> board_1_stack;
+    // stack<board_t *> board_2_stack;
+    // stack<board_t *> board_3_stack;
+    // stack<board_t *> board_4_stack;
+    // stack<board_t *> board_5_stack;
+    // stack<board_t *> board_6_stack;
+    // board_1_stack.push(board_1);
+    // board_2_stack.push(board_2);
+    // board_3_stack.push(board_3);
+    // board_4_stack.push(board_4);
+    // board_5_stack.push(board_5);
+    // board_6_stack.push(board_6);
+    // while(true) {
+    //     cout << endl << "Enter depth: ";
+    //     cin >> depth;
+    //     total_nodes = 0;
+    //     tStart = clock();
+    //     total_nodes += num_nodes_bulk(board_1_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_2_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_3_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_4_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_5_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_6_stack, depth, luts);
+    //     tStop = clock();
+    //     time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+    //     cout << "Total nodes: " << total_nodes << endl;
+    //     cout << "Time elapsed: " << time_elapsed << endl;
+    //     cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+    // }
     
     free(luts);
     return 0;
@@ -2074,5 +2074,6 @@ int main() {
     - after removing attack maps: 677203 nodes/second at depth 4
     - with bulk we are at 3.5 million per second
     - with heap-allocated board, we are at 4 million per second
+    - with unmake_move taking a pointer to stack, 4.3 million per second
 
 */

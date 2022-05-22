@@ -1797,6 +1797,24 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
+size_t num_nodes_bulk(stack<board_t> board, size_t depth, lut_t *luts) {
+    board_t curr_board = board.top();
+    board_t next_board;
+    vector<move_t> moves = generate_moves(curr_board, luts);
+    if(depth == 1) {
+        return moves.size();
+    }
+
+    size_t total_moves = 0;
+    for(move_t move : moves) {
+        next_board = make_move(curr_board, move, luts);
+        board.push(next_board);
+        total_moves += num_nodes_bulk(board, depth - 1, luts); 
+        board.pop();
+    }
+    return total_moves;
+}
+
 size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
     board_t curr_board = board.top();
@@ -1919,6 +1937,10 @@ int search_position(stack<board_t> board_stack, size_t depth, lut_t *luts) {
     return best_eval;
 }
 
+
+// how would I do alpha beta pruning with this algorithm here?
+// I want to be able to prune these top branches, since they have the most nodes
+// under them.
 move_t find_best_move(board_t board, size_t depth, lut_t *luts) {
     stack<board_t> board_stack;
     board_stack.push(board);
@@ -1959,68 +1981,69 @@ int main() {
     // cout << notation_from_move(find_best_move(board_2, 4, luts), generate_moves(board_2, luts), board_2) << endl;
 
     size_t depth;
-    // while(true) {
-    //     cout << endl << "Enter depth: ";
-    //     cin >> depth;
-
-    //     cout << "Test 1 at depth " << depth << endl;
-    //     perft(board_1, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 2 at depth " << depth << endl;
-    //     perft(board_2, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 3 at depth " << depth << endl;
-    //     perft(board_3, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 4 at depth " << depth << endl;
-    //     perft(board_4, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 5 at depth " << depth << endl;
-    //     perft(board_5, depth, luts);
-    //     cout << endl;
-
-    //     cout << "Test 6 at depth " << depth << endl;
-    //     perft(board_6, depth, luts);
-    //     cout << endl;
-    // }
-
-    size_t total_nodes;
-    clock_t tStart;
-    clock_t tStop;
-    double time_elapsed;
-
-    stack<board_t> board_1_stack;
-    stack<board_t> board_2_stack;
-    stack<board_t> board_3_stack;
-    stack<board_t> board_4_stack;
-    stack<board_t> board_5_stack;
-    stack<board_t> board_6_stack;
-    board_1_stack.push(board_1);
-    board_2_stack.push(board_2);
-    board_3_stack.push(board_3);
-    board_4_stack.push(board_4);
-    board_5_stack.push(board_5);
-    board_6_stack.push(board_6);
     while(true) {
         cout << endl << "Enter depth: ";
         cin >> depth;
-        total_nodes = 0;
-        tStart = clock();
-        total_nodes += num_nodes(board_1_stack, depth, luts);
-        total_nodes += num_nodes(board_2_stack, depth, luts);
-        total_nodes += num_nodes(board_3_stack, depth, luts);
-        total_nodes += num_nodes(board_4_stack, depth, luts);
-        total_nodes += num_nodes(board_5_stack, depth, luts);
-        total_nodes += num_nodes(board_6_stack, depth, luts);
-        tStop = clock();
-        time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-        cout << "Time elapsed: " << time_elapsed << endl;
-        cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+
+        cout << "Test 1 at depth " << depth << endl;
+        perft(board_1, depth, luts);
+        cout << endl;
+
+        cout << "Test 2 at depth " << depth << endl;
+        perft(board_2, depth, luts);
+        cout << endl;
+
+        cout << "Test 3 at depth " << depth << endl;
+        perft(board_3, depth, luts);
+        cout << endl;
+
+        cout << "Test 4 at depth " << depth << endl;
+        perft(board_4, depth, luts);
+        cout << endl;
+
+        cout << "Test 5 at depth " << depth << endl;
+        perft(board_5, depth, luts);
+        cout << endl;
+
+        cout << "Test 6 at depth " << depth << endl;
+        perft(board_6, depth, luts);
+        cout << endl;
     }
+
+    // size_t total_nodes;
+    // clock_t tStart;
+    // clock_t tStop;
+    // double time_elapsed;
+
+    // stack<board_t> board_1_stack;
+    // stack<board_t> board_2_stack;
+    // stack<board_t> board_3_stack;
+    // stack<board_t> board_4_stack;
+    // stack<board_t> board_5_stack;
+    // stack<board_t> board_6_stack;
+    // board_1_stack.push(board_1);
+    // board_2_stack.push(board_2);
+    // board_3_stack.push(board_3);
+    // board_4_stack.push(board_4);
+    // board_5_stack.push(board_5);
+    // board_6_stack.push(board_6);
+    // while(true) {
+    //     cout << endl << "Enter depth: ";
+    //     cin >> depth;
+    //     total_nodes = 0;
+    //     tStart = clock();
+    //     total_nodes += num_nodes_bulk(board_1_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_2_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_3_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_4_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_5_stack, depth, luts);
+    //     total_nodes += num_nodes_bulk(board_6_stack, depth, luts);
+    //     tStop = clock();
+    //     time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+    //     cout << "Total nodes: " << total_nodes << endl;
+    //     cout << "Time elapsed: " << time_elapsed << endl;
+    //     cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+    // }
     
     free(luts);
     return 0;
@@ -2042,12 +2065,18 @@ int main() {
         - condense all of the if(board.t == W) into just the generate_moves
           function and pass in the necessary info to each of the functions
           such as opponent_bishops etc.
+        - in the same spirit, try not to pass around the board as much
+          only give functions what they need and determine what to give each 
+          function at the highest call possible.
 
     Next up:
         - make benchmark test for speed DONE
         - make improvements and comment code as I go
+        - make the board a pointer and use memcpy
 
     SPEED DATA:
     - at 414077 nodes/second at depth 4
+    - after removing attack maps: 677203 nodes/second at depth 4
+    - with bulk we are at 3.5 million per second
 
 */

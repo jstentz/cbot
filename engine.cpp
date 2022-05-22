@@ -8,6 +8,8 @@
 #include <iostream>
 #include <fstream>
 #include <limits.h>
+#include <stdio.h>
+#include <cstring>
 
 using namespace std;
 
@@ -476,30 +478,28 @@ size_t bitboard_index_from_piece(piece pc) {
     return pc - 2; //this is to offset the existence of the two EMPTY (0000 and 0001)
 }
 
-board_t zero_board() {
-    board_t board;
+board_t *zero_board() {
+    board_t *board = (board_t *)malloc(sizeof(board_t));
     
     for (size_t i = 0; i < 12; i++) {
-        board.piece_boards[i] = 0;
+        board->piece_boards[i] = 0;
     }
 
-    board.white_pieces = 0;
-    board.black_pieces = 0;
-    board.all_pieces = 0;
+    board->white_pieces = 0;
+    board->black_pieces = 0;
+    board->all_pieces = 0;
 
     for (size_t i = 0; i < 64; i++) {
-        board.sq_board[i] = EMPTY;
+        board->sq_board[i] = EMPTY;
     }
 
-    board.t = W;
-    board.en_passant = NONE;
-    board.white_king_side = false; // default to false so I can change to true in decode_fen
-    board.white_queen_side = false;
-    board.black_king_side = false;
-    board.black_queen_side = false;
+    board->t = W;
+    board->en_passant = NONE;
+    board->white_king_side = false; // default to false so I can change to true in decode_fen
+    board->white_queen_side = false;
+    board->black_king_side = false;
+    board->black_queen_side = false;
 
-    // board.white_attack_map = 0;
-    // board.black_attack_map = 0;
     return board;
 }
 
@@ -630,24 +630,17 @@ bitboard generate_attack_map(board_t board, turn side, lut_t *luts) {
     return attack_map;
 }
 
-board_t update_boards(board_t board, lut_t *luts) {
-    board.black_pieces = (board.piece_boards[1]  | board.piece_boards[3] | 
-                           board.piece_boards[5]  | board.piece_boards[7] |
-                           board.piece_boards[9]  | board.piece_boards[11]);
+void update_boards(board_t *board, lut_t *luts) {
+    board->black_pieces = (board->piece_boards[1]  | board->piece_boards[3] | 
+                           board->piece_boards[5]  | board->piece_boards[7] |
+                           board->piece_boards[9]  | board->piece_boards[11]);
 
-    board.white_pieces = (board.piece_boards[0]  | board.piece_boards[2] | 
-                           board.piece_boards[4]  | board.piece_boards[6] |
-                           board.piece_boards[8]  | board.piece_boards[10]);
+    board->white_pieces = (board->piece_boards[0]  | board->piece_boards[2] | 
+                           board->piece_boards[4]  | board->piece_boards[6] |
+                           board->piece_boards[8]  | board->piece_boards[10]);
 
-    board.all_pieces = board.white_pieces | board.black_pieces;
-    // if(board.t == W) {
-    //     // generate the opponents attack map for king moves
-    //     board.black_attack_map = generate_attack_map(board, B, luts);
-    // }
-    // else {
-    //     board.white_attack_map = generate_attack_map(board, W, luts);
-    // }
-    return board;
+    board->all_pieces = board->white_pieces | board->black_pieces;
+    return;
 }
 
 bool is_sliding_piece(piece pc) {
@@ -664,142 +657,147 @@ bitboard rem_piece(bitboard board, square sq, lut_t *luts) {
     return board & ~(luts->pieces[sq]);
 }
 
-board_t make_move(board_t board, move_t move, lut_t *luts) {
+board_t *make_move(board_t *board, move_t move, lut_t *luts) {
+    board_t *next_board = (board_t *)malloc(sizeof(board_t));
+    memcpy(next_board, board, sizeof(board_t));
+
     square start = move.start;
     square target = move.target;
 
     piece mv_piece = move.mv_piece;
     piece tar_piece = move.tar_piece;
 
-    bitboard *mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
+    bitboard *mv_board = &next_board->piece_boards[bitboard_index_from_piece(mv_piece)];
     
     // always remove the piece from its board no matter what
     *mv_board = rem_piece(*mv_board, start, luts);
 
     /* update king locations */
-    if (mv_piece == (WHITE | KING)) board.white_king_loc = target;
-    else if (mv_piece == (BLACK | KING)) board.black_king_loc = target;
+    if (mv_piece == (WHITE | KING)) next_board->white_king_loc = target;
+    else if (mv_piece == (BLACK | KING)) next_board->black_king_loc = target;
 
     /* check for castling move */
     bitboard *castling_rook;
     if(mv_piece == (WHITE | KING) && (start == E1) && (target == G1)) {
-        castling_rook = &board.piece_boards[WHITE_ROOKS_INDEX];
+        castling_rook = &next_board->piece_boards[WHITE_ROOKS_INDEX];
         *castling_rook = rem_piece(*castling_rook, H1, luts);
         *castling_rook = place_piece(*castling_rook, F1, luts);
-        board.sq_board[H1] = EMPTY;
-        board.sq_board[F1] = WHITE | ROOK;
-        board.white_king_side = false;
+        next_board->sq_board[H1] = EMPTY;
+        next_board->sq_board[F1] = WHITE | ROOK;
+        next_board->white_king_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
-        castling_rook = &board.piece_boards[WHITE_ROOKS_INDEX];
+        castling_rook = &next_board->piece_boards[WHITE_ROOKS_INDEX];
         *castling_rook = rem_piece(*castling_rook, A1, luts);
         *castling_rook = place_piece(*castling_rook, D1, luts);
-        board.sq_board[A1] = EMPTY;
-        board.sq_board[D1] = WHITE | ROOK;
-        board.white_queen_side = false;
+        next_board->sq_board[A1] = EMPTY;
+        next_board->sq_board[D1] = WHITE | ROOK;
+        next_board->white_queen_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
-        castling_rook = &board.piece_boards[BLACK_ROOKS_INDEX];
+        castling_rook = &next_board->piece_boards[BLACK_ROOKS_INDEX];
         *castling_rook = rem_piece(*castling_rook, H8, luts);
         *castling_rook = place_piece(*castling_rook, F8, luts);
-        board.sq_board[H8] = EMPTY;
-        board.sq_board[F8] = BLACK | ROOK;
-        board.black_king_side = false;
+        next_board->sq_board[H8] = EMPTY;
+        next_board->sq_board[F8] = BLACK | ROOK;
+        next_board->black_king_side = false;
         castle_moves++; // DEBUGGING
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
-        castling_rook = &board.piece_boards[BLACK_ROOKS_INDEX];
+        castling_rook = &next_board->piece_boards[BLACK_ROOKS_INDEX];
         *castling_rook = rem_piece(*castling_rook, A8, luts);
         *castling_rook = place_piece(*castling_rook, D8, luts);
-        board.sq_board[A8] = EMPTY;
-        board.sq_board[D8] = BLACK | ROOK;
-        board.black_queen_side = false;
+        next_board->sq_board[A8] = EMPTY;
+        next_board->sq_board[D8] = BLACK | ROOK;
+        next_board->black_queen_side = false;
         castle_moves++; // DEBUGGING
     }
 
     /* check if promoting move */
     if(move.promotion_piece != EMPTY) {
         mv_piece = move.promotion_piece;
-        mv_board = &board.piece_boards[bitboard_index_from_piece(mv_piece)];
+        mv_board = &next_board->piece_boards[bitboard_index_from_piece(mv_piece)];
         promotion_moves++; // DEBUGGING
     }
 
     *mv_board = place_piece(*mv_board, target, luts);
 
     if(tar_piece != EMPTY) {
-        bitboard *captured_board = &board.piece_boards[bitboard_index_from_piece(tar_piece)];
+        bitboard *captured_board = &next_board->piece_boards[bitboard_index_from_piece(tar_piece)];
         *captured_board = rem_piece(*captured_board, target, luts);
         capture_moves++; // DEBUGGING
     }
 
-    board.sq_board[start] = EMPTY;
-    board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
+    next_board->sq_board[start] = EMPTY;
+    next_board->sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
 
     /* check for en passant move to remove the pawn being captured en passant */
-    if(mv_piece == (WHITE | PAWN) && target == board.en_passant) {
-        bitboard *black_pawns = &board.piece_boards[BLACK_PAWNS_INDEX];
-        square pawn_square = (square)((int)board.en_passant - 8);
+    if(mv_piece == (WHITE | PAWN) && target == next_board->en_passant) {
+        bitboard *black_pawns = &next_board->piece_boards[BLACK_PAWNS_INDEX];
+        square pawn_square = (square)((int)next_board->en_passant - 8);
         *black_pawns = rem_piece(*black_pawns, pawn_square, luts);
-        board.sq_board[pawn_square] = EMPTY;
+        next_board->sq_board[pawn_square] = EMPTY;
         en_passant_moves++; // DEBUGGING
         capture_moves++; // DEBUGGING
     }
-    else if(mv_piece == (BLACK | PAWN) && target == board.en_passant) {
-        bitboard *white_pawns = &board.piece_boards[WHITE_PAWNS_INDEX];
-        square pawn_square = (square)((int)board.en_passant + 8);
+    else if(mv_piece == (BLACK | PAWN) && target == next_board->en_passant) {
+        bitboard *white_pawns = &next_board->piece_boards[WHITE_PAWNS_INDEX];
+        square pawn_square = (square)((int)next_board->en_passant + 8);
         *white_pawns = rem_piece(*white_pawns, pawn_square, luts);
-        board.sq_board[pawn_square] = EMPTY;
+        next_board->sq_board[pawn_square] = EMPTY;
         en_passant_moves++; // DEBUGGING
         capture_moves++; // DEBUGGING
     }
 
     /* Update en passant squares */
     if(mv_piece == (WHITE | PAWN) && target - start == 16) {
-        board.en_passant = (square)(start + 8);
+        next_board->en_passant = (square)(start + 8);
     }
     else if(mv_piece == (BLACK | PAWN) && start - target == 16) {
-        board.en_passant = (square)(target + 8);
+        next_board->en_passant = (square)(target + 8);
     }
     else {
-        board.en_passant = NONE;
+        next_board->en_passant = NONE;
     }
 
     /* Update castling rights for king moves */
     if(mv_piece == (WHITE | KING)) {
-        board.white_king_side = false;
-        board.white_queen_side = false;
+        next_board->white_king_side = false;
+        next_board->white_queen_side = false;
     }
     else if(mv_piece == (BLACK | KING)) {
-        board.black_king_side = false;
-        board.black_queen_side = false;
+        next_board->black_king_side = false;
+        next_board->black_queen_side = false;
     }
     /* Update castling rights for rook moves */
     else if(mv_piece == (WHITE | ROOK) && start == H1) {
-        board.white_king_side = false;
+        next_board->white_king_side = false;
     }
     else if(mv_piece == (WHITE | ROOK) && start == A1) {
-        board.white_queen_side = false;
+        next_board->white_queen_side = false;
     }
     else if(mv_piece == (BLACK | ROOK) && start == H8) {
-        board.black_king_side = false;
+        next_board->black_king_side = false;
     }
     else if(mv_piece == (BLACK | ROOK) && start == A8) {
-        board.black_queen_side = false;
+        next_board->black_queen_side = false;
     }
 
-    board.t = !board.t;
-    return update_boards(board, luts);
+    next_board->t = !next_board->t;
+    update_boards(next_board, luts);
+    return next_board;
 }
 
-stack<board_t> unmake_move(stack<board_t> boards) {
+stack<board_t *> unmake_move(stack<board_t *> boards) {
+    free(boards.top());
     boards.pop();
     return boards;
 }
 
-board_t decode_fen(string fen, lut_t *luts) {
-    board_t board = zero_board();
+board_t *decode_fen(string fen, lut_t *luts) {
+    board_t *board = zero_board();
     bitboard *place_board;
     piece pc;
     int col = 0;
@@ -842,12 +840,12 @@ board_t decode_fen(string fen, lut_t *luts) {
             }
             else {
                 pc = pc | KING;
-                if(pc == (WHITE | KING)) board.white_king_loc = (square)loc;
-                else                     board.black_king_loc = (square)loc;
+                if(pc == (WHITE | KING)) board->white_king_loc = (square)loc;
+                else                     board->black_king_loc = (square)loc;
             }
             
-            board.sq_board[loc] = pc;
-            place_board = &board.piece_boards[bitboard_index_from_piece(pc)];
+            board->sq_board[loc] = pc;
+            place_board = &board->piece_boards[bitboard_index_from_piece(pc)];
             *place_board = place_piece(*place_board, (square)loc, luts);
             col += 1;
         }
@@ -855,18 +853,19 @@ board_t decode_fen(string fen, lut_t *luts) {
         c = fen[i];
     }
     i++;
-    if(fen[i] == 'w') board.t = W;
-    else              board.t = B;
+    if(fen[i] == 'w') board->t = W;
+    else              board->t = B;
     i++;
     while(i < fen.size()) {
         c = fen[i];
-        if(c == 'K') board.white_king_side = true;
-        if(c == 'Q') board.white_queen_side = true;
-        if(c == 'k') board.black_king_side = true;
-        if(c == 'q') board.black_queen_side = true;
+        if(c == 'K') board->white_king_side = true;
+        if(c == 'Q') board->white_queen_side = true;
+        if(c == 'k') board->black_king_side = true;
+        if(c == 'q') board->black_queen_side = true;
         i++;
     }
-    return update_boards(board, luts);
+    update_boards(board, luts);
+    return board;
 }
 
 void print_bitboard (bitboard b) {
@@ -933,23 +932,23 @@ void print_squarewise(piece sqs[64]) {
     cout << endl;
 }
 
-void print_board(board_t board) {
-    bitboard all_pieces = (board.all_pieces);
-    bitboard white_pieces = (board.white_pieces);
-    bitboard black_pieces = (board.black_pieces);
+void print_board(board_t *board) {
+    bitboard all_pieces = (board->all_pieces);
+    bitboard white_pieces = (board->white_pieces);
+    bitboard black_pieces = (board->black_pieces);
 
-    bitboard white_pawns = (board.piece_boards[0]);
-    bitboard black_pawns = (board.piece_boards[1]);
-    bitboard white_knights = (board.piece_boards[2]);
-    bitboard black_knights = (board.piece_boards[3]);
-    bitboard white_bishops = (board.piece_boards[4]);
-    bitboard black_bishops = (board.piece_boards[5]);
-    bitboard white_rooks = (board.piece_boards[6]);
-    bitboard black_rooks = (board.piece_boards[7]);
-    bitboard white_queens = (board.piece_boards[8]);
-    bitboard black_queens = (board.piece_boards[9]);
-    bitboard white_kings = (board.piece_boards[10]);
-    bitboard black_kings = (board.piece_boards[11]);
+    bitboard white_pawns = (board->piece_boards[0]);
+    bitboard black_pawns = (board->piece_boards[1]);
+    bitboard white_knights = (board->piece_boards[2]);
+    bitboard black_knights = (board->piece_boards[3]);
+    bitboard white_bishops = (board->piece_boards[4]);
+    bitboard black_bishops = (board->piece_boards[5]);
+    bitboard white_rooks = (board->piece_boards[6]);
+    bitboard black_rooks = (board->piece_boards[7]);
+    bitboard white_queens = (board->piece_boards[8]);
+    bitboard black_queens = (board->piece_boards[9]);
+    bitboard white_kings = (board->piece_boards[10]);
+    bitboard black_kings = (board->piece_boards[11]);
 
     cout << "All Pieces" << endl;
     print_bitboard(all_pieces);
@@ -997,7 +996,7 @@ void print_board(board_t board) {
     print_bitboard(black_kings);
 
     cout << endl <<  "Square-wise" << endl;
-    print_squarewise(board.sq_board);
+    print_squarewise(board->sq_board);
     return;
 }
 
@@ -1027,55 +1026,55 @@ bitboard get_ray_from_sq_to_sq(square start, square target, lut_t *luts) {
     return get_ray_from_queen_to_king(start, target, luts);
 }
 
-bool is_attacked(board_t board, square sq, bitboard blocking_pieces, lut_t *luts) {
+bool is_attacked(board_t *board, square sq, bitboard blocking_pieces, lut_t *luts) {
     bitboard opponent_knights;
     bitboard opponent_kings;
     bitboard opponent_pawns;
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board.t == W) {
-        opponent_knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
-        opponent_kings = board.piece_boards[BLACK_KINGS_INDEX];
-        opponent_pawns = board.piece_boards[BLACK_PAWNS_INDEX];
-        opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
+    if(board->t == W) {
+        opponent_knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = board->piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
-        opponent_kings = board.piece_boards[WHITE_KINGS_INDEX];
-        opponent_pawns = board.piece_boards[WHITE_PAWNS_INDEX];
-        opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
+        opponent_knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = board->piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
     }
     if(get_bishop_attacks(sq, blocking_pieces, luts) & opponent_bishops) return true;
     if(get_rook_attacks(sq, blocking_pieces, luts) & opponent_rooks) return true;
     if(get_knight_attacks(sq, luts) & opponent_knights) return true;
-    if(get_pawn_attacks(sq, board.t, luts) & opponent_pawns) return true;
+    if(get_pawn_attacks(sq, board->t, luts) & opponent_pawns) return true;
     if(get_queen_attacks(sq, blocking_pieces, luts) & opponent_queens) return true;
     if(get_king_attacks(sq, luts) & opponent_kings) return true;
     return false;
 }
 
-bitboard generate_knight_move_bitboard(square knight, board_t board, lut_t *luts) {
+bitboard generate_knight_move_bitboard(square knight, board_t *board, lut_t *luts) {
     bitboard own_pieces;
-    if(board.t == W)  own_pieces = board.white_pieces;
-    else              own_pieces = board.black_pieces;
+    if(board->t == W)  own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
     
     bitboard knight_attacks = luts->knight_attacks[knight];
 
     return knight_attacks & ~own_pieces;
 }
 
-bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
+bitboard generate_king_move_bitboard(square king, board_t *board, lut_t *luts) {
     bitboard own_pieces;
-    if(board.t == W)  {
-        own_pieces = board.white_pieces; 
+    if(board->t == W)  {
+        own_pieces = board->white_pieces; 
     }
     else {
-        own_pieces = board.black_pieces;
+        own_pieces = board->black_pieces;
     }
     
     bitboard king_attacks = luts->king_attacks[king];
@@ -1084,7 +1083,7 @@ bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
     if(!king_pseudomoves) return 0; // if the king has no pseudolegal moves, it cannot castle
 
     bitboard king_legal_moves = 0;
-    bitboard blocking_pieces = board.all_pieces & ~luts->pieces[king]; // the king cannot block the attack on a square behind it
+    bitboard blocking_pieces = board->all_pieces & ~luts->pieces[king]; // the king cannot block the attack on a square behind it
 
     while(king_pseudomoves) {
         square loc = (square)first_set_bit(king_pseudomoves);
@@ -1113,40 +1112,40 @@ bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
     square black_queen_sq_3 = B8; // this square is allowed to be attacked
 
     bitboard king_castle = 0;
-    if(board.t == W && board.white_king_loc == E1 && !is_attacked(board, E1, blocking_pieces, luts)) {
-        if(board.white_king_side && board.sq_board[H1] == (WHITE | ROOK)) {
-            if(board.sq_board[white_king_sq_1] == EMPTY &&
-               board.sq_board[white_king_sq_2] == EMPTY) {
+    if(board->t == W && board->white_king_loc == E1 && !is_attacked(board, E1, blocking_pieces, luts)) {
+        if(board->white_king_side && board->sq_board[H1] == (WHITE | ROOK)) {
+            if(board->sq_board[white_king_sq_1] == EMPTY &&
+               board->sq_board[white_king_sq_2] == EMPTY) {
                    if(!is_attacked(board, white_king_sq_1, blocking_pieces, luts) &&
                       !is_attacked(board, white_king_sq_2, blocking_pieces, luts))
                         king_castle |= w_king_side_castle;
                }
         }
 
-        if(board.white_queen_side && board.sq_board[A1] == (WHITE | ROOK)) {
-            if(board.sq_board[white_queen_sq_1] == EMPTY &&
-               board.sq_board[white_queen_sq_2] == EMPTY &&
-               board.sq_board[white_queen_sq_3] == EMPTY) {
+        if(board->white_queen_side && board->sq_board[A1] == (WHITE | ROOK)) {
+            if(board->sq_board[white_queen_sq_1] == EMPTY &&
+               board->sq_board[white_queen_sq_2] == EMPTY &&
+               board->sq_board[white_queen_sq_3] == EMPTY) {
                    if(!is_attacked(board, white_queen_sq_1, blocking_pieces, luts) &&
                       !is_attacked(board, white_queen_sq_2, blocking_pieces, luts))
                         king_castle |= w_queen_side_castle;
                }
         } 
     }
-    else if (board.t == B && board.black_king_loc == E8 && !is_attacked(board, E8, blocking_pieces, luts)) {
-        if(board.black_king_side && board.sq_board[H8] == (BLACK | ROOK)) {
-            if(board.sq_board[black_king_sq_1] == EMPTY &&
-               board.sq_board[black_king_sq_2] == EMPTY) {
+    else if (board->t == B && board->black_king_loc == E8 && !is_attacked(board, E8, blocking_pieces, luts)) {
+        if(board->black_king_side && board->sq_board[H8] == (BLACK | ROOK)) {
+            if(board->sq_board[black_king_sq_1] == EMPTY &&
+               board->sq_board[black_king_sq_2] == EMPTY) {
                    if(!is_attacked(board, black_king_sq_1, blocking_pieces, luts) &&
                       !is_attacked(board, black_king_sq_2, blocking_pieces, luts))
                         king_castle |= b_king_side_castle;
                }
         }
 
-        if(board.black_queen_side && board.sq_board[A8] == (BLACK | ROOK)) {
-            if(board.sq_board[black_queen_sq_1] == EMPTY &&
-               board.sq_board[black_queen_sq_2] == EMPTY &&
-               board.sq_board[black_queen_sq_3] == EMPTY) {
+        if(board->black_queen_side && board->sq_board[A8] == (BLACK | ROOK)) {
+            if(board->sq_board[black_queen_sq_1] == EMPTY &&
+               board->sq_board[black_queen_sq_2] == EMPTY &&
+               board->sq_board[black_queen_sq_3] == EMPTY) {
                    if(!is_attacked(board, black_queen_sq_1, blocking_pieces, luts) &&
                       !is_attacked(board, black_queen_sq_2, blocking_pieces, luts))
                         king_castle |= b_queen_side_castle;
@@ -1156,16 +1155,16 @@ bitboard generate_king_move_bitboard(square king, board_t board, lut_t *luts) {
     return king_legal_moves | king_castle;           
 }
 
-bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
+bitboard generate_pawn_move_bitboard(square pawn, board_t *board, lut_t *luts) {
     // will need to add en passant later
     bitboard enemy_pieces;
-    bitboard all_pieces = board.all_pieces;
+    bitboard all_pieces = board->all_pieces;
     bitboard captures;
     bitboard forward_moves;
     bitboard forward_one;
     bitboard forward_two;
     bitboard en_passant_capture;
-    square en_passant_sq = board.en_passant;
+    square en_passant_sq = board->en_passant;
     bitboard en_passant_bit = 0; // default it to zero
     size_t rank = pawn / 8;
     bitboard opponent_rooks;
@@ -1177,8 +1176,8 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
         en_passant_bit =  luts->pieces[en_passant_sq]; // used to and with attack pattern
     }
 
-    if(board.t == W) {
-        enemy_pieces = board.black_pieces;
+    if(board->t == W) {
+        enemy_pieces = board->black_pieces;
         captures = luts->white_pawn_attacks[pawn] & enemy_pieces;
         forward_one = luts->white_pawn_pushes[pawn] & ~all_pieces;
         forward_two = 0;
@@ -1189,17 +1188,17 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
 
         en_passant_capture = 0;
         if(en_passant_bit){
-            opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
-            opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
-            board_without_pawns = board.all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit >> 8);
-            attackers = get_rook_attacks(board.white_king_loc, board_without_pawns, luts) & (opponent_rooks | opponent_queens);
+            opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+            opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+            board_without_pawns = board->all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit >> 8);
+            attackers = get_rook_attacks(board->white_king_loc, board_without_pawns, luts) & (opponent_rooks | opponent_queens);
             if(!attackers) {
                 en_passant_capture = luts->white_pawn_attacks[pawn] & en_passant_bit;
             }
         }
     }
     else {
-        enemy_pieces = board.white_pieces;
+        enemy_pieces = board->white_pieces;
         captures = luts->black_pawn_attacks[pawn] & enemy_pieces;
         forward_one = luts->black_pawn_pushes[pawn] & ~all_pieces;
         forward_two = 0;
@@ -1211,10 +1210,10 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
 
         en_passant_capture = 0;
         if(en_passant_bit){
-            opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
-            opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
-            board_without_pawns = board.all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit << 8);
-            attackers = get_rook_attacks(board.black_king_loc, board_without_pawns, luts) & (opponent_rooks | opponent_queens);
+            opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+            opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+            board_without_pawns = board->all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit << 8);
+            attackers = get_rook_attacks(board->black_king_loc, board_without_pawns, luts) & (opponent_rooks | opponent_queens);
             if(!attackers) {
                 en_passant_capture = luts->black_pawn_attacks[pawn] & en_passant_bit;
             }
@@ -1224,46 +1223,46 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t board, lut_t *luts) {
     return captures | forward_moves | en_passant_capture;
 }
 
-bitboard generate_rook_move_bitboard(square rook, board_t board, lut_t *luts) {
-    bitboard all_pieces = board.all_pieces;
+bitboard generate_rook_move_bitboard(square rook, board_t *board, lut_t *luts) {
+    bitboard all_pieces = board->all_pieces;
     bitboard own_pieces;
-    if(board.t == W)  own_pieces = board.white_pieces;
-    else              own_pieces = board.black_pieces;
+    if(board->t == W)  own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
 
     bitboard rook_attacks = get_rook_attacks(rook, all_pieces, luts);
     return rook_attacks & ~own_pieces;
 }
 
-bitboard generate_bishop_move_bitboard(square bishop, board_t board, lut_t *luts) {
-    bitboard all_pieces = board.all_pieces;
+bitboard generate_bishop_move_bitboard(square bishop, board_t *board, lut_t *luts) {
+    bitboard all_pieces = board->all_pieces;
     bitboard own_pieces;
 
-    if(board.t == W)  own_pieces = board.white_pieces;
-    else              own_pieces = board.black_pieces;
+    if(board->t == W)  own_pieces = board->white_pieces;
+    else              own_pieces = board->black_pieces;
 
     bitboard bishop_attacks = get_bishop_attacks(bishop, all_pieces, luts);
     
     return  bishop_attacks & ~own_pieces;
 }
 
-bitboard generate_queen_move_bitboard(square queen, board_t board, lut_t *luts) {
+bitboard generate_queen_move_bitboard(square queen, board_t *board, lut_t *luts) {
     return   generate_rook_move_bitboard(queen, board, luts)
            | generate_bishop_move_bitboard(queen, board, luts);
 }
 
-vector<move_t> generate_knight_moves(board_t board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+vector<move_t> generate_knight_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
     move.promotion_piece = EMPTY;
     bitboard knights;       
     piece color;
-    if (board.t == W) {
-        knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
+    if (board->t == W) {
+        knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
         color = WHITE;
     }
     else {
-        knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
+        knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
         color = BLACK;
     }
     bitboard knight_moves;
@@ -1281,7 +1280,7 @@ vector<move_t> generate_knight_moves(board_t board, vector<move_t> curr_moves, b
             move.start = (square)pc_loc;
             move.target = (square)tar_loc;
             move.mv_piece = color | KNIGHT;
-            move.tar_piece = board.sq_board[tar_loc];
+            move.tar_piece = board->sq_board[tar_loc];
             curr_moves.push_back(move);
             knight_moves = rem_first_bit(knight_moves);
         }
@@ -1290,19 +1289,19 @@ vector<move_t> generate_knight_moves(board_t board, vector<move_t> curr_moves, b
     return curr_moves;
 }
 
-vector<move_t> generate_king_moves(board_t board, vector<move_t> curr_moves, lut_t *luts) {
+vector<move_t> generate_king_moves(board_t *board, vector<move_t> curr_moves, lut_t *luts) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
     move.promotion_piece = EMPTY;
     bitboard kings;       
     piece color;
-    if (board.t == W) {
-        kings = board.piece_boards[WHITE_KINGS_INDEX];
+    if (board->t == W) {
+        kings = board->piece_boards[WHITE_KINGS_INDEX];
         color = WHITE;
     }
     else {
-        kings = board.piece_boards[BLACK_KINGS_INDEX];
+        kings = board->piece_boards[BLACK_KINGS_INDEX];
         color = BLACK;
     }
     bitboard king_moves;
@@ -1315,7 +1314,7 @@ vector<move_t> generate_king_moves(board_t board, vector<move_t> curr_moves, lut
             move.start = (square)pc_loc;
             move.target = (square)tar_loc;
             move.mv_piece = color | KING;
-            move.tar_piece = board.sq_board[tar_loc];
+            move.tar_piece = board->sq_board[tar_loc];
             curr_moves.push_back(move);
             king_moves = rem_first_bit(king_moves);
         }
@@ -1324,7 +1323,7 @@ vector<move_t> generate_king_moves(board_t board, vector<move_t> curr_moves, lut
     return curr_moves;
 }
 
-vector<move_t> generate_pawn_moves(board_t board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+vector<move_t> generate_pawn_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
@@ -1332,17 +1331,17 @@ vector<move_t> generate_pawn_moves(board_t board, vector<move_t> curr_moves, bit
     bitboard pin_mask;
     bitboard pawns;       
     piece color;
-    if (board.t == W) {
-        pawns = board.piece_boards[WHITE_PAWNS_INDEX];
+    if (board->t == W) {
+        pawns = board->piece_boards[WHITE_PAWNS_INDEX];
         color = WHITE;
     }
     else {
-        pawns = board.piece_boards[BLACK_PAWNS_INDEX];
+        pawns = board->piece_boards[BLACK_PAWNS_INDEX];
         color = BLACK;
     }
     bitboard pawn_moves;
     bitboard pawn_bit;
-    if(board.en_passant != NONE) check_mask |= luts->pieces[board.en_passant];
+    if(board->en_passant != NONE) check_mask |= luts->pieces[board->en_passant];
     while(pawns) {
         pc_loc = first_set_bit(pawns);
         pawn_bit = luts->pieces[pc_loc];
@@ -1354,7 +1353,7 @@ vector<move_t> generate_pawn_moves(board_t board, vector<move_t> curr_moves, bit
             move.start = (square)pc_loc;
             move.target = (square)tar_loc;
             move.mv_piece = color | PAWN;
-            move.tar_piece = board.sq_board[tar_loc];
+            move.tar_piece = board->sq_board[tar_loc];
             size_t tar_rank = tar_loc / 8;
             if(tar_rank == RANK_8 || tar_rank == RANK_1) {
                 piece color = (tar_rank == RANK_8) ? WHITE : BLACK;
@@ -1379,7 +1378,7 @@ vector<move_t> generate_pawn_moves(board_t board, vector<move_t> curr_moves, bit
 
 }
 
-vector<move_t> generate_rook_moves(board_t board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+vector<move_t> generate_rook_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
@@ -1388,12 +1387,12 @@ vector<move_t> generate_rook_moves(board_t board, vector<move_t> curr_moves, bit
     bitboard pin_mask;
     bitboard rooks;          
     piece color;
-    if (board.t == W) {
-        rooks = board.piece_boards[WHITE_ROOKS_INDEX];
+    if (board->t == W) {
+        rooks = board->piece_boards[WHITE_ROOKS_INDEX];
         color = WHITE;
     }
     else {
-        rooks = board.piece_boards[BLACK_ROOKS_INDEX];
+        rooks = board->piece_boards[BLACK_ROOKS_INDEX];
         color = BLACK;
     }
 
@@ -1410,7 +1409,7 @@ vector<move_t> generate_rook_moves(board_t board, vector<move_t> curr_moves, bit
             move.start = (square)pc_loc;
             move.target = (square)tar_loc;
             move.mv_piece = color | ROOK;
-            move.tar_piece = board.sq_board[tar_loc];
+            move.tar_piece = board->sq_board[tar_loc];
             curr_moves.push_back(move);
             rook_moves = rem_first_bit(rook_moves);
         }
@@ -1419,7 +1418,7 @@ vector<move_t> generate_rook_moves(board_t board, vector<move_t> curr_moves, bit
     return curr_moves;
 }
 
-vector<move_t> generate_bishop_moves(board_t board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+vector<move_t> generate_bishop_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
@@ -1428,12 +1427,12 @@ vector<move_t> generate_bishop_moves(board_t board, vector<move_t> curr_moves, b
     bitboard pin_mask;
     bitboard bishops;          
     piece color;
-    if (board.t == W) {
-        bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
+    if (board->t == W) {
+        bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
         color = WHITE;
     }
     else {
-        bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
+        bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
         color = BLACK;
     }
 
@@ -1450,7 +1449,7 @@ vector<move_t> generate_bishop_moves(board_t board, vector<move_t> curr_moves, b
             move.start = (square)pc_loc;
             move.target = (square)tar_loc;
             move.mv_piece = color | BISHOP;
-            move.tar_piece = board.sq_board[tar_loc];
+            move.tar_piece = board->sq_board[tar_loc];
             curr_moves.push_back(move);
             bishop_moves = rem_first_bit(bishop_moves);
         }
@@ -1459,7 +1458,7 @@ vector<move_t> generate_bishop_moves(board_t board, vector<move_t> curr_moves, b
     return curr_moves;
 }
 
-vector<move_t> generate_queen_moves(board_t board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
+vector<move_t> generate_queen_moves(board_t *board, vector<move_t> curr_moves, bitboard check_mask, pin_t pin, lut_t *luts) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
@@ -1468,12 +1467,12 @@ vector<move_t> generate_queen_moves(board_t board, vector<move_t> curr_moves, bi
     bitboard pin_mask;
     bitboard queens;          
     piece color;
-    if (board.t == W) {
-        queens = board.piece_boards[WHITE_QUEENS_INDEX];
+    if (board->t == W) {
+        queens = board->piece_boards[WHITE_QUEENS_INDEX];
         color = WHITE;
     }
     else {
-        queens = board.piece_boards[BLACK_QUEENS_INDEX];
+        queens = board->piece_boards[BLACK_QUEENS_INDEX];
         color = BLACK;
     }
 
@@ -1490,7 +1489,7 @@ vector<move_t> generate_queen_moves(board_t board, vector<move_t> curr_moves, bi
             move.start = (square)pc_loc;
             move.target = (square)tar_loc;
             move.mv_piece = color | QUEEN;
-            move.tar_piece = board.sq_board[tar_loc];
+            move.tar_piece = board->sq_board[tar_loc];
             curr_moves.push_back(move);
             queen_moves = rem_first_bit(queen_moves);
         }
@@ -1499,7 +1498,7 @@ vector<move_t> generate_queen_moves(board_t board, vector<move_t> curr_moves, bi
     return curr_moves;
 }
 
-bitboard attackers_from_square(board_t board, square sq, lut_t *luts) {
+bitboard attackers_from_square(board_t *board, square sq, lut_t *luts) {
     bitboard attackers = 0;
     bitboard opponent_knights;
     bitboard opponent_kings;
@@ -1507,33 +1506,33 @@ bitboard attackers_from_square(board_t board, square sq, lut_t *luts) {
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board.t == W) {
-        opponent_knights = board.piece_boards[BLACK_KNIGHTS_INDEX];
-        opponent_kings = board.piece_boards[BLACK_KINGS_INDEX];
-        opponent_pawns = board.piece_boards[BLACK_PAWNS_INDEX];
-        opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
+    if(board->t == W) {
+        opponent_knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = board->piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_knights = board.piece_boards[WHITE_KNIGHTS_INDEX];
-        opponent_kings = board.piece_boards[WHITE_KINGS_INDEX];
-        opponent_pawns = board.piece_boards[WHITE_PAWNS_INDEX];
-        opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
+        opponent_knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = board->piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
     }
     attackers |= get_knight_attacks(sq, luts) & opponent_knights;
     attackers |= get_king_attacks(sq, luts) & opponent_kings;
-    attackers |= get_pawn_attacks(sq, board.t, luts) & opponent_pawns;
-    attackers |= get_rook_attacks(sq, board.all_pieces, luts) & opponent_rooks;
-    attackers |= get_bishop_attacks(sq, board.all_pieces, luts) & opponent_bishops;
-    attackers |= get_queen_attacks(sq, board.all_pieces, luts) & opponent_queens;
+    attackers |= get_pawn_attacks(sq, board->t, luts) & opponent_pawns;
+    attackers |= get_rook_attacks(sq, board->all_pieces, luts) & opponent_rooks;
+    attackers |= get_bishop_attacks(sq, board->all_pieces, luts) & opponent_bishops;
+    attackers |= get_queen_attacks(sq, board->all_pieces, luts) & opponent_queens;
     return attackers;
 }
 
-bitboard checking_pieces(board_t board, lut_t *luts) {
-    square friendly_king = (board.t == W) ? board.white_king_loc : board.black_king_loc;
+bitboard checking_pieces(board_t *board, lut_t *luts) {
+    square friendly_king = (board->t == W) ? board->white_king_loc : board->black_king_loc;
     return attackers_from_square(board, friendly_king, luts);
 }
 
@@ -1543,45 +1542,41 @@ int in_check(bitboard attackers) {
     else return DOUBLE_CHECK;
 }
 
-bitboard opponent_slider_rays_to_square(board_t board, square sq, lut_t *luts) {
-    // put a rook at the kings square... get the rook attacks
-    // and that with the file and rank the rook is on
-    // for queens, treat it like a rook if its on the same file or rank as sq
-    // treat it like a bishop if its on the same diag or antidiag as sq
+bitboard opponent_slider_rays_to_square(board_t *board, square sq, lut_t *luts) {
     bitboard res = 0;
     square attacker_loc;
     bitboard attackers;
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board.t == W) {
-        opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
+    if(board->t == W) {
+        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
+        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
     }
-    bitboard rook_attacks_from_sq = get_rook_attacks(sq, board.all_pieces, luts);
+    bitboard rook_attacks_from_sq = get_rook_attacks(sq, board->all_pieces, luts);
     attackers = rook_attacks_from_sq & (opponent_rooks | opponent_queens);
     while(attackers) {
         attacker_loc = (square)first_set_bit(attackers);
-        res |= get_rook_attacks(attacker_loc, board.all_pieces, luts) & rook_attacks_from_sq;
+        res |= get_rook_attacks(attacker_loc, board->all_pieces, luts) & rook_attacks_from_sq;
         attackers = rem_first_bit(attackers);    
     }
-    bitboard bishop_attacks_from_sq = get_bishop_attacks(sq, board.all_pieces, luts);
+    bitboard bishop_attacks_from_sq = get_bishop_attacks(sq, board->all_pieces, luts);
     attackers = bishop_attacks_from_sq & (opponent_bishops | opponent_queens);
     while(attackers) {
         attacker_loc = (square)first_set_bit(attackers);
-        res |= get_bishop_attacks(attacker_loc, board.all_pieces, luts) & bishop_attacks_from_sq;
+        res |= get_bishop_attacks(attacker_loc, board->all_pieces, luts) & bishop_attacks_from_sq;
         attackers = rem_first_bit(attackers);
     }
     return res;
 }
 
-pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
+pin_t get_pinned_pieces(board_t *board, square friendly_king_loc, lut_t *luts) {
     pin_t pin;
     pin.pinned_pieces = 0;
     bitboard curr_pin;
@@ -1590,20 +1585,20 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
     bitboard opponent_bishops;
     bitboard opponent_queens;
     bitboard friendly_pieces;
-    if(board.t == W) {
-        opponent_rooks = board.piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[BLACK_QUEENS_INDEX];
-        friendly_pieces = board.white_pieces;
+    if(board->t == W) {
+        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+        friendly_pieces = board->white_pieces;
     }
     else {
-        opponent_rooks = board.piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board.piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board.piece_boards[WHITE_QUEENS_INDEX];
-        friendly_pieces = board.black_pieces;
+        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+        friendly_pieces = board->black_pieces;
     }
-    bitboard king_rook_attacks = get_rook_attacks(friendly_king_loc, board.all_pieces, luts);
-    bitboard king_bishop_attacks = get_bishop_attacks(friendly_king_loc, board.all_pieces, luts);
+    bitboard king_rook_attacks = get_rook_attacks(friendly_king_loc, board->all_pieces, luts);
+    bitboard king_bishop_attacks = get_bishop_attacks(friendly_king_loc, board->all_pieces, luts);
     bitboard rook_attacks;
     bitboard bishop_attacks;
     bitboard queen_attacks;
@@ -1624,7 +1619,7 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
             opponent_rooks = rem_first_bit(opponent_rooks);
             continue;
         }
-        rook_attacks = get_rook_attacks(pc_loc, board.all_pieces, luts);
+        rook_attacks = get_rook_attacks(pc_loc, board->all_pieces, luts);
         curr_pin = rook_attacks & king_rook_attacks & friendly_pieces;
         if(curr_pin){
             pin.pinned_pieces |= curr_pin;
@@ -1643,7 +1638,7 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
             opponent_bishops = rem_first_bit(opponent_bishops);
             continue;
         }
-        bishop_attacks = get_bishop_attacks(pc_loc, board.all_pieces, luts);
+        bishop_attacks = get_bishop_attacks(pc_loc, board->all_pieces, luts);
         curr_pin = bishop_attacks & king_bishop_attacks & friendly_pieces;
         if(curr_pin){
             pin.pinned_pieces |= curr_pin;
@@ -1659,7 +1654,7 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
         pc_diag = pc_rank - pc_file;
         pc_antidiag = pc_rank + pc_file;
         if(pc_rank == king_rank || pc_file == king_file) {
-            queen_attacks = get_rook_attacks(pc_loc, board.all_pieces, luts);
+            queen_attacks = get_rook_attacks(pc_loc, board->all_pieces, luts);
             curr_pin = queen_attacks & king_rook_attacks & friendly_pieces;
             if(curr_pin){
                 pin.pinned_pieces |= curr_pin;
@@ -1668,7 +1663,7 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
             }
         }
         else if(pc_diag == king_diag || pc_antidiag == king_antidiag){
-            queen_attacks = get_bishop_attacks(pc_loc, board.all_pieces, luts);
+            queen_attacks = get_bishop_attacks(pc_loc, board->all_pieces, luts);
             curr_pin = queen_attacks & king_bishop_attacks & friendly_pieces;
             if(curr_pin){
                 pin.pinned_pieces |= curr_pin;
@@ -1681,12 +1676,12 @@ pin_t get_pinned_pieces(board_t board, square friendly_king_loc, lut_t *luts) {
     return pin;
 }
 
-vector<move_t> generate_moves(board_t board, lut_t *luts) {
+vector<move_t> generate_moves(board_t *board, lut_t *luts) {
     vector<move_t> moves;
     bitboard check_pieces = checking_pieces(board, luts);
     bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
     bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
-    square friendly_king_loc = (board.t == W) ? board.white_king_loc : board.black_king_loc;
+    square friendly_king_loc = (board->t == W) ? board->white_king_loc : board->black_king_loc;
     int check = in_check(check_pieces);
     if(check == DOUBLE_CHECK) {
         double_checks++; // DEBUGGING
@@ -1696,7 +1691,7 @@ vector<move_t> generate_moves(board_t board, lut_t *luts) {
         checks++; // DEBUGGING
         capture_mask = check_pieces;
         square sq = (square)first_set_bit(check_pieces);
-        if(is_sliding_piece(board.sq_board[sq])) {
+        if(is_sliding_piece(board->sq_board[sq])) {
             push_mask = opponent_slider_rays_to_square(board, friendly_king_loc, luts);
         }
         else {
@@ -1718,7 +1713,7 @@ vector<move_t> generate_moves(board_t board, lut_t *luts) {
  * Goes from a move struct to the correct notation, given a move, a list of 
  * legal moves in the position, and the state of the board.
  */
-string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) {
+string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board) {
     // conflicting doesn't work for knights right now
     // need to update for check (+) and checkmate (#)
     // need to add castling
@@ -1735,7 +1730,7 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t board) 
     string str_move;
     char piece_name = pieces[bitboard_index_from_piece(move.mv_piece) / 2];
     bool capture = (move.tar_piece == EMPTY) ? false : true;
-    if(move.target == board.en_passant && (move.mv_piece & 0xE) == PAWN) capture = true;
+    if(move.target == board->en_passant && (move.mv_piece & 0xE) == PAWN) capture = true;
     bool promotion = (move.promotion_piece == EMPTY) ? false : true;
     size_t start_file_num = move.start % 8;
     size_t start_rank_num = move.start / 8;
@@ -1797,9 +1792,9 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_nodes_bulk(stack<board_t> board, size_t depth, lut_t *luts) {
-    board_t curr_board = board.top();
-    board_t next_board;
+size_t num_nodes_bulk(stack<board_t *> board, size_t depth, lut_t *luts) {
+    board_t *curr_board = board.top();
+    board_t *next_board;
     vector<move_t> moves = generate_moves(curr_board, luts);
     if(depth == 1) {
         return moves.size();
@@ -1810,15 +1805,15 @@ size_t num_nodes_bulk(stack<board_t> board, size_t depth, lut_t *luts) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
         total_moves += num_nodes_bulk(board, depth - 1, luts); 
-        board.pop();
+        board = unmake_move(board);
     }
     return total_moves;
 }
 
-size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
+size_t num_nodes(stack<board_t *> board, size_t depth, lut_t *luts) {
     vector<move_t> moves;
-    board_t curr_board = board.top();
-    board_t next_board;
+    board_t *curr_board = board.top();
+    board_t *next_board;
     if(depth == 0) {
         return 1;
     }
@@ -1829,14 +1824,14 @@ size_t num_nodes(stack<board_t> board, size_t depth, lut_t *luts) {
         next_board = make_move(curr_board, move, luts);
         board.push(next_board);
         total_moves += num_nodes(board, depth - 1, luts); 
-        board.pop();
+        board = unmake_move(board);
     }
     return total_moves;
 }
 
-size_t perft(board_t board, size_t depth, lut_t *luts) {
+size_t perft(board_t *board, size_t depth, lut_t *luts) {
     vector<move_t> moves = generate_moves(board, luts);
-    stack<board_t> board_stack;
+    stack<board_t *> board_stack;
     board_stack.push(board);
     size_t total_nodes = 0;
     size_t nodes_from_move = 0;
@@ -1846,15 +1841,15 @@ size_t perft(board_t board, size_t depth, lut_t *luts) {
         nodes_from_move = num_nodes(board_stack, depth - 1, luts);
         total_nodes += nodes_from_move;
         cout << nodes_from_move << endl;
-        board_stack.pop();
+        board_stack = unmake_move(board_stack);
     }
     cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
 }
 
 void speed_test(string pos, lut_t *luts) {
-    board_t board = decode_fen(pos, luts);
-    stack<board_t> board_stack;
+    board_t *board = decode_fen(pos, luts);
+    stack<board_t *> board_stack;
     board_stack.push(board);
     size_t max_depth;
     clock_t tStart;
@@ -1891,11 +1886,11 @@ void speed_test(string pos, lut_t *luts) {
     return;
 }
 
-int material_count(board_t board) {
+int material_count(board_t *board) {
     int count = 0;
     bitboard piece_board;
     for(size_t i = 0; i < 10; i++) { // there are 10 piece types excluding kings
-        piece_board = board.piece_boards[i];
+        piece_board = board->piece_boards[i];
         while(piece_board) { // go through all of each piece type
             count += piece_values[i];
             piece_board = rem_first_bit(piece_board);
@@ -1904,15 +1899,15 @@ int material_count(board_t board) {
     return count;
 }
 
-int evaluate(board_t board) {
-    int perspective = (board.t == W) ? 1 : -1;
+int evaluate(board_t *board) {
+    int perspective = (board->t == W) ? 1 : -1;
     return material_count(board) * perspective; // ahhh yes very fancy
 }
 
-int search_position(stack<board_t> board_stack, size_t depth, lut_t *luts) {
+int search_position(stack<board_t *> board_stack, size_t depth, lut_t *luts) {
     vector<move_t> moves;
-    board_t curr_board = board_stack.top();
-    board_t next_board;
+    board_t *curr_board = board_stack.top();
+    board_t *next_board;
     if(depth == 0) {
         return evaluate(curr_board);
     }
@@ -1932,7 +1927,7 @@ int search_position(stack<board_t> board_stack, size_t depth, lut_t *luts) {
         board_stack.push(next_board);
         int evaluation = -search_position(board_stack, depth - 1, luts);
         best_eval = MAX(evaluation, best_eval);
-        board_stack.pop();
+        board_stack = unmake_move(board_stack);
     }
     return best_eval;
 }
@@ -1941,8 +1936,8 @@ int search_position(stack<board_t> board_stack, size_t depth, lut_t *luts) {
 // how would I do alpha beta pruning with this algorithm here?
 // I want to be able to prune these top branches, since they have the most nodes
 // under them.
-move_t find_best_move(board_t board, size_t depth, lut_t *luts) {
-    stack<board_t> board_stack;
+move_t find_best_move(board_t *board, size_t depth, lut_t *luts) {
+    stack<board_t *> board_stack;
     board_stack.push(board);
     vector<move_t> moves = generate_moves(board, luts);
     move_t best_move;
@@ -1962,8 +1957,8 @@ move_t find_best_move(board_t board, size_t depth, lut_t *luts) {
 
 int main() {
     lut_t *luts = init_LUT();
+    // if you see this change ur back
     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
@@ -1971,79 +1966,79 @@ int main() {
     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-    board_t board_1 = decode_fen(test_pos_1, luts);
-    board_t board_2 = decode_fen(test_pos_2, luts);
-    board_t board_3 = decode_fen(test_pos_3, luts);
-    board_t board_4 = decode_fen(test_pos_4, luts);
-    board_t board_5 = decode_fen(test_pos_5, luts);
-    board_t board_6 = decode_fen(test_pos_6, luts);
+    board_t *board_1 = decode_fen(test_pos_1, luts);
+    board_t *board_2 = decode_fen(test_pos_2, luts);
+    board_t *board_3 = decode_fen(test_pos_3, luts);
+    board_t *board_4 = decode_fen(test_pos_4, luts);
+    board_t *board_5 = decode_fen(test_pos_5, luts);
+    board_t *board_6 = decode_fen(test_pos_6, luts);
 
     // cout << notation_from_move(find_best_move(board_2, 4, luts), generate_moves(board_2, luts), board_2) << endl;
 
     size_t depth;
-    while(true) {
-        cout << endl << "Enter depth: ";
-        cin >> depth;
-
-        cout << "Test 1 at depth " << depth << endl;
-        perft(board_1, depth, luts);
-        cout << endl;
-
-        cout << "Test 2 at depth " << depth << endl;
-        perft(board_2, depth, luts);
-        cout << endl;
-
-        cout << "Test 3 at depth " << depth << endl;
-        perft(board_3, depth, luts);
-        cout << endl;
-
-        cout << "Test 4 at depth " << depth << endl;
-        perft(board_4, depth, luts);
-        cout << endl;
-
-        cout << "Test 5 at depth " << depth << endl;
-        perft(board_5, depth, luts);
-        cout << endl;
-
-        cout << "Test 6 at depth " << depth << endl;
-        perft(board_6, depth, luts);
-        cout << endl;
-    }
-
-    // size_t total_nodes;
-    // clock_t tStart;
-    // clock_t tStop;
-    // double time_elapsed;
-
-    // stack<board_t> board_1_stack;
-    // stack<board_t> board_2_stack;
-    // stack<board_t> board_3_stack;
-    // stack<board_t> board_4_stack;
-    // stack<board_t> board_5_stack;
-    // stack<board_t> board_6_stack;
-    // board_1_stack.push(board_1);
-    // board_2_stack.push(board_2);
-    // board_3_stack.push(board_3);
-    // board_4_stack.push(board_4);
-    // board_5_stack.push(board_5);
-    // board_6_stack.push(board_6);
     // while(true) {
     //     cout << endl << "Enter depth: ";
     //     cin >> depth;
-    //     total_nodes = 0;
-    //     tStart = clock();
-    //     total_nodes += num_nodes_bulk(board_1_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_2_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_3_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_4_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_5_stack, depth, luts);
-    //     total_nodes += num_nodes_bulk(board_6_stack, depth, luts);
-    //     tStop = clock();
-    //     time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-    //     cout << "Total nodes: " << total_nodes << endl;
-    //     cout << "Time elapsed: " << time_elapsed << endl;
-    //     cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+
+    //     cout << "Test 1 at depth " << depth << endl;
+    //     perft(board_1, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 2 at depth " << depth << endl;
+    //     perft(board_2, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 3 at depth " << depth << endl;
+    //     perft(board_3, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 4 at depth " << depth << endl;
+    //     perft(board_4, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 5 at depth " << depth << endl;
+    //     perft(board_5, depth, luts);
+    //     cout << endl;
+
+    //     cout << "Test 6 at depth " << depth << endl;
+    //     perft(board_6, depth, luts);
+    //     cout << endl;
     // }
+
+    size_t total_nodes;
+    clock_t tStart;
+    clock_t tStop;
+    double time_elapsed;
+
+    stack<board_t *> board_1_stack;
+    stack<board_t *> board_2_stack;
+    stack<board_t *> board_3_stack;
+    stack<board_t *> board_4_stack;
+    stack<board_t *> board_5_stack;
+    stack<board_t *> board_6_stack;
+    board_1_stack.push(board_1);
+    board_2_stack.push(board_2);
+    board_3_stack.push(board_3);
+    board_4_stack.push(board_4);
+    board_5_stack.push(board_5);
+    board_6_stack.push(board_6);
+    while(true) {
+        cout << endl << "Enter depth: ";
+        cin >> depth;
+        total_nodes = 0;
+        tStart = clock();
+        total_nodes += num_nodes_bulk(board_1_stack, depth, luts);
+        total_nodes += num_nodes_bulk(board_2_stack, depth, luts);
+        total_nodes += num_nodes_bulk(board_3_stack, depth, luts);
+        total_nodes += num_nodes_bulk(board_4_stack, depth, luts);
+        total_nodes += num_nodes_bulk(board_5_stack, depth, luts);
+        total_nodes += num_nodes_bulk(board_6_stack, depth, luts);
+        tStop = clock();
+        time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+        cout << "Total nodes: " << total_nodes << endl;
+        cout << "Time elapsed: " << time_elapsed << endl;
+        cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+    }
     
     free(luts);
     return 0;
@@ -2078,5 +2073,6 @@ int main() {
     - at 414077 nodes/second at depth 4
     - after removing attack maps: 677203 nodes/second at depth 4
     - with bulk we are at 3.5 million per second
+    - with heap-allocated board, we are at 4 million per second
 
 */

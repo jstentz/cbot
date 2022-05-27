@@ -25,6 +25,7 @@
 using namespace std;
 
 typedef long long unsigned int bitboard;
+typedef long long unsigned int uint64_t;
 typedef short unsigned int uint16_t;
 typedef short unsigned int piece;
 typedef bool turn;

@@ -1044,7 +1044,10 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
     bitboard opponent_rooks;
     bitboard opponent_queens;
     bitboard attackers;
+    bitboard side_attackers;
     bitboard board_without_pawns;
+    bitboard white_pawn_attacks;
+    bitboard black_pawn_attacks;
 
     if(en_passant_sq != NONE) {
         en_passant_bit =  luts->pieces[en_passant_sq]; // used to and with attack pattern
@@ -1052,7 +1055,8 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
 
     if(board->t == W) {
         enemy_pieces = board->black_pieces;
-        captures = luts->white_pawn_attacks[pawn] & enemy_pieces;
+        white_pawn_attacks = luts->white_pawn_attacks[pawn];
+        captures = white_pawn_attacks & enemy_pieces;
         forward_one = luts->white_pawn_pushes[pawn] & ~all_pieces;
         forward_two = 0;
         if(rank == RANK_2 && forward_one) {
@@ -1060,36 +1064,38 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
         }
         forward_moves = forward_one | forward_two;
 
-        en_passant_capture = 0;
-        if(en_passant_bit){
+        en_passant_capture = white_pawn_attacks & en_passant_bit;
+        if(en_passant_capture){
             opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
             opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
             board_without_pawns = board->all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit >> 8);
             attackers = get_rook_attacks(board->white_king_loc, board_without_pawns) & (opponent_rooks | opponent_queens);
-            if(!attackers) {
-                en_passant_capture = luts->white_pawn_attacks[pawn] & en_passant_bit;
+            side_attackers = attackers & luts->mask_rank[pawn / 8];
+            if(side_attackers) {
+                en_passant_capture = 0;
             }
         }
     }
     else {
         enemy_pieces = board->white_pieces;
-        captures = luts->black_pawn_attacks[pawn] & enemy_pieces;
+        black_pawn_attacks = luts->black_pawn_attacks[pawn];
+        captures = black_pawn_attacks & enemy_pieces;
         forward_one = luts->black_pawn_pushes[pawn] & ~all_pieces;
         forward_two = 0;
         if(rank == RANK_7 && forward_one) {
             forward_two = luts->black_pawn_pushes[pawn - 8] & ~all_pieces;
         }
         forward_moves = forward_one | forward_two;
-        en_passant_capture = luts->black_pawn_attacks[pawn] & en_passant_bit;
 
-        en_passant_capture = 0;
-        if(en_passant_bit){
+        en_passant_capture = black_pawn_attacks & en_passant_bit;
+        if(en_passant_capture){
             opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
             opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
             board_without_pawns = board->all_pieces & ~(luts->pieces[pawn]) & ~(en_passant_bit << 8);
             attackers = get_rook_attacks(board->black_king_loc, board_without_pawns) & (opponent_rooks | opponent_queens);
-            if(!attackers) {
-                en_passant_capture = luts->black_pawn_attacks[pawn] & en_passant_bit;
+            side_attackers = attackers & luts->mask_rank[pawn / 8];
+            if(side_attackers) {
+                en_passant_capture = 0;
             }
         }
     }
@@ -1663,7 +1669,7 @@ void print_moves(vector<move_t> move_vector) {
     return;
 }
 
-size_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
+uint64_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
     board_t *curr_board = (*board).top();
     board_t *next_board;
     vector<move_t> moves;
@@ -1675,7 +1681,7 @@ size_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
         return 1;
     }
 
-    size_t total_moves = 0;
+    uint64_t total_moves = 0;
     for(move_t move : moves) {
         next_board = make_move(curr_board, move);
         (*board).push(next_board);
@@ -1685,7 +1691,7 @@ size_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
     return total_moves;
 }
 
-size_t num_nodes(stack<board_t *> *board, size_t depth) {
+uint64_t num_nodes(stack<board_t *> *board, size_t depth) {
     vector<move_t> moves;
     board_t *curr_board = (*board).top();
     board_t *next_board;
@@ -1693,7 +1699,7 @@ size_t num_nodes(stack<board_t *> *board, size_t depth) {
         return 1;
     }
 
-    size_t total_moves = 0;
+    uint64_t total_moves = 0;
     generate_moves(curr_board, &moves);
     for(move_t move : moves) {
         next_board = make_move(curr_board, move);
@@ -1704,13 +1710,13 @@ size_t num_nodes(stack<board_t *> *board, size_t depth) {
     return total_moves;
 }
 
-size_t perft(board_t *board, size_t depth) {
+uint64_t perft(board_t *board, size_t depth) {
     vector<move_t> moves;
     generate_moves(board, &moves);
     stack<board_t *> board_stack;
     board_stack.push(board);
-    size_t total_nodes = 0; // this can overflow, should change
-    size_t nodes_from_move = 0;
+    uint64_t total_nodes = 0; // this can overflow, should change
+    uint64_t nodes_from_move = 0;
     for(move_t move : moves) {
         board_stack.push(make_move(board, move));
         cout << notation_from_move(move, moves, board) << ": ";
@@ -1849,25 +1855,25 @@ int main() {
             perft(board_1, depth);
             cout << endl;
 
-            cout << "Test 2 at depth " << depth << endl;
-            perft(board_2, depth);
-            cout << endl;
+            // cout << "Test 2 at depth " << depth << endl;
+            // perft(board_2, depth);
+            // cout << endl;
 
-            cout << "Test 3 at depth " << depth << endl;
-            perft(board_3, depth);
-            cout << endl;
+            // cout << "Test 3 at depth " << depth << endl;
+            // perft(board_3, depth);
+            // cout << endl;
 
-            cout << "Test 4 at depth " << depth << endl;
-            perft(board_4, depth);
-            cout << endl;
+            // cout << "Test 4 at depth " << depth << endl;
+            // perft(board_4, depth);
+            // cout << endl;
 
-            cout << "Test 5 at depth " << depth << endl;
-            perft(board_5, depth);
-            cout << endl;
+            // cout << "Test 5 at depth " << depth << endl;
+            // perft(board_5, depth);
+            // cout << endl;
 
-            cout << "Test 6 at depth " << depth << endl;
-            perft(board_6, depth);
-            cout << endl;
+            // cout << "Test 6 at depth " << depth << endl;
+            // perft(board_6, depth);
+            // cout << endl;
         }
         else if(answer == 's') {
             cout << endl << "Enter depth: ";

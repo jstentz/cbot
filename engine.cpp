@@ -1203,7 +1203,7 @@ void generate_king_moves(board_t *board, vector<move_t> *curr_moves) {
     return;
 }
 
-void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin) {
+void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
@@ -1221,7 +1221,7 @@ void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
     }
     bitboard pawn_moves;
     bitboard pawn_bit;
-    if(board->en_passant != NONE) check_mask |= luts->pieces[board->en_passant];
+    if(board->en_passant != NONE && pawn_check) check_mask |= luts->pieces[board->en_passant];
     while(pawns) {
         pc_loc = first_set_bit(pawns);
         pawn_bit = luts->pieces[pc_loc];
@@ -1575,11 +1575,12 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves) {
             push_mask = 0;
         }
     }
+    bool pawn_check = (check_pieces & (board->piece_boards[WHITE_PAWNS_INDEX] | board->piece_boards[BLACK_PAWNS_INDEX])) != 0;
     bitboard check_mask = push_mask | capture_mask;
     pin_t pin = get_pinned_pieces(board, friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
     generate_king_moves(board, curr_moves);
     generate_knight_moves(board, curr_moves, check_mask, &pin);
-    generate_pawn_moves(board, curr_moves, check_mask, &pin);
+    generate_pawn_moves(board, curr_moves, check_mask, pawn_check, &pin);
     generate_rook_moves(board, curr_moves, check_mask, &pin);
     generate_bishop_moves(board, curr_moves, check_mask, &pin);
     generate_queen_moves(board, curr_moves, check_mask, &pin);
@@ -1855,25 +1856,25 @@ int main() {
             perft(board_1, depth);
             cout << endl;
 
-            // cout << "Test 2 at depth " << depth << endl;
-            // perft(board_2, depth);
-            // cout << endl;
+            cout << "Test 2 at depth " << depth << endl;
+            perft(board_2, depth);
+            cout << endl;
 
-            // cout << "Test 3 at depth " << depth << endl;
-            // perft(board_3, depth);
-            // cout << endl;
+            cout << "Test 3 at depth " << depth << endl;
+            perft(board_3, depth);
+            cout << endl;
 
-            // cout << "Test 4 at depth " << depth << endl;
-            // perft(board_4, depth);
-            // cout << endl;
+            cout << "Test 4 at depth " << depth << endl;
+            perft(board_4, depth);
+            cout << endl;
 
-            // cout << "Test 5 at depth " << depth << endl;
-            // perft(board_5, depth);
-            // cout << endl;
+            cout << "Test 5 at depth " << depth << endl;
+            perft(board_5, depth);
+            cout << endl;
 
-            // cout << "Test 6 at depth " << depth << endl;
-            // perft(board_6, depth);
-            // cout << endl;
+            cout << "Test 6 at depth " << depth << endl;
+            perft(board_6, depth);
+            cout << endl;
         }
         else if(answer == 's') {
             cout << endl << "Enter depth: ";

@@ -1671,6 +1671,9 @@ size_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
     if(depth == 1) {
         return moves.size();
     }
+    else if(depth == 0) {
+        return 1;
+    }
 
     size_t total_moves = 0;
     for(move_t move : moves) {
@@ -1842,29 +1845,29 @@ int main() {
             cout << endl << "Enter depth: ";
             cin >> depth;
 
-            // cout << "Test 1 at depth " << depth << endl;
-            // perft(board_1, depth);
-            // cout << endl;
+            cout << "Test 1 at depth " << depth << endl;
+            perft(board_1, depth);
+            cout << endl;
 
             cout << "Test 2 at depth " << depth << endl;
             perft(board_2, depth);
             cout << endl;
 
-            // cout << "Test 3 at depth " << depth << endl;
-            // perft(board_3, depth);
-            // cout << endl;
+            cout << "Test 3 at depth " << depth << endl;
+            perft(board_3, depth);
+            cout << endl;
 
-            // cout << "Test 4 at depth " << depth << endl;
-            // perft(board_4, depth);
-            // cout << endl;
+            cout << "Test 4 at depth " << depth << endl;
+            perft(board_4, depth);
+            cout << endl;
 
-            // cout << "Test 5 at depth " << depth << endl;
-            // perft(board_5, depth);
-            // cout << endl;
+            cout << "Test 5 at depth " << depth << endl;
+            perft(board_5, depth);
+            cout << endl;
 
-            // cout << "Test 6 at depth " << depth << endl;
-            // perft(board_6, depth);
-            // cout << endl;
+            cout << "Test 6 at depth " << depth << endl;
+            perft(board_6, depth);
+            cout << endl;
         }
         else if(answer == 's') {
             cout << endl << "Enter depth: ";

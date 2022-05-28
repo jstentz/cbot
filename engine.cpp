@@ -1578,12 +1578,12 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves) {
     bool pawn_check = (check_pieces & (board->piece_boards[WHITE_PAWNS_INDEX] | board->piece_boards[BLACK_PAWNS_INDEX])) != 0;
     bitboard check_mask = push_mask | capture_mask;
     pin_t pin = get_pinned_pieces(board, friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
-    generate_king_moves(board, curr_moves);
-    generate_knight_moves(board, curr_moves, check_mask, &pin);
     generate_pawn_moves(board, curr_moves, check_mask, pawn_check, &pin);
-    generate_rook_moves(board, curr_moves, check_mask, &pin);
+    generate_knight_moves(board, curr_moves, check_mask, &pin);
     generate_bishop_moves(board, curr_moves, check_mask, &pin);
+    generate_rook_moves(board, curr_moves, check_mask, &pin);
     generate_queen_moves(board, curr_moves, check_mask, &pin);
+    generate_king_moves(board, curr_moves);
     return;
 }
 
@@ -1804,106 +1804,106 @@ move_t find_best_move(board_t *board, size_t depth) {
     return best_move;
 }
 
-int main() {
-    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
-    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
-    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+// int main() {
+//     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     string test_pos_1 = "r1bqk2r/ppp2ppp/2p2n2/2b3B1/4P3/3P4/PPP2PPP/RN1QKB1R b KQkq - 2 6";
+//     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
+//     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
+//     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+//     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+//     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-    board_t *board_1 = decode_fen(test_pos_1);
-    board_t *board_2 = decode_fen(test_pos_2);
-    board_t *board_3 = decode_fen(test_pos_3);
-    board_t *board_4 = decode_fen(test_pos_4);
-    board_t *board_5 = decode_fen(test_pos_5);
-    board_t *board_6 = decode_fen(test_pos_6);
+//     board_t *board_1 = decode_fen(test_pos_1);
+//     board_t *board_2 = decode_fen(test_pos_2);
+//     board_t *board_3 = decode_fen(test_pos_3);
+//     board_t *board_4 = decode_fen(test_pos_4);
+//     board_t *board_5 = decode_fen(test_pos_5);
+//     board_t *board_6 = decode_fen(test_pos_6);
 
-    string test_pos = "8/8/8/8/5p1p/2kp1P1P/5P2/4K3 b - - 9 51";
-    board_t *board = decode_fen(test_pos);
-    vector<move_t> moves;
-    generate_moves(board, &moves);
-    cout << notation_from_move(find_best_move(board, 5), moves, board) << endl;
+//     string test_pos = "r1bqk2r/ppp2ppp/2p2n2/2b3B1/4P3/3P4/PPP2PPP/RN1QKB1R b KQkq - 2 6";
+//     board_t *board = decode_fen(test_pos);
+//     vector<move_t> moves;
+//     generate_moves(board, &moves);
+//     cout << notation_from_move(find_best_move(board, 5), moves, board) << endl;
 
-    size_t depth;
-    size_t total_nodes;
-    clock_t tStart;
-    clock_t tStop;
-    double time_elapsed;
+//     size_t depth;
+//     size_t total_nodes;
+//     clock_t tStart;
+//     clock_t tStop;
+//     double time_elapsed;
 
-    stack<board_t *> board_1_stack;
-    stack<board_t *> board_2_stack;
-    stack<board_t *> board_3_stack;
-    stack<board_t *> board_4_stack;
-    stack<board_t *> board_5_stack;
-    stack<board_t *> board_6_stack;
-    board_1_stack.push(board_1);
-    board_2_stack.push(board_2);
-    board_3_stack.push(board_3);
-    board_4_stack.push(board_4);
-    board_5_stack.push(board_5);
-    board_6_stack.push(board_6);
-    char answer;
-    while(true) {
-        cout << "Perft test or speed test? (p/s)" << endl;
-        cin >> answer;
-        if(answer == 'p') {
-            cout << endl << "Enter depth: ";
-            cin >> depth;
+//     stack<board_t *> board_1_stack;
+//     stack<board_t *> board_2_stack;
+//     stack<board_t *> board_3_stack;
+//     stack<board_t *> board_4_stack;
+//     stack<board_t *> board_5_stack;
+//     stack<board_t *> board_6_stack;
+//     board_1_stack.push(board_1);
+//     board_2_stack.push(board_2);
+//     board_3_stack.push(board_3);
+//     board_4_stack.push(board_4);
+//     board_5_stack.push(board_5);
+//     board_6_stack.push(board_6);
+//     char answer;
+//     while(true) {
+//         cout << "Perft test or speed test? (p/s)" << endl;
+//         cin >> answer;
+//         if(answer == 'p') {
+//             cout << endl << "Enter depth: ";
+//             cin >> depth;
 
-            cout << "Test 1 at depth " << depth << endl;
-            perft(board_1, depth);
-            cout << endl;
+//             cout << "Test 1 at depth " << depth << endl;
+//             perft(board_1, depth);
+//             cout << endl;
 
-            cout << "Test 2 at depth " << depth << endl;
-            perft(board_2, depth);
-            cout << endl;
+//             cout << "Test 2 at depth " << depth << endl;
+//             perft(board_2, depth);
+//             cout << endl;
 
-            cout << "Test 3 at depth " << depth << endl;
-            perft(board_3, depth);
-            cout << endl;
+//             cout << "Test 3 at depth " << depth << endl;
+//             perft(board_3, depth);
+//             cout << endl;
 
-            cout << "Test 4 at depth " << depth << endl;
-            perft(board_4, depth);
-            cout << endl;
+//             cout << "Test 4 at depth " << depth << endl;
+//             perft(board_4, depth);
+//             cout << endl;
 
-            cout << "Test 5 at depth " << depth << endl;
-            perft(board_5, depth);
-            cout << endl;
+//             cout << "Test 5 at depth " << depth << endl;
+//             perft(board_5, depth);
+//             cout << endl;
 
-            cout << "Test 6 at depth " << depth << endl;
-            perft(board_6, depth);
-            cout << endl;
-        }
-        else if(answer == 's') {
-            cout << endl << "Enter depth: ";
-            cin >> depth;
-            total_nodes = 0;
-            tStart = clock();
-            total_nodes += num_nodes_bulk(&board_1_stack, depth);
-            total_nodes += num_nodes_bulk(&board_2_stack, depth);
-            total_nodes += num_nodes_bulk(&board_3_stack, depth);
-            total_nodes += num_nodes_bulk(&board_4_stack, depth);
-            total_nodes += num_nodes_bulk(&board_5_stack, depth);
-            total_nodes += num_nodes_bulk(&board_6_stack, depth);
-            tStop = clock();
-            time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-            cout << "Total nodes: " << total_nodes << endl;
-            cout << "Time elapsed: " << time_elapsed << endl;
-            cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
-        }
-    }
+//             cout << "Test 6 at depth " << depth << endl;
+//             perft(board_6, depth);
+//             cout << endl;
+//         }
+//         else if(answer == 's') {
+//             cout << endl << "Enter depth: ";
+//             cin >> depth;
+//             total_nodes = 0;
+//             tStart = clock();
+//             total_nodes += num_nodes_bulk(&board_1_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_2_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_3_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_4_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_5_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_6_stack, depth);
+//             tStop = clock();
+//             time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+//             cout << "Total nodes: " << total_nodes << endl;
+//             cout << "Time elapsed: " << time_elapsed << endl;
+//             cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+//         }
+//     }
     
-    free(luts);
-    free(board_1);
-    free(board_2);
-    free(board_3);
-    free(board_4);
-    free(board_5);
-    free(board_6);
-    return 0;
-}
+//     free(luts);
+//     free(board_1);
+//     free(board_2);
+//     free(board_3);
+//     free(board_4);
+//     free(board_5);
+//     free(board_6);
+//     return 0;
+// }
 
 
 // fuck tests 2 and 3 fail at depth 6

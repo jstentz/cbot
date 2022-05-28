@@ -3,3 +3,6 @@ For graphics:
 
 For engine:
     g++ -o engine engine.cpp -static-libgcc -static-libstdc++
+
+For both:
+    g++ -o main graphics.cpp engine.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_image

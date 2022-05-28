@@ -196,3 +196,7 @@ bitboard checking_pieces(board_t *board);
 string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board);
 
 // Include best move function for interacting with the engine
+
+void generate_moves(board_t *board, vector<move_t> *curr_moves);
+
+move_t find_best_move(board_t *board, size_t depth);

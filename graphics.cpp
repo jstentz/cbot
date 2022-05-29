@@ -163,7 +163,8 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
+    // board_t *board = decode_fen("nnnnknnn/pppppppp/8/8/8/8/PPPPPPPP/NNNNKNNN w - - 0 1");
+    board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stack<board_t *> game; // add functionality for going back
     move_t move;
     vector<move_t> legal_moves;
@@ -251,11 +252,25 @@ int main(int argc, char** argv){
         }
 
         if(madeMove) {
-            board = make_move(board, find_best_move(board, 5));
+            LoadDisplayBoardFromGameState(board->sq_board);
+            SDL_RenderClear(renderer);
+            DrawChessBoard();
+            DrawPieces();
+            DrawSelectedPiece(selectedPiece);
+            SDL_RenderPresent(renderer);
+
+            move = find_best_move(board, 5);
+            board = make_move(board, move); // leaking memory here
+            LoadDisplayBoardFromGameState(board->sq_board);
 
             legal_moves.clear();
             generate_moves(board, &legal_moves);
-            LoadDisplayBoardFromGameState(board->sq_board);
+
+            // cout << "Player moves: " << legal_moves.size() << endl;
+
+            // cout << notation_from_move(move, legal_moves, board);
+            // cout << endl;
+
             madeMove = false;
         }
         SDL_RenderClear(renderer);
@@ -263,14 +278,13 @@ int main(int argc, char** argv){
         DrawPieces();
         DrawSelectedPiece(selectedPiece);
         SDL_RenderPresent(renderer);
-        
     }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     IMG_Quit();
     SDL_Quit();
-
+    free(board);
     return 0;
 }
 
@@ -279,4 +293,18 @@ int main(int argc, char** argv){
         - Load the display board with rects when you decode the fen
         - draw the board based off of the display board
 
+    - there is some strange bug with this position (move white rook):
+        8/8/8/8/8/2K5/7R/1k6 w - - 0 1
+      when the computer has a low number of moves, it just doesn't play a move...
+      its finding my move to be the best move?
+      its not my move generation that's wrong, its my find_best_move function
+
+      it thinks that they all lead to mate eventually, so it doesn't know which to pick
+      It can't see far enough to know the exact mate
+
+      To do list:
+       - opening book
+       - move ordering
+       - qsearch
+       - better eval function
 */

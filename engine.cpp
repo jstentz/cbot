@@ -1228,6 +1228,7 @@ void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(pawn_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
         pawn_moves = generate_pawn_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
+        // and it with opponent_pieces and the en_passant square if it exists to generate captures only
         while(pawn_moves) {
             tar_loc = first_set_bit(pawn_moves);
             move.start = (square)pc_loc;
@@ -1748,7 +1749,7 @@ int evaluate(board_t *board) {
     return material_count(board) * perspective; // ahhh yes very fancy
 }
 
-int search_position(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
+int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     vector<move_t> moves;
     board_t *curr_board = (*board_stack).top();
     board_t *next_board;
@@ -1758,8 +1759,8 @@ int search_position(stack<board_t *> *board_stack, size_t depth, int alpha, int 
     
     generate_moves(curr_board, &moves);
     if(moves.size() == 0) {
-        if(checking_pieces(curr_board)) {
-            return INT_MIN + 1; // have to do this since negative of INT_MIN is not INT_MAX
+        if(checking_pieces(curr_board) != 0) {
+            return INT_MIN + 1 + depth; // have to do this since negative of INT_MIN is not INT_MAX
         }
         return 0;
     }
@@ -1769,11 +1770,11 @@ int search_position(stack<board_t *> *board_stack, size_t depth, int alpha, int 
     for(move_t move : moves) {
         next_board = make_move(curr_board, move);
         (*board_stack).push(next_board);
-        int evaluation = -search_position(board_stack, depth - 1, -beta, -alpha);
+        int evaluation = -search(board_stack, depth - 1, -beta, -alpha);
         unmake_move(board_stack);
         if(evaluation > best_eval) best_eval = evaluation;
         if(best_eval > alpha) alpha = best_eval;
-        if(alpha >= beta) return alpha;
+        if(alpha >= beta) break;
     }
     return best_eval;
 }
@@ -1787,26 +1788,28 @@ move_t find_best_move(board_t *board, size_t depth) {
     board_stack.push(board);
     vector<move_t> moves;
     generate_moves(board, &moves);
-    move_t best_move;
+    // cout << "Computer moves: " << moves.size() << endl;
+    move_t best_move = moves[0]; // this will crash it at some point
     int best_eval = INT_MIN + 1;
     int alpha = INT_MIN + 1;
     int beta = INT_MAX;
     for(move_t move : moves) {
         board_stack.push(make_move(board, move));
-        int eval = -search_position(&board_stack, depth - 1, alpha, beta); // now its black's move
+        int eval = -search(&board_stack, depth - 1, -beta, -alpha); // now its black's move
 
         if(eval > best_eval) {
             best_eval = eval;
             best_move = move;
+            if(best_eval > alpha) alpha = best_eval; // not sure if this is right
         }
-        board_stack.pop();
+        unmake_move(&board_stack);
     }
     return best_move;
 }
 
 // int main() {
 //     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     string test_pos_1 = "r1bqk2r/ppp2ppp/2p2n2/2b3B1/4P3/3P4/PPP2PPP/RN1QKB1R b KQkq - 2 6";
+//     string test_pos_1 = "3R4/3Q4/8/8/2k5/4K3/8/8 b - - 0 1";
 //     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
 //     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
 //     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
@@ -1820,7 +1823,7 @@ move_t find_best_move(board_t *board, size_t depth) {
 //     board_t *board_5 = decode_fen(test_pos_5);
 //     board_t *board_6 = decode_fen(test_pos_6);
 
-//     string test_pos = "r1bqk2r/ppp2ppp/2p2n2/2b3B1/4P3/3P4/PPP2PPP/RN1QKB1R b KQkq - 2 6";
+//     string test_pos = "3R4/3Q4/8/8/2k5/4K3/8/8 b - - 0 1";
 //     board_t *board = decode_fen(test_pos);
 //     vector<move_t> moves;
 //     generate_moves(board, &moves);

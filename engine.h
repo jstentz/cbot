@@ -138,6 +138,11 @@ typedef struct pin_struct {
     bitboard pinned_pieces;
 } pin_t;
 
+typedef struct move_eval {
+    move_t move;
+    int eval;
+} move_eval_t;
+
 /**
  * @brief Given a piece, it will return the index associated with that piece.
  * Each piece is mapped to an index 0 - 11 inclusive.

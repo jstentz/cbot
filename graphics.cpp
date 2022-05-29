@@ -167,7 +167,7 @@ int main(int argc, char** argv){
     LoadPieceTextures();
 
     // board_t *board = decode_fen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
-    // board_t *board = decode_fen("8/3r4/3k4/8/8/3K4/8/8 w - - 0 1");
+    // board_t *board = decode_fen("8/3q4/3k4/8/8/4K3/8/8 w - - 0 1");
     board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stack<board_t *> game; // add functionality for going back
     move_t move;
@@ -315,4 +315,7 @@ int main(int argc, char** argv){
 
 
       before adding new eval, we have 3527924 positions searched after Nd5
+
+      consider doing what I do in evaluate() incrementally in make_move
+      then just access the evaluation of the board when evaluating
 */

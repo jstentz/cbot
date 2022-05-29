@@ -1948,17 +1948,16 @@ uint64_t perft(board_t *board, size_t depth) {
     return total_nodes;
 }
 
-int material_count(board_t *board) {
-    int count = 0;
-    bitboard piece_board;
-    for(size_t i = 0; i < 10; i++) { // there are 10 piece types excluding kings
-        piece_board = board->piece_boards[i];
-        while(piece_board) { // go through all of each piece type
-            count += piece_values[i];
-            piece_board = rem_first_bit(piece_board);
+void order_moves(vector<move_t> *moves) {
+    vector<move_t> new_order;
+    for(move_t move : (*moves)) {
+        if(move.promotion_piece != EMPTY || move.tar_piece != EMPTY){
+            new_order.insert(new_order.begin(), move);
         }
+        else new_order.push_back(move);
     }
-    return count;
+    *moves = new_order;
+    return;
 }
 
 int evaluate(board_t *board) {
@@ -1991,8 +1990,9 @@ int evaluate(board_t *board) {
     square black_king_loc = board->black_king_loc;
 
     // check if its the end game
-    if(piece_counts[WHITE_QUEENS_INDEX] == 0 &&
-       piece_counts[BLACK_QUEENS_INDEX] == 0) {
+    if((piece_counts[WHITE_QUEENS_INDEX] == 0 &&
+       piece_counts[BLACK_QUEENS_INDEX] == 0) || 
+       (total_material_count < 2000)) {
         positional_score += piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc]; // access the endgame positional scores
         positional_score += piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
     }
@@ -2009,16 +2009,22 @@ int evaluate(board_t *board) {
     int distance_between_kings = abs(white_king_rank - black_king_rank)
                                + abs(white_king_file - black_king_file);
 
+    // cout << distance_between_kings << endl;
+
     double endgame_weight = 1.0 - (((double)total_material_count) / 8000.0); // total material on both sides at start = 8000
 
-    int king_distance_eval = endgame_weight * (14 - distance_between_kings) * 10;
+    // cout << endgame_weight << endl;
+    // need to add functionality for repeat draws so it doesn't repeat in the endgame
+    int king_distance_eval = (int)(endgame_weight * (double)((14 - distance_between_kings) * 5));
+    // cout << king_distance_eval << endl;
     /*
         All scores are calculated as positive meaning "good for white."
         Therefore, if it is black's turn, we have to negate our evaluation
         so that positive means "good for black."
     */
+
     int perspective = (board->t == W) ? 1 : -1;
-    return ((material_score + positional_score) * perspective) + king_distance_eval;
+    return ((material_score + positional_score) * perspective);
 }
 
 // go back through and comment this more to understand it
@@ -2032,6 +2038,7 @@ int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(curr_board, &captures, true); // true flag generates only captures
+    order_moves(&captures);
     for (move_t capture : captures) {
         next_board = make_move(curr_board, capture);
         (*board_stack).push(next_board);
@@ -2056,6 +2063,7 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     board_t *next_board;
     
     generate_moves(curr_board, &moves);
+    order_moves(&moves);
     if(moves.size() == 0) {
         if(checking_pieces(curr_board) != 0) {
             return INT_MIN + 1 + (*board_stack).size(); // the deeper in the search we are, the less good the checkmate is
@@ -2087,6 +2095,7 @@ move_t find_best_move(board_t *board) {
     board_stack.push(board);
     vector<move_t> moves;
     generate_moves(board, &moves);
+    order_moves(&moves);
     // cout << "Computer moves: " << moves.size() << endl;
     move_t best_move = moves[0]; // this will crash it at some point
     int best_eval = INT_MIN + 1;

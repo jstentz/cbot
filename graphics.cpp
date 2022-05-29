@@ -11,18 +11,18 @@ using namespace std;
 #define SCREEN_WIDTH 1080 
 #define SCREEN_HEIGHT 1080
 
-#define BB_PATH "assets/bB.png"
-#define BK_PATH "assets/bK.png"
-#define BN_PATH "assets/bN.png"
-#define BP_PATH "assets/bP.png"
-#define BQ_PATH "assets/bQ.png"
-#define BR_PATH "assets/bR.png"
-#define WB_PATH "assets/wB.png"
-#define WK_PATH "assets/wK.png"
-#define WN_PATH "assets/wN.png"
-#define WP_PATH "assets/wP.png"
-#define WQ_PATH "assets/wQ.png"
-#define WR_PATH "assets/wR.png"
+#define BB_PATH "assets/bB.svg"
+#define BK_PATH "assets/bK.svg"
+#define BN_PATH "assets/bN.svg"
+#define BP_PATH "assets/bP.svg"
+#define BQ_PATH "assets/bQ.svg"
+#define BR_PATH "assets/bR.svg"
+#define WB_PATH "assets/wB.svg"
+#define WK_PATH "assets/wK.svg"
+#define WN_PATH "assets/wN.svg"
+#define WP_PATH "assets/wP.svg"
+#define WQ_PATH "assets/wQ.svg"
+#define WR_PATH "assets/wR.svg"
 
 typedef struct display_square {
     SDL_Rect rect;
@@ -47,19 +47,19 @@ d_square_t Display_Board[64];
 
 
 void LoadPieceTextures() {
-    Piece_Textures[BLACK_BISHOPS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(BB_PATH));
-    Piece_Textures[BLACK_KINGS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(BK_PATH));
-    Piece_Textures[BLACK_KNIGHTS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(BN_PATH));
-    Piece_Textures[BLACK_PAWNS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(BP_PATH));
-    Piece_Textures[BLACK_QUEENS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(BQ_PATH));
-    Piece_Textures[BLACK_ROOKS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(BR_PATH));
+    Piece_Textures[BLACK_BISHOPS_INDEX] = IMG_LoadTexture(renderer, BB_PATH);
+    Piece_Textures[BLACK_KINGS_INDEX] = IMG_LoadTexture(renderer, BK_PATH);
+    Piece_Textures[BLACK_KNIGHTS_INDEX] = IMG_LoadTexture(renderer, BN_PATH);
+    Piece_Textures[BLACK_PAWNS_INDEX] = IMG_LoadTexture(renderer, BP_PATH);
+    Piece_Textures[BLACK_QUEENS_INDEX] = IMG_LoadTexture(renderer, BQ_PATH);
+    Piece_Textures[BLACK_ROOKS_INDEX] = IMG_LoadTexture(renderer, BR_PATH);
 
-    Piece_Textures[WHITE_BISHOPS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(WB_PATH));
-    Piece_Textures[WHITE_KINGS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(WK_PATH));
-    Piece_Textures[WHITE_KNIGHTS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(WN_PATH));
-    Piece_Textures[WHITE_PAWNS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(WP_PATH));
-    Piece_Textures[WHITE_QUEENS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(WQ_PATH));
-    Piece_Textures[WHITE_ROOKS_INDEX] = SDL_CreateTextureFromSurface(renderer, IMG_Load(WR_PATH));
+    Piece_Textures[WHITE_BISHOPS_INDEX] = IMG_LoadTexture(renderer, WB_PATH);
+    Piece_Textures[WHITE_KINGS_INDEX] = IMG_LoadTexture(renderer, WK_PATH);
+    Piece_Textures[WHITE_KNIGHTS_INDEX] = IMG_LoadTexture(renderer, WN_PATH);
+    Piece_Textures[WHITE_PAWNS_INDEX] = IMG_LoadTexture(renderer, WP_PATH);
+    Piece_Textures[WHITE_QUEENS_INDEX] = IMG_LoadTexture(renderer, WQ_PATH);
+    Piece_Textures[WHITE_ROOKS_INDEX] = IMG_LoadTexture(renderer, WR_PATH);
 }
 
 void DrawChessBoard() {
@@ -161,9 +161,13 @@ int main(int argc, char** argv){
         return 1;
     }
 
+    // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+    // SDL_SetHint(SDL_HINT_RENDER_BATCHING, "2");
+
     LoadPieceTextures();
 
-    // board_t *board = decode_fen("nnnnknnn/pppppppp/8/8/8/8/PPPPPPPP/NNNNKNNN w - - 0 1");
+    // board_t *board = decode_fen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    // board_t *board = decode_fen("8/3r4/3k4/8/8/3K4/8/8 w - - 0 1");
     board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stack<board_t *> game; // add functionality for going back
     move_t move;
@@ -223,9 +227,6 @@ int main(int argc, char** argv){
                                 Display_Board[selectedPiece.start_sq].pc = selectedPiece.pc; // put the piece back where you picked it up
                             }
                 
-                            // d_sq->pc = selectedPiece.pc;
-                            // instead of doing this, this should generate a move which will
-                            // be applied to the board, and then the board will be reloaded from game state
                         }
                         leftMouseButtonDown = false;
                         selectedPiece.pc = EMPTY;
@@ -259,7 +260,7 @@ int main(int argc, char** argv){
             DrawSelectedPiece(selectedPiece);
             SDL_RenderPresent(renderer);
 
-            move = find_best_move(board, 5);
+            move = find_best_move(board);
             board = make_move(board, move); // leaking memory here
             LoadDisplayBoardFromGameState(board->sq_board);
 
@@ -305,6 +306,13 @@ int main(int argc, char** argv){
       To do list:
        - opening book
        - move ordering
-       - qsearch
-       - better eval function
+       - qsearch (done but now its very slow... try move ordering?)
+       - better eval function (done for now)
+       - transposition tables
+       - eventually switch away from SDL for better quality... Maybe try Unity?
+         or UE4?
+       - store the material in the board state
+
+
+      before adding new eval, we have 3527924 positions searched after Nd5
 */

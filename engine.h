@@ -92,9 +92,6 @@ typedef struct Board
     bool black_king_side;
     bool black_queen_side;
 
-    // bitboard white_attack_map;
-    // bitboard black_attack_map;
-
     square white_king_loc;
     square black_king_loc;
 } board_t;
@@ -202,6 +199,6 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
 
 // Include best move function for interacting with the engine
 
-void generate_moves(board_t *board, vector<move_t> *curr_moves);
+void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_only = false);
 
-move_t find_best_move(board_t *board, size_t depth);
+move_t find_best_move(board_t *board);

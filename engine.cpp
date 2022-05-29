@@ -15,17 +15,207 @@
 
 using namespace std;
 
+// all from white's perspective, so you need to negate for black
 const int piece_values[10] = {100, // white pawn
                              -100, // black pawn
-                              300, // white knight
-                             -300, // black knight
-                              300, // white bishop
-                             -300, // black bishop
+                              320, // white knight
+                             -320, // black knight
+                              330, // white bishop
+                             -330, // black bishop
                               500, // white rook
                              -500, // black rook
                               900, // white queen
                              -900};// black queen
 
+// these are all from white's perspective, so you need to negate for black
+
+const int white_pawns_score[64] = 
+{
+    0,   0,   0,   0,   0,   0,   0,  0,
+    5,  10,  10, -20, -20,  10,  10,  5,
+    5,  -5, -10,   0,   0, -10,  -5,  5,
+    0,   0,   0,  20,  20,   0,   0,  0,
+    5,   5,  10,  25,  25,  10,   5,  5,
+   10,  10,  20,  30,  30,  20,  10, 10,
+   50,  50,  50,  50,  50,  50,  50, 50,
+    0,   0,   0,   0,   0,   0,   0,  0
+};
+
+const int black_pawns_score[64] = 
+{
+    0,   0,   0,   0,   0,   0,   0,  0,
+  -50, -50, -50, -50, -50, -50, -50,-50,
+   -10,  -10,  -20,  -30,  -30,  -20,  -10, -10,
+    -5,   -5,  -10,  -25,  -25,  -10,   -5,  -5,
+    0,   0,   0,  -20,  -20,   0,   0,  0,
+    -5,  5, 10,   0,   0, 10,  5,  -5,
+    -5,  -10,  -10, 20, 20,  -10,  -10,  -5,
+    0,   0,   0,   0,   0,   0,   0,  0
+};
+
+const int white_knights_score[64] = 
+{
+  -50, -40, -30, -30, -30, -30, -40  -50,
+  -40, -20,   0,   5,   5,   0, -20, -40,
+  -30,   5,  10,  15,  15,  10,   5, -30,
+  -30,   0,  15,  20,  20,  15,   0, -30,
+  -30,   5,  15,  20,  20,  15,   5, -30,
+  -30,   0,  10,  15,  15,  10,   0, -30,
+  -40, -20,   0,   0,   0,   0, -20, -40,
+  -50, -40, -30, -30, -30, -30, -40, -50
+};
+
+const int black_knights_score[64] = 
+{
+  50, 40, 30, 30, 30,  30, 40, 50,
+  40, 20,   0,   0,   0,   0, 20, 40,
+  30,   0,  -10,  -15,  -15,  -10,   0, 30,
+  30,   -5,  -15,  -20,  -20,  -15,   -5, 30,
+  30,   0,  -15,  -20,  -20,  -15,   0, 30,
+  30,   -5,  -10,  -15,  -15,  -10,   -5, 30,
+  40, 20,   0,   -5,   -5,   0, 20, 40,
+  50, 40, 30, 30, 30, 30, 40, 50
+};
+
+const int white_bishops_score[64] = 
+{
+  -20, -10, -10, -10, -10, -10, -10, -20,
+  -10,   5,   0,   0,   0,   0,   5, -10,
+  -10,  10,  10,  10,  10,  10,  10, -10,
+  -10,   0,  10,  10,  10,  10,   0, -10,
+  -10,   5,   5,  10,  10,   5,   5, -10,
+  -10,   0,   5,  10,  10,   5,   0, -10,
+  -10,   0,   0,   0,   0,   0,   0, -10,
+  -20, -10, -10, -10, -10, -10, -10, -20
+};
+
+const int black_bishops_score[64] = 
+{
+  20, 10, 10, 10, 10, 10, 10, 20,
+  10,   0,   0,   0,   0,   0,   0, 10,
+  10,   0,   -5,  -10,  -10,   -5,   0, 10,
+  10,   -5,   -5,  -10,  -10,   -5,   -5, 10,
+  10,   0,  -10,  -10,  -10,  -10,   0, 10,
+  10,  -10,  -10,  -10,  -10,  -10,  -10, 10,
+  10,   -5,   0,   0,   0,   0,   -5, 10,
+  20, 10, 10, 10, 10, 10, 10, 20
+};
+
+const int white_rooks_score[64] = 
+{
+   0,    0,   0,   5,   5,   0,   0,   0,
+  -5,    0,   0,   0,   0,   0,   0,  -5,
+  -5,    0,   0,   0,   0,   0,   0,  -5,
+  -5,    0,   0,   0,   0,   0,   0,  -5,
+  -5,    0,   0,   0,   0,   0,   0,  -5,
+  -5,    0,   0,   0,   0,   0,   0,  -5,
+   5,   10,  10,  10,  10,  10,  10,   5,
+   0,    0,   0,   0,   0,   0,   0,   0
+};
+
+const int black_rooks_score[64] = 
+{
+   0,    0,   0,   0,   0,   0,   0,   0,
+   -5,   -10,  -10,  -10,  -10,  -10,  -10,   -5,
+  5,    0,   0,   0,   0,   0,   0,  5,
+  5,    0,   0,   0,   0,   0,   0,  5,
+  5,    0,   0,   0,   0,   0,   0,  5,
+  5,    0,   0,   0,   0,   0,   0,  5,
+  5,    0,   0,   0,   0,   0,   0,  5,
+   0,    0,   0,   -5,   -5,   0,   0,   0
+};
+
+const int white_queens_score[64] = 
+{
+ -20,  -10, -10,  -5,  -5, -10, -10,  -20,
+ -10,    0,   5,   0,   0,   0,   0, -10,
+ -10,    5,   5,   5,   5,   5,   0, -10,
+   0,    0,   5,   5,   5,   5,   0,  -5,
+  -5,    0,   5,   5,   5,   5,   0,  -5,
+ -10,    0,   5,   5,   5,   5,   0, -10,
+ -10,    0,   0,   0,   0,   0,   0, -10,
+ -20,  -10, -10,  -5,  -5, -10, -10,  -20
+};
+
+const int black_queens_score[64] = 
+{
+ 20,  10, 10,  5,  5, 10, 10,  20,
+ 10,    0,   0,   0,   0,   0,   0, 10,
+ 10,    0,   -5,   -5,   -5,   -5,   0, 10,
+  5,    0,   -5,   -5,   -5,   -5,   0,  5,
+   0,    0,   -5,   -5,   -5,  -5,   0,  5,
+ 10,    -5,   -5,   -5,   -5,   -5,   0, 10,
+ 10,    0,   -5,   0,   0,   0,   0, 10,
+ 20,  10, 10,  5,  5, 10, 10, 20
+};
+
+const int white_king_middlegame_score[64] = 
+{
+     20, 30, 10,  0,  0, 10, 30, 20,
+     20, 20,  0,  0,  0,  0, 20, 20,
+    -10,-20,-20,-20,-20,-20,-20,-10,
+    -20,-30,-30,-40,-40,-30,-30,-20,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30
+};
+
+const int black_king_middlegame_score[64] = 
+{
+    30,40,40,50,50,40,40,30,
+    30,40,40,50,50,40,40,30,
+    30,40,40,50,50,40,40,30,
+    30,40,40,50,50,40,40,30,
+    20,30,30,40,40,30,30,20,
+    10,20,20,20,20,20,20,10,
+     -20, -20,  0,  0,  0,  0, -20, -20,
+     -20, -30, -10,  0,  0, -10, -30, -20
+};
+
+const int white_king_endgame_score[64] = 
+{
+    -50,-30,-30,-30,-30,-30,-30,-50,
+    -30,-30,  0,  0,  0,  0,-30,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-20,-10,  0,  0,-10,-20,-30,
+    -50,-40,-30,-20,-20,-30,-40,-50
+};
+
+const int black_king_endgame_score[64] = 
+{
+    50,40,30,20,20,30,40,50,
+    30,20,10,  0,  0,10,20,30,
+    30,10, -20, -30, -30, -20,10,30,
+    30,10, -30, -40, -40, -30,10,30,
+    30,10, -30, -40, -40, -30,10,30,
+    30,10, -20, -30, -30, -20,10,30,
+    30,30,  0,  0,  0,  0,30,30,
+    50,30,30,30,30,30,30,50
+};
+
+const int *piece_scores[14] = 
+{
+    white_pawns_score,
+    black_pawns_score,
+    white_knights_score,
+    black_knights_score,
+    white_bishops_score,
+    black_bishops_score,
+    white_rooks_score,
+    black_rooks_score,
+    white_queens_score,
+    black_queens_score,
+    white_king_middlegame_score,
+    black_king_middlegame_score,
+    white_king_endgame_score,
+    black_king_endgame_score
+};
+
+size_t positions_searched = 0; // speed test purposes
 
 // stolen from chessprogramming wiki
 bitboard flip_vertical(bitboard b) {
@@ -1130,19 +1320,22 @@ bitboard generate_queen_move_bitboard(square queen, board_t *board) {
            | generate_bishop_move_bitboard(queen, board);
 }
 
-void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin) {
+void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
     move.promotion_piece = EMPTY;
-    bitboard knights;       
+    bitboard knights;
+    bitboard opponent_pieces;
     piece color;
     if (board->t == W) {
         knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_pieces = board->black_pieces;
         color = WHITE;
     }
     else {
         knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_pieces = board->white_pieces;
         color = BLACK;
     }
     bitboard knight_moves;
@@ -1155,6 +1348,7 @@ void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard 
             continue;
         } // pinned knights cannot move at all
         knight_moves = generate_knight_move_bitboard((square)pc_loc, board) & check_mask;
+        knight_moves = (captures_only) ? (knight_moves & opponent_pieces) : knight_moves; // filter out non-captures
         while(knight_moves) {
             tar_loc = first_set_bit(knight_moves);
             move.start = (square)pc_loc;
@@ -1169,26 +1363,29 @@ void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard 
     return;
 }
 
-void generate_king_moves(board_t *board, vector<move_t> *curr_moves) {
+void generate_king_moves(board_t *board, vector<move_t> *curr_moves, bool captures_only) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
     move.promotion_piece = EMPTY;
-    bitboard kings;       
+    bitboard kings;
+    bitboard opponent_pieces;
     piece color;
     if (board->t == W) {
         kings = board->piece_boards[WHITE_KINGS_INDEX];
+        opponent_pieces = board->black_pieces;
         color = WHITE;
     }
     else {
         kings = board->piece_boards[BLACK_KINGS_INDEX];
+        opponent_pieces = board->white_pieces;
         color = BLACK;
     }
     bitboard king_moves;
     while(kings) {
         pc_loc = first_set_bit(kings);
         king_moves = generate_king_move_bitboard((square)pc_loc, board);
-        
+        king_moves = (captures_only) ? (king_moves & opponent_pieces) : king_moves; // filter out non-captures
         while(king_moves) {
             tar_loc = first_set_bit(king_moves);
             move.start = (square)pc_loc;
@@ -1203,31 +1400,39 @@ void generate_king_moves(board_t *board, vector<move_t> *curr_moves) {
     return;
 }
 
-void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin) {
+void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
     move_t move;
     uint16_t pc_loc;
     uint16_t tar_loc;
     move.promotion_piece = EMPTY;
     bitboard pin_mask;
-    bitboard pawns;       
+    bitboard pawns;
+    bitboard opponent_pieces; // used for captures only
     piece color;
     if (board->t == W) {
         pawns = board->piece_boards[WHITE_PAWNS_INDEX];
+        opponent_pieces = board->black_pieces;
         color = WHITE;
     }
     else {
         pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+        opponent_pieces = board->white_pieces;
         color = BLACK;
     }
     bitboard pawn_moves;
     bitboard pawn_bit;
-    if(board->en_passant != NONE && pawn_check) check_mask |= luts->pieces[board->en_passant];
+    bitboard en_passant_bit = 0;
+    if(board->en_passant != NONE && pawn_check) {
+        en_passant_bit = luts->pieces[board->en_passant];
+        check_mask |= en_passant_bit;
+    }
     while(pawns) {
         pc_loc = first_set_bit(pawns);
         pawn_bit = luts->pieces[pc_loc];
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(pawn_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
         pawn_moves = generate_pawn_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
+        pawn_moves = (captures_only) ? (pawn_moves & (opponent_pieces | en_passant_bit)) : pawn_moves; // choose between captures only or all moves
         // and it with opponent_pieces and the en_passant square if it exists to generate captures only
         while(pawn_moves) {
             tar_loc = first_set_bit(pawn_moves);
@@ -1258,21 +1463,24 @@ void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
     return;
 }
 
-void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin) {
+void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
     move_t move;
     move.promotion_piece = EMPTY; // default to empty for sliding pieces
     bitboard pin_mask;
-    bitboard rooks;          
+    bitboard rooks;
+    bitboard opponent_pieces;
     piece color;
     if (board->t == W) {
         rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+        opponent_pieces = board->black_pieces;
         color = WHITE;
     }
     else {
         rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+        opponent_pieces = board->white_pieces;
         color = BLACK;
     }
 
@@ -1284,6 +1492,7 @@ void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(rook_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
         rook_moves = generate_rook_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
+        rook_moves = (captures_only) ? (rook_moves & opponent_pieces) : rook_moves; // filter out non-captures
         while(rook_moves) {
             tar_loc = first_set_bit(rook_moves);
             move.start = (square)pc_loc;
@@ -1298,21 +1507,24 @@ void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
     return;
 }
 
-void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin) {
+void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
     move_t move;
     move.promotion_piece = EMPTY; // default to empty for sliding pieces
     bitboard pin_mask;
-    bitboard bishops;          
+    bitboard bishops;
+    bitboard opponent_pieces;
     piece color;
     if (board->t == W) {
         bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_pieces = board->black_pieces;
         color = WHITE;
     }
     else {
         bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_pieces = board->white_pieces;
         color = BLACK;
     }
 
@@ -1324,6 +1536,7 @@ void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard 
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(bishop_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
         bishop_moves = generate_bishop_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
+        bishop_moves = (captures_only) ? (bishop_moves & opponent_pieces) : bishop_moves; // filter out non-captures
         while(bishop_moves) {
             tar_loc = first_set_bit(bishop_moves);
             move.start = (square)pc_loc;
@@ -1338,21 +1551,24 @@ void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard 
     return;
 }
 
-void generate_queen_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin) {
+void generate_queen_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     uint16_t pc_loc;
     uint16_t tar_loc;
 
     move_t move;
     move.promotion_piece = EMPTY; // default to empty for sliding pieces
     bitboard pin_mask;
-    bitboard queens;          
+    bitboard queens;
+    bitboard opponent_pieces;
     piece color;
     if (board->t == W) {
         queens = board->piece_boards[WHITE_QUEENS_INDEX];
+        opponent_pieces = board->black_pieces;
         color = WHITE;
     }
     else {
         queens = board->piece_boards[BLACK_QUEENS_INDEX];
+        opponent_pieces = board->white_pieces;
         color = BLACK;
     }
 
@@ -1364,6 +1580,7 @@ void generate_queen_moves(board_t *board, vector<move_t> *curr_moves, bitboard c
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(queen_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
         queen_moves = generate_queen_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
+        queen_moves = (captures_only) ? (queen_moves & opponent_pieces) : queen_moves; // filter out non-captures
         while(queen_moves) {
             tar_loc = first_set_bit(queen_moves);
             move.start = (square)pc_loc;
@@ -1556,14 +1773,14 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
     return pin;
 }
 
-void generate_moves(board_t *board, vector<move_t> *curr_moves) {
+void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_only) {
     bitboard check_pieces = checking_pieces(board);
     bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
     bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
     square friendly_king_loc = (board->t == W) ? board->white_king_loc : board->black_king_loc;
     int check = in_check(check_pieces);
     if(check == DOUBLE_CHECK) {
-        generate_king_moves(board, curr_moves);
+        generate_king_moves(board, curr_moves, captures_only);
         return;
     }
     else if (check == SINGLE_CHECK) {
@@ -1579,12 +1796,12 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves) {
     bool pawn_check = (check_pieces & (board->piece_boards[WHITE_PAWNS_INDEX] | board->piece_boards[BLACK_PAWNS_INDEX])) != 0;
     bitboard check_mask = push_mask | capture_mask;
     pin_t pin = get_pinned_pieces(board, friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
-    generate_pawn_moves(board, curr_moves, check_mask, pawn_check, &pin);
-    generate_knight_moves(board, curr_moves, check_mask, &pin);
-    generate_bishop_moves(board, curr_moves, check_mask, &pin);
-    generate_rook_moves(board, curr_moves, check_mask, &pin);
-    generate_queen_moves(board, curr_moves, check_mask, &pin);
-    generate_king_moves(board, curr_moves);
+    generate_pawn_moves(board, curr_moves, check_mask, pawn_check, &pin, captures_only);
+    generate_knight_moves(board, curr_moves, check_mask, &pin, captures_only);
+    generate_bishop_moves(board, curr_moves, check_mask, &pin, captures_only);
+    generate_rook_moves(board, curr_moves, check_mask, &pin, captures_only);
+    generate_queen_moves(board, curr_moves, check_mask, &pin, captures_only);
+    generate_king_moves(board, curr_moves, captures_only);
     return;
 }
 
@@ -1745,22 +1962,103 @@ int material_count(board_t *board) {
 }
 
 int evaluate(board_t *board) {
+    int piece_counts[10];
+    int total_material_count = 0;
+
+    // positive number initially means it is good for white
+    // when returning we will negate based on who's turn it is
+    int material_score = 0; 
+    int positional_score = 0;
+
+    bitboard piece_board;
+    square piece_sq;
+    int piece_value;
+    for(int i = 0; i < 10; i++) { // only 10 because handle kings seperately
+        piece_board = board->piece_boards[i];
+        piece_counts[i] = 0;
+        while(piece_board) {
+            piece_sq = (square)first_set_bit(piece_board);
+            piece_value = piece_values[i];
+            positional_score += piece_scores[i][piece_sq]; // get the correct board and index it at its square location
+            material_score += piece_value;
+            piece_counts[i]++; // we've seen 1 of this piece type
+            total_material_count += abs(piece_value);
+            piece_board = rem_first_bit(piece_board);
+        }
+    }
+
+    square white_king_loc = board->white_king_loc;
+    square black_king_loc = board->black_king_loc;
+
+    // check if its the end game
+    if(piece_counts[WHITE_QUEENS_INDEX] == 0 &&
+       piece_counts[BLACK_QUEENS_INDEX] == 0) {
+        positional_score += piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc]; // access the endgame positional scores
+        positional_score += piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
+    }
+    else{
+        positional_score += piece_scores[WHITE_KINGS_INDEX][white_king_loc]; // access the middle game positional scores
+        positional_score += piece_scores[BLACK_KINGS_INDEX][black_king_loc];
+    }
+
+    int white_king_rank = white_king_loc / 8;
+    int white_king_file = white_king_loc % 8;
+    int black_king_rank = black_king_loc / 8;
+    int black_king_file = black_king_loc % 8;
+
+    int distance_between_kings = abs(white_king_rank - black_king_rank)
+                               + abs(white_king_file - black_king_file);
+
+    double endgame_weight = 1.0 - (((double)total_material_count) / 8000.0); // total material on both sides at start = 8000
+
+    int king_distance_eval = endgame_weight * (14 - distance_between_kings) * 10;
+    /*
+        All scores are calculated as positive meaning "good for white."
+        Therefore, if it is black's turn, we have to negate our evaluation
+        so that positive means "good for black."
+    */
     int perspective = (board->t == W) ? 1 : -1;
-    return material_count(board) * perspective; // ahhh yes very fancy
+    return ((material_score + positional_score) * perspective) + king_distance_eval;
+}
+
+// go back through and comment this more to understand it
+int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
+    vector<move_t> captures;
+    board_t *curr_board = (*board_stack).top();
+    board_t *next_board;
+
+    int stand_pat = evaluate(curr_board); // fall back evaluation
+    if(stand_pat >= beta) {positions_searched++; return beta;}
+    if(alpha < stand_pat) alpha = stand_pat;
+
+    generate_moves(curr_board, &captures, true); // true flag generates only captures
+    for (move_t capture : captures) {
+        next_board = make_move(curr_board, capture);
+        (*board_stack).push(next_board);
+        int evaluation = -qsearch(board_stack, -beta, -alpha);
+        unmake_move(board_stack);
+
+        if(evaluation >= beta) {positions_searched++; return beta;}
+        if(evaluation > alpha) alpha = evaluation;
+    }
+    positions_searched++;
+    return alpha;
 }
 
 int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     vector<move_t> moves;
+   
+    if(depth == 0) {
+        return qsearch(board_stack, alpha, beta);
+    }
+
     board_t *curr_board = (*board_stack).top();
     board_t *next_board;
-    if(depth == 0) {
-        return evaluate(curr_board);
-    }
     
     generate_moves(curr_board, &moves);
     if(moves.size() == 0) {
         if(checking_pieces(curr_board) != 0) {
-            return INT_MIN + 1 + depth; // have to do this since negative of INT_MIN is not INT_MAX
+            return INT_MIN + 1 + (*board_stack).size(); // the deeper in the search we are, the less good the checkmate is
         }
         return 0;
     }
@@ -1783,7 +2081,8 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
 // how would I do alpha beta pruning with this algorithm here?
 // I want to be able to prune these top branches, since they have the most nodes
 // under them.
-move_t find_best_move(board_t *board, size_t depth) {
+move_t find_best_move(board_t *board) {
+    size_t depth = 4; // how do I know how deep to search?
     stack<board_t *> board_stack;
     board_stack.push(board);
     vector<move_t> moves;
@@ -1793,6 +2092,8 @@ move_t find_best_move(board_t *board, size_t depth) {
     int best_eval = INT_MIN + 1;
     int alpha = INT_MIN + 1;
     int beta = INT_MAX;
+    int move_num = 0;
+    int count = 0;
     for(move_t move : moves) {
         board_stack.push(make_move(board, move));
         int eval = -search(&board_stack, depth - 1, -beta, -alpha); // now its black's move
@@ -1800,16 +2101,22 @@ move_t find_best_move(board_t *board, size_t depth) {
         if(eval > best_eval) {
             best_eval = eval;
             best_move = move;
+            move_num = count;
             if(best_eval > alpha) alpha = best_eval; // not sure if this is right
         }
         unmake_move(&board_stack);
+        count++;
     }
+    // more speed debugging stuff
+    cout << "Positions searched: " << positions_searched << endl;
+    cout << "This move was in position " << move_num << " out of " << count << endl;
+    positions_searched = 0;
     return best_move;
 }
 
 // int main() {
 //     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     string test_pos_1 = "3R4/3Q4/8/8/2k5/4K3/8/8 b - - 0 1";
+//     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 //     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
 //     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
 //     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
@@ -1823,11 +2130,11 @@ move_t find_best_move(board_t *board, size_t depth) {
 //     board_t *board_5 = decode_fen(test_pos_5);
 //     board_t *board_6 = decode_fen(test_pos_6);
 
-//     string test_pos = "3R4/3Q4/8/8/2k5/4K3/8/8 b - - 0 1";
-//     board_t *board = decode_fen(test_pos);
-//     vector<move_t> moves;
-//     generate_moves(board, &moves);
-//     cout << notation_from_move(find_best_move(board, 5), moves, board) << endl;
+//     // string test_pos = "3R4/3Q4/8/8/2k5/4K3/8/8 b - - 0 1";
+//     // board_t *board = decode_fen(test_pos);
+//     // vector<move_t> moves;
+//     // generate_moves(board, &moves);
+//     // cout << notation_from_move(find_best_move(board, 5), moves, board) << endl;
 
 //     size_t depth;
 //     size_t total_nodes;

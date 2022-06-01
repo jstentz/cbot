@@ -2106,7 +2106,7 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
 // I want to be able to prune these top branches, since they have the most nodes
 // under them.
 move_t find_best_move(board_t *board) {
-    size_t depth = 4; // how do I know how deep to search?
+    size_t depth = 5; // how do I know how deep to search?
     stack<board_t *> board_stack;
     board_stack.push(board);
     vector<move_t> moves;

@@ -69,10 +69,10 @@ void DrawChessBoard() {
     for(int row = 0; row < 8; row++) {
         for(int col = 0; col < 8; col++) {
             if((row + col) % 2 == 0) {
-                SDL_SetRenderDrawColor(renderer, 118, 150, 86, 0xFF);
+                SDL_SetRenderDrawColor(renderer, 238, 238, 210, 0xFF);
             }
             else {
-                SDL_SetRenderDrawColor(renderer, 238, 238, 210, 0xFF);
+                SDL_SetRenderDrawColor(renderer, 118, 150, 86, 0xFF);
             }
             sq.y = row * sq_width;
             sq.x = col * sq_width;
@@ -143,7 +143,7 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    window = SDL_CreateWindow("Chess", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+    window = SDL_CreateWindow("Cbot", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     if(!window){
         printf("Error: Failed to open window\nSDL Error: '%s'\n", SDL_GetError());
         return 1;
@@ -166,9 +166,9 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    // board_t *board = decode_fen("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
-    // board_t *board = decode_fen("8/3q4/3k4/8/8/4K3/8/8 w - - 0 1");
     board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // board_t *board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
+    // board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stack<board_t *> game; // add functionality for going back
     move_t move;
     vector<move_t> legal_moves;
@@ -267,13 +267,13 @@ int main(int argc, char** argv){
             legal_moves.clear();
             generate_moves(board, &legal_moves);
 
-            // cout << "Player moves: " << legal_moves.size() << endl;
-
-            // cout << notation_from_move(move, legal_moves, board);
-            // cout << endl;
-
             madeMove = false;
         }
+
+        // move = find_best_move(board);
+        // board = make_move(board, move); // leaking memory here
+        // LoadDisplayBoardFromGameState(board->sq_board);
+
         SDL_RenderClear(renderer);
         DrawChessBoard();
         DrawPieces();
@@ -304,14 +304,20 @@ int main(int argc, char** argv){
       It can't see far enough to know the exact mate
 
       To do list:
+       - dark squares are light squares
+       - zobrist hashing and repetition draws (bookmark)
+       - test simple checkmates again
+       - transposition table
        - opening book
-       - move ordering
+       - iterative deepening
+       - better move ordering
        - qsearch (done but now its very slow... try move ordering?)
        - better eval function (done for now)
        - transposition tables
        - eventually switch away from SDL for better quality... Maybe try Unity?
          or UE4?
        - store the material in the board state
+       - add checks to qsearch
 
 
       before adding new eval, we have 3527924 positions searched after Nd5

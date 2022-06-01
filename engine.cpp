@@ -1990,9 +1990,7 @@ int evaluate(board_t *board) {
     square black_king_loc = board->black_king_loc;
 
     // check if its the end game
-    if((piece_counts[WHITE_QUEENS_INDEX] == 0 &&
-       piece_counts[BLACK_QUEENS_INDEX] == 0) || 
-       (total_material_count < 2000)) {
+    if(total_material_count < 2000) {
         positional_score += piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc]; // access the endgame positional scores
         positional_score += piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
     }
@@ -2005,9 +2003,9 @@ int evaluate(board_t *board) {
     int white_king_file = white_king_loc % 8;
     int black_king_rank = black_king_loc / 8;
     int black_king_file = black_king_loc % 8;
-
-    int distance_between_kings = abs(white_king_rank - black_king_rank)
-                               + abs(white_king_file - black_king_file);
+    int rank_distance = abs(white_king_rank - black_king_rank);
+    int file_distance = abs(white_king_file - black_king_file);
+    int distance_between_kings = (rank_distance > file_distance) ? rank_distance : file_distance;
 
     // cout << distance_between_kings << endl;
 
@@ -2015,7 +2013,7 @@ int evaluate(board_t *board) {
 
     // cout << endgame_weight << endl;
     // need to add functionality for repeat draws so it doesn't repeat in the endgame
-    int king_distance_eval = (int)(endgame_weight * (double)((14 - distance_between_kings) * 5));
+    int king_distance_eval = (int)(endgame_weight * (double)((7 - distance_between_kings) * 10));
     // cout << king_distance_eval << endl;
     /*
         All scores are calculated as positive meaning "good for white."
@@ -2024,7 +2022,7 @@ int evaluate(board_t *board) {
     */
 
     int perspective = (board->t == W) ? 1 : -1;
-    return ((material_score + positional_score) * perspective);
+    return ((material_score + positional_score) * perspective) + king_distance_eval;
 }
 
 // go back through and comment this more to understand it

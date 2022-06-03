@@ -94,6 +94,11 @@ typedef struct Board
 
     square white_king_loc;
     square black_king_loc;
+
+    /* evaluation items */
+    int total_material;
+    int material_score; // this will always be from white's perspective
+    int piece_placement_score; // score based on piece locations
 } board_t;
 
 typedef struct LUTs {
@@ -158,7 +163,7 @@ size_t index_from_piece(piece pc);
  * @param move 
  * @return board_t* 
  */
-board_t *make_move(board_t *board, move_t move);
+board_t *make_move(board_t *board, move_t *move);
 
 /**
  * @brief Given a pointer to a stack of boards, it will undo the most

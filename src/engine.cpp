@@ -2083,7 +2083,7 @@ int evaluate(board_t *board) {
 
     // cout << endgame_weight << endl;
     // need to add functionality for repeat draws so it doesn't repeat in the endgame
-    int king_distance_eval = (int)(endgame_weight * (double)((7 - distance_between_kings) * 10));
+    int king_distance_eval = (int)(endgame_weight * (double)((7 - distance_between_kings) * 5));
     // cout << king_distance_eval << endl;
     /*
         All scores are calculated as positive meaning "good for white."
@@ -2192,7 +2192,8 @@ move_t find_best_move(board_t *board) {
     // cout << "This move was in position " << move_num << " out of " << count << endl;
     double time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
     cout << "Time elapsed: " << time_elapsed << endl;
-    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl << endl;
+    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl;
+    cout << "Material score: " << board->material_score << endl;
     positions_searched = 0;
     return best_move;
 }
@@ -2308,6 +2309,9 @@ move_t find_best_move(board_t *board) {
     incremental evaluation of the board
 
     currently 2.5 million nodes evaluated per second
+
+    maybe have the opening book be like a hashtable that has the position and 
+    the move to be played in that position
 */
 
 

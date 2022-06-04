@@ -26,8 +26,21 @@ typedef struct move_struct {
     piece promotion_piece;
 } move_t;
 
+/**
+ * @brief Given a board state, generates all legal moves in the position.
+ * 
+ * @param board Current board state
+ * @param curr_moves Place to store the moves
+ * @param captures_only Whether to generate only captures or all legal moves
+ */
 void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_only = false);
 
+/**
+ * @brief Given a list of moves, tries to order the moves from best to worse
+ * using some heuristics.
+ * 
+ * @param moves Vector of moves to reorder
+ */
 void order_moves(vector<move_t> *moves);
 
 /**

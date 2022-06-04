@@ -60,7 +60,7 @@ bitboard undo_pseudo_rotate_45_clockwise(bitboard b);
  * @brief Undo the 45 degree anticlockwise rotation.
  * 
  * @param b bitboard
- * @return Unrotated bitboard 
+ * @return Unrotated bitboard
  */
 bitboard undo_pseudo_rotate_45_anticlockwise(bitboard b);
 

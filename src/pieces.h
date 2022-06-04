@@ -29,9 +29,16 @@ typedef short unsigned int piece;
  * @brief Given a piece, it will return the index associated with that piece.
  * Each piece is mapped to an index 0 - 11 inclusive.
  * 
- * @param pc 
- * @return size_t
+ * @param pc piece
+ * @return index
  */
 size_t index_from_piece(piece pc);
 
+/**
+ * @brief Given a piece, returns true iff it is a sliding piece.
+ * 
+ * @param pc 
+ * @return true if sliding piece
+ * @return false if not
+ */
 bool is_sliding_piece(piece pc);

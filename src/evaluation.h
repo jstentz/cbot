@@ -13,7 +13,7 @@
 
 #pragma once
 
-// all from white's perspective, so you need to negate for black
+
 const int piece_values[10] = {100, // white pawn
                              -100, // black pawn
                               320, // white knight
@@ -24,8 +24,6 @@ const int piece_values[10] = {100, // white pawn
                              -500, // black rook
                               900, // white queen
                              -900};// black queen
-
-// these are all from white's perspective, so you need to negate for black
 
 const int white_pawns_score[64] = 
 {
@@ -195,6 +193,10 @@ const int black_king_endgame_score[64] =
     50,30,30,30,30,30,30,50
 };
 
+/**
+ * @brief Contains an array of piece-location scores from white's perspective.
+ * 
+ */
 static const int *piece_scores[14] = 
 {
     white_pawns_score,
@@ -217,6 +219,6 @@ static const int *piece_scores[14] =
  * @brief Returns a static evaluation of the board state
  * 
  * @param board board to evaluate
- * @return score
+ * @return score from the perspective of who's turn it is
  */
 int evaluate(board_t *board);

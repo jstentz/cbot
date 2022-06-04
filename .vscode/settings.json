@@ -4,7 +4,8 @@
         "ios": "cpp",
         "ostream": "cpp",
         "iostream": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "stack": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

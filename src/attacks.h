@@ -13,6 +13,7 @@
 
 #include "bitboard.h"
 #include "board.h"
+
 /**
  * @brief Structure containing all precalculated data
  * 

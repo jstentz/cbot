@@ -57,6 +57,10 @@ enum square { A1, B1, C1, D1, E1, F1, G1, H1,
 enum rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 enum file { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
+/**
+ * @brief Struct containing all board state data
+ * 
+ */
 typedef struct Board
 {
     bitboard piece_boards[12];
@@ -83,15 +87,37 @@ typedef struct Board
     int piece_placement_score; // score based on piece locations
 } board_t;
 
+/**
+ * @brief Struct containing the state of pins on the board
+ * 
+ */
 typedef struct pin_struct {
     bitboard ray_at_sq[64];
     bitboard pinned_pieces;
 } pin_t;
 
+/**
+ * @brief Sets a bit on the given bitboard at the given square.
+ * 
+ * @param bb Bitboard
+ * @param sq Location of piece
+ */
 void place_piece(bitboard *bb, square sq);
 
+/**
+ * @brief Removes a bit on the given bitboard at the given square.
+ * 
+ * @param bb Bitboard
+ * @param sq Location of piece
+ */
 void rem_piece(bitboard *bb, square sq);
 
+/**
+ * @brief Given a board, it makes sure that the extra boards, such as all_pieces
+ * are updated with the piece bitboards.
+ * 
+ * @param board Board to update
+ */
 void update_boards(board_t *board);
 
 /**
@@ -103,10 +129,31 @@ void update_boards(board_t *board);
  */
 board_t *decode_fen(string fen);
 
+/**
+ * @brief Given a board state and the location of the friendly king, it
+ * returns a struct outlining the pins on the board.
+ * 
+ * @param board Current board state
+ * @param friendly_king_loc 
+ * @return pin_t 
+ */
 pin_t get_pinned_pieces(board_t *board, square friendly_king_loc);
 
+/**
+ * @brief Given a board state, it returns a bitboard with the location of the
+ * pinned pieces.
+ * 
+ * @param board Current board state
+ * @return Bitboard containing location of pinned pieces 
+ */
 bitboard checking_pieces(board_t *board);
 
+/**
+ * @brief Given attackers of the king, it returns the type of check we are in.
+ * 
+ * @param attackers Pieces attacking the king
+ * @return Double check, single check, or no check 
+ */
 int in_check(bitboard attackers);
 
 /**

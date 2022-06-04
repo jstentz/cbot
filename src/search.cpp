@@ -167,7 +167,7 @@ move_t find_best_move(board_t *board) {
     tStop = clock();
     // more speed debugging stuff
     cout << "Positions searched: " << positions_searched << endl;
-    // cout << "This move was in position " << move_num << " out of " << count << endl;
+    cout << "This move was in position " << move_num << " out of " << count << endl;
     double time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
     cout << "Time elapsed: " << time_elapsed << endl;
     cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl;

@@ -5,7 +5,8 @@
         "ostream": "cpp",
         "iostream": "cpp",
         "bitset": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "xlocale": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

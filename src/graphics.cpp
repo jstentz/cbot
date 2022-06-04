@@ -4,7 +4,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include "engine.h"
+#include "search.h"
+#include "pieces.h"
+#include "board.h"
 
 using namespace std;
 

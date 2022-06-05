@@ -19,13 +19,13 @@ void rem_piece(bitboard *bb, square sq) {
 }
 
 void update_boards(board_t *board) {
-    board->black_pieces = (board->piece_boards[1]  | board->piece_boards[3] | 
-                           board->piece_boards[5]  | board->piece_boards[7] |
-                           board->piece_boards[9]  | board->piece_boards[11]);
+    board->white_pieces = (board->piece_boards[WHITE_PAWNS_INDEX]   | board->piece_boards[WHITE_KNIGHTS_INDEX] | 
+                           board->piece_boards[WHITE_BISHOPS_INDEX] | board->piece_boards[WHITE_ROOKS_INDEX]   |
+                           board->piece_boards[WHITE_QUEENS_INDEX]  | board->piece_boards[WHITE_KINGS_INDEX]);
 
-    board->white_pieces = (board->piece_boards[0]  | board->piece_boards[2] | 
-                           board->piece_boards[4]  | board->piece_boards[6] |
-                           board->piece_boards[8]  | board->piece_boards[10]);
+    board->black_pieces = (board->piece_boards[BLACK_PAWNS_INDEX]   | board->piece_boards[BLACK_KNIGHTS_INDEX] | 
+                           board->piece_boards[BLACK_BISHOPS_INDEX] | board->piece_boards[BLACK_ROOKS_INDEX]   |
+                           board->piece_boards[BLACK_QUEENS_INDEX]  | board->piece_boards[BLACK_KINGS_INDEX]);
 
     board->all_pieces = board->white_pieces | board->black_pieces;
     return;
@@ -136,6 +136,43 @@ board_t *decode_fen(string fen) {
     update_boards(board);
     // cout << board->material_score << endl;
     return board;
+}
+
+string encode_fen(board_t *board) {
+    piece *sq_board = board->sq_board;
+    int consecutive_empty = 0;
+    piece pc;
+    string fen = "";
+    string pc_str;
+    piece color;
+    piece pc_type;
+    int sq;
+    for(int i = 7; i >= 0; i--) {
+        for(int j = 0; j < 8; j++) {
+            sq = i * 8 + j;
+            pc = sq_board[sq];
+            if(pc == EMPTY) {
+                consecutive_empty++;
+                continue;
+            }
+            else if(consecutive_empty != 0) {
+                fen += to_string(consecutive_empty);
+                consecutive_empty = 0;
+            }
+
+            pc_type = PIECE(pc);
+            if(pc_type == PAWN) pc_str = "p";
+            else if(pc_type == KNIGHT) pc_str = "n";
+            else if(pc_type == BISHOP) pc_str = "b";
+            else if(pc_type == ROOK) pc_str = "r";
+            else if(pc_type == QUEEN) pc_str = "q";
+            else pc_str = "k";
+
+            color = COLOR(pc);
+            // if(color == WHITE) 
+        }
+        if(i != 0) fen += "/";
+    }
 }
 
 pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {

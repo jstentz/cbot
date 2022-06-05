@@ -130,6 +130,15 @@ void update_boards(board_t *board);
 board_t *decode_fen(string fen);
 
 /**
+ * @brief Given a board state, gives back a FEN string representing
+ * that board state.
+ * 
+ * @param board Board state
+ * @return FEN string
+ */
+string encode_fen(board_t *board);
+
+/**
  * @brief Given a board state and the location of the friendly king, it
  * returns a struct outlining the pins on the board.
  * 

@@ -17,7 +17,6 @@
 
 #include "bitboard.h"
 #include "pieces.h"
-#include "hashing.h"
 
 using namespace std;
 
@@ -57,6 +56,9 @@ enum square { A1, B1, C1, D1, E1, F1, G1, H1,
 
 enum rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 enum file { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
+
+typedef unsigned long long int hash_val; // stolen from hashing.h
+// NOT THE FIX I LIKE
 
 /**
  * @brief Struct containing all board state data
@@ -140,7 +142,7 @@ board_t *decode_fen(string fen);
  * @param board Board state
  * @return FEN string
  */
-string encode_fen(board_t *board);
+// string encode_fen(board_t *board);
 
 /**
  * @brief Given a board state and the location of the friendly king, it

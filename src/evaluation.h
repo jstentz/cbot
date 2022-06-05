@@ -9,10 +9,9 @@
  * 
  */
 
-#include "board.h"
-
 #pragma once
 
+#include "board.h"
 
 const int piece_values[10] = {100, // white pawn
                              -100, // black pawn

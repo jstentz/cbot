@@ -7,6 +7,7 @@
 #include "pieces.h"
 #include "attacks.h"
 #include "evaluation.h"
+#include "hashing.h"
 
 void place_piece(bitboard *bb, square sq) {
     *bb = *bb | luts.pieces[sq];
@@ -140,6 +141,7 @@ board_t *decode_fen(string fen) {
     return board;
 }
 
+// incomplete
 string encode_fen(board_t *board) {
     piece *sq_board = board->sq_board;
     int consecutive_empty = 0;
@@ -175,6 +177,7 @@ string encode_fen(board_t *board) {
         }
         if(i != 0) fen += "/";
     }
+    return fen;
 }
 
 pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {

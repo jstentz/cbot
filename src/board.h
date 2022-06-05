@@ -142,7 +142,7 @@ board_t *decode_fen(string fen);
  * @param board Board state
  * @return FEN string
  */
-// string encode_fen(board_t *board);
+string encode_fen(board_t *board);
 
 /**
  * @brief Given a board state and the location of the friendly king, it

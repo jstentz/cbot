@@ -142,43 +142,43 @@ board_t *decode_fen(string fen) {
 }
 
 // incomplete
-// string encode_fen(board_t *board) {
-//     piece *sq_board = board->sq_board;
-//     int consecutive_empty = 0;
-//     piece pc;
-//     string fen = "";
-//     string pc_str;
-//     piece color;
-//     piece pc_type;
-//     int sq;
-//     for(int i = 7; i >= 0; i--) {
-//         for(int j = 0; j < 8; j++) {
-//             sq = i * 8 + j;
-//             pc = sq_board[sq];
-//             if(pc == EMPTY) {
-//                 consecutive_empty++;
-//                 continue;
-//             }
-//             else if(consecutive_empty != 0) {
-//                 fen += to_string(consecutive_empty);
-//                 consecutive_empty = 0;
-//             }
+string encode_fen(board_t *board) {
+    piece *sq_board = board->sq_board;
+    int consecutive_empty = 0;
+    piece pc;
+    string fen = "";
+    string pc_str;
+    piece color;
+    piece pc_type;
+    int sq;
+    for(int i = 7; i >= 0; i--) {
+        for(int j = 0; j < 8; j++) {
+            sq = i * 8 + j;
+            pc = sq_board[sq];
+            if(pc == EMPTY) {
+                consecutive_empty++;
+                continue;
+            }
+            else if(consecutive_empty != 0) {
+                fen += to_string(consecutive_empty);
+                consecutive_empty = 0;
+            }
 
-//             pc_type = PIECE(pc);
-//             if(pc_type == PAWN) pc_str = "p";
-//             else if(pc_type == KNIGHT) pc_str = "n";
-//             else if(pc_type == BISHOP) pc_str = "b";
-//             else if(pc_type == ROOK) pc_str = "r";
-//             else if(pc_type == QUEEN) pc_str = "q";
-//             else pc_str = "k";
+            pc_type = PIECE(pc);
+            if(pc_type == PAWN) pc_str = "p";
+            else if(pc_type == KNIGHT) pc_str = "n";
+            else if(pc_type == BISHOP) pc_str = "b";
+            else if(pc_type == ROOK) pc_str = "r";
+            else if(pc_type == QUEEN) pc_str = "q";
+            else pc_str = "k";
 
-//             color = COLOR(pc);
-//             // if(color == WHITE) 
-//         }
-//         if(i != 0) fen += "/";
-//     }
-//     return fen;
-// }
+            color = COLOR(pc);
+            // if(color == WHITE) 
+        }
+        if(i != 0) fen += "/";
+    }
+    return fen;
+}
 
 pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
     pin_t pin;

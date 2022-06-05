@@ -296,4 +296,8 @@ move_t find_best_move(board_t *board) {
     ^ used for move ordering purposes
 
     most programs consider a single repetition to be a draw
+
+    need to add draw for insufficient material
+    tomorrow need to do better eval and better move ordering
+    have make_move function update hash value
 */

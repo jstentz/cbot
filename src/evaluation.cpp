@@ -1,12 +1,19 @@
 #include "evaluation.h"
 #include "board.h"
 
+char cmd(square sq) {
+
+}
+
+
+int mop_up_eval(board_t *board) {
+    // this function assumes that there are no pawns for either side
+
+}
+
 int evaluate(board_t *board) {
     // positive number initially means it is good for white
     // when returning we will negate based on who's turn it is
-    int material_score = board->material_score; 
-    int positional_score = board->piece_placement_score;
-    int total_material_count = board->total_material;
 
     bitboard piece_board;
     square piece_sq;

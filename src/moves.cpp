@@ -625,9 +625,6 @@ board_t *make_move(board_t *board, move_t *move) {
     piece tar_piece = move->tar_piece;
 
     bitboard *mv_board = &next_board->piece_boards[index_from_piece(mv_piece)];
-
-    /* remove the moving piece from location score */
-    next_board->piece_placement_score -= piece_scores[index_from_piece(mv_piece)][start];
     
     // always remove the piece from its board no matter what
     rem_piece(mv_board, start);
@@ -645,9 +642,6 @@ board_t *make_move(board_t *board, move_t *move) {
         next_board->sq_board[H1] = EMPTY;
         next_board->sq_board[F1] = WHITE | ROOK;
         next_board->white_king_side = false;
-
-        next_board->piece_placement_score -= piece_scores[WHITE_ROOKS_INDEX][H1]; /* rook is no longer in the H1 */
-        next_board->piece_placement_score += piece_scores[WHITE_ROOKS_INDEX][F1]; /* rook is now on F1 */
     }
     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
         castling_rook = &next_board->piece_boards[WHITE_ROOKS_INDEX];
@@ -656,9 +650,6 @@ board_t *make_move(board_t *board, move_t *move) {
         next_board->sq_board[A1] = EMPTY;
         next_board->sq_board[D1] = WHITE | ROOK;
         next_board->white_queen_side = false;
-
-        next_board->piece_placement_score -= piece_scores[WHITE_ROOKS_INDEX][A1]; /* rook is no longer in the A1 */
-        next_board->piece_placement_score += piece_scores[WHITE_ROOKS_INDEX][D1]; /* rook is now on D1 */
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
         castling_rook = &next_board->piece_boards[BLACK_ROOKS_INDEX];
@@ -667,9 +658,6 @@ board_t *make_move(board_t *board, move_t *move) {
         next_board->sq_board[H8] = EMPTY;
         next_board->sq_board[F8] = BLACK | ROOK;
         next_board->black_king_side = false;
-
-        next_board->piece_placement_score -= piece_scores[BLACK_ROOKS_INDEX][H8]; /* rook is no longer in the H8 */
-        next_board->piece_placement_score += piece_scores[BLACK_ROOKS_INDEX][F8]; /* rook is now on F8 */
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
         castling_rook = &next_board->piece_boards[BLACK_ROOKS_INDEX];
@@ -678,23 +666,12 @@ board_t *make_move(board_t *board, move_t *move) {
         next_board->sq_board[A8] = EMPTY;
         next_board->sq_board[D8] = BLACK | ROOK;
         next_board->black_queen_side = false;
-
-        next_board->piece_placement_score -= piece_scores[BLACK_ROOKS_INDEX][A8]; /* rook is no longer in the A8 */
-        next_board->piece_placement_score += piece_scores[BLACK_ROOKS_INDEX][D8]; /* rook is now on D8 */
     }
 
     /* check if promoting move */
     if(move->promotion_piece != EMPTY) {
-        /* remove the pawn from the material scores */
-        next_board->material_score -= piece_values[index_from_piece(mv_piece)];
-        next_board->total_material -= abs(piece_values[index_from_piece(mv_piece)]);
-
         mv_piece = move->promotion_piece;
         mv_board = &next_board->piece_boards[index_from_piece(mv_piece)];
-
-        /* add the promoting piece from the material scores */
-        next_board->material_score += piece_values[index_from_piece(mv_piece)];
-        next_board->total_material += abs(piece_values[index_from_piece(mv_piece)]);
     }
 
     place_piece(mv_board, target);
@@ -703,10 +680,6 @@ board_t *make_move(board_t *board, move_t *move) {
     if(tar_piece != EMPTY) {
         bitboard *captured_board = &next_board->piece_boards[index_from_piece(tar_piece)];
         rem_piece(captured_board, target);
-
-        next_board->material_score -= piece_values[index_from_piece(tar_piece)]; /* remove the captured piece from material */
-        next_board->piece_placement_score -= piece_scores[index_from_piece(tar_piece)][target]; /* remove the piece from the placement score */
-        next_board->total_material -= abs(piece_values[index_from_piece(tar_piece)]);
     }
 
     next_board->sq_board[start] = EMPTY;
@@ -718,20 +691,12 @@ board_t *make_move(board_t *board, move_t *move) {
         square pawn_square = (square)((int)next_board->en_passant - 8);
         rem_piece(black_pawns, pawn_square);
         next_board->sq_board[pawn_square] = EMPTY;
-
-        next_board->material_score -= piece_values[BLACK_PAWNS_INDEX]; /* remove the captured pawn from material */
-        next_board->piece_placement_score -= piece_scores[BLACK_PAWNS_INDEX][pawn_square]; /* remove the pawn from the placement score */
-        next_board->total_material -= abs(piece_values[BLACK_PAWNS_INDEX]);
     }
     else if(mv_piece == (BLACK | PAWN) && target == next_board->en_passant) {
         bitboard *white_pawns = &next_board->piece_boards[WHITE_PAWNS_INDEX];
         square pawn_square = (square)((int)next_board->en_passant + 8);
         rem_piece(white_pawns, pawn_square);
         next_board->sq_board[pawn_square] = EMPTY;
-
-        next_board->material_score -= piece_values[WHITE_PAWNS_INDEX]; /* remove the captured pawn from material */
-        next_board->piece_placement_score -= piece_scores[WHITE_PAWNS_INDEX][pawn_square]; /* remove the pawn from the placement score */
-        next_board->total_material -= abs(piece_values[WHITE_PAWNS_INDEX]);
     }
 
     /* Update en passant squares */
@@ -770,10 +735,6 @@ board_t *make_move(board_t *board, move_t *move) {
 
     next_board->t = !next_board->t;
     update_boards(next_board);
-
-    /* update the moving pieces location score note that mv_piece will be the promoted piece */
-    next_board->piece_placement_score += piece_scores[index_from_piece(mv_piece)][target];
-
     return next_board;
 }
 

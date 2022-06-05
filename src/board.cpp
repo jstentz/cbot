@@ -54,10 +54,6 @@ board_t *zero_board() {
     board->black_king_side = false;
     board->black_queen_side = false;
 
-    board->material_score = 0;
-    board->piece_placement_score = 0;
-    board->total_material = 0;
-
     board->board_hash = 0;
 
     return board;
@@ -110,10 +106,6 @@ board_t *decode_fen(string fen) {
                 if(pc == (WHITE | KING)) board->white_king_loc = (square)loc;
                 else                     board->black_king_loc = (square)loc;
             }
-            /* setup the current evaluation */
-            board->material_score += piece_values[index_from_piece(pc)];
-            board->piece_placement_score += piece_scores[index_from_piece(pc)][loc];
-            board->total_material += abs(piece_values[index_from_piece(pc)]);
 
             /* place the piece in its boards */
             board->sq_board[loc] = pc;

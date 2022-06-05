@@ -57,6 +57,8 @@ board_t *zero_board() {
     board->piece_placement_score = 0;
     board->total_material = 0;
 
+    board->board_hash = 0;
+
     return board;
 }
 
@@ -134,7 +136,7 @@ board_t *decode_fen(string fen) {
         i++;
     }
     update_boards(board);
-    // cout << board->material_score << endl;
+    board->board_hash = zobrist_hash(board); // hash the board initially
     return board;
 }
 

@@ -4,6 +4,7 @@
 #include "attacks.h"
 #include "pieces.h"
 #include "evaluation.h"
+#include "hashing.h"
 
 #include <vector>
 #include <stack>

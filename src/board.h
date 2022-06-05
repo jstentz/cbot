@@ -17,6 +17,7 @@
 
 #include "bitboard.h"
 #include "pieces.h"
+#include "hashing.h"
 
 using namespace std;
 
@@ -85,6 +86,9 @@ typedef struct Board
     int total_material;
     int material_score; // this will always be from white's perspective
     int piece_placement_score; // score based on piece locations
+
+    /* hashing items */
+    hash_val board_hash;
 } board_t;
 
 /**

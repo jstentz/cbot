@@ -18,6 +18,9 @@
 #include <iostream>
 #include <string>
 
+/**
+ * @brief Struct that represents a chess move.
+ */
 typedef struct move_struct {
     square start;
     square target;

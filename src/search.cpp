@@ -131,10 +131,6 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     return best_eval;
 }
 
-
-// how would I do alpha beta pruning with this algorithm here?
-// I want to be able to prune these top branches, since they have the most nodes
-// under them.
 move_t find_best_move(board_t *board) {
     clock_t tStart;
     clock_t tStop;

@@ -25,6 +25,9 @@ typedef short unsigned int piece;
 #define KING (piece)0xC
 #define EMPTY (piece)0x0
 
+#define COLOR(pc) (pc & 0x1)
+#define PIECE(pc) (pc & 0xE)
+
 /**
  * @brief Given a piece, it will return the index associated with that piece.
  * Each piece is mapped to an index 0 - 11 inclusive.

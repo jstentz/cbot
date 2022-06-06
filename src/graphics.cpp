@@ -172,8 +172,8 @@ int main(int argc, char** argv){
     // board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // board_t *board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
     // board_t *board = decode_fen("6k1/pp3pp1/4pn1p/8/2P5/5N1P/PP3PP1/6K1 w - - 0 1");
-    board_t *board = decode_fen("8/3p7/3k4/8/8/3K4/8/8 w - - 0 1");
-    // board_t *board = decode_fen("8/6r1/5k2/8/8/8/8/4K3 w - - 0 1");
+    // board_t *board = decode_fen("8/3p7/3k4/8/8/3K4/8/8 w - - 0 1");
+    board_t *board = decode_fen("8/6r1/5k2/8/8/8/8/4K3 w - - 0 1");
     stack<board_t *> game; // add functionality for going back
     move_t move;
     vector<move_t> legal_moves;

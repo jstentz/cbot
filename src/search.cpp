@@ -3,11 +3,13 @@
 #include "board.h"
 #include "moves.h"
 #include "evaluation.h"
+#include "hashing.h"
 
 #include <stddef.h>
 #include <stack>
 #include <vector>
 #include <time.h>
+#include <unordered_set>
 
 using namespace std;
 
@@ -73,14 +75,21 @@ uint64_t perft(board_t *board, size_t depth) {
     return total_nodes;
 }
 
+unordered_set<hash_val> TT;
+
 // go back through and comment this more to understand it
 int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
     vector<move_t> captures;
     board_t *curr_board = (*board_stack).top();
     board_t *next_board;
+    hash_val h = zobrist_hash(curr_board);
+    if(TT.find(h) != TT.end()) {
+        return 0;
+    }
+    TT.insert(h);
 
     int stand_pat = evaluate(curr_board); // fall back evaluation
-    if(stand_pat >= beta) {positions_searched++; return beta;}
+    if(stand_pat >= beta) {positions_searched++; TT.erase(h); return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(curr_board, &captures, true); // true flag generates only captures
@@ -91,10 +100,11 @@ int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
         int evaluation = -qsearch(board_stack, -beta, -alpha);
         unmake_move(board_stack);
 
-        if(evaluation >= beta) {positions_searched++; return beta;}
+        if(evaluation >= beta) {positions_searched++; TT.erase(h); return beta;}
         if(evaluation > alpha) alpha = evaluation;
     }
     positions_searched++;
+    TT.erase(h);
     return alpha;
 }
 
@@ -108,6 +118,12 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     board_t *curr_board = (*board_stack).top();
     board_t *next_board;
     
+    hash_val h = zobrist_hash(curr_board);
+    if(TT.find(h) != TT.end()) {
+        return 0;
+    }
+    TT.insert(h);
+
     generate_moves(curr_board, &moves);
     order_moves(&moves);
     if(moves.size() == 0) {
@@ -128,19 +144,25 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
         if(best_eval > alpha) alpha = best_eval;
         if(alpha >= beta) break;
     }
+    TT.erase(h);
     return best_eval;
 }
 
 move_t find_best_move(board_t *board) {
+    // runs under the assumption that there are legal moves
+    TT.clear();
+    hash_val h = zobrist_hash(board);
+    TT.insert(h);
     clock_t tStart;
     clock_t tStop;
     size_t depth = 5; // how do I know how deep to search?
+    board_t *next_board;
     stack<board_t *> board_stack;
     board_stack.push(board);
     vector<move_t> moves;
     generate_moves(board, &moves);
     order_moves(&moves);
-    move_t best_move = moves[0]; // this will crash it at some point
+    move_t best_move;
     int best_eval = INT_MIN + 1;
     int alpha = INT_MIN + 1;
     int beta = INT_MAX;
@@ -148,7 +170,8 @@ move_t find_best_move(board_t *board) {
     int count = 0;
     tStart = clock();
     for(move_t move : moves) {
-        board_stack.push(make_move(board, &move));
+        next_board = make_move(board, &move);
+        board_stack.push(next_board);
         int eval = -search(&board_stack, depth - 1, -beta, -alpha); // now its black's move
 
         if(eval > best_eval) {
@@ -160,14 +183,15 @@ move_t find_best_move(board_t *board) {
         unmake_move(&board_stack);
         count++;
     }
+    // TT.erase(h); // don't erase because this position was played
+    TT.insert(zobrist_hash(make_move(board, &best_move))); // include the new board
     tStop = clock();
     // more speed debugging stuff
     cout << "Positions searched: " << positions_searched << endl;
     cout << "This move was in position " << move_num << " out of " << count << endl;
     double time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
     cout << "Time elapsed: " << time_elapsed << endl;
-    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl;
-    cout << "Material score: " << board->material_score << endl;
+    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl << endl;
     positions_searched = 0;
     return best_move;
 }
@@ -300,4 +324,10 @@ move_t find_best_move(board_t *board) {
     need to add draw for insufficient material
     tomorrow need to do better eval and better move ordering
     have make_move function update hash value
+
+    maybe the find best move function will just perform the search and then look
+    up the hash value in the TT that was created from the search
+    still just need to reason through this more
+
+    for speed consider using smaller types for numbers that aren't big
 */

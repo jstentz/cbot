@@ -183,8 +183,8 @@ move_t find_best_move(board_t *board) {
         unmake_move(&board_stack);
         count++;
     }
-    // TT.erase(h); // don't erase because this position was played
-    TT.insert(zobrist_hash(make_move(board, &best_move))); // include the new board
+    TT.erase(h); // don't erase because this position was played
+    // TT.insert(zobrist_hash(make_move(board, &best_move))); // include the new board
     tStop = clock();
     // more speed debugging stuff
     cout << "Positions searched: " << positions_searched << endl;

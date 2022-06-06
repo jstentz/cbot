@@ -83,9 +83,9 @@ int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
     board_t *curr_board = (*board_stack).top();
     board_t *next_board;
     hash_val h = zobrist_hash(curr_board);
-    if(TT.find(h) != TT.end()) {
-        return 0;
-    }
+    // if(TT.find(h) != TT.end()) {
+    //     return 0;
+    // }
     TT.insert(h);
 
     int stand_pat = evaluate(curr_board); // fall back evaluation
@@ -104,7 +104,7 @@ int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
         if(evaluation > alpha) alpha = evaluation;
     }
     positions_searched++;
-    TT.erase(h);
+    // TT.erase(h);
     return alpha;
 }
 
@@ -118,11 +118,11 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     board_t *curr_board = (*board_stack).top();
     board_t *next_board;
     
-    hash_val h = zobrist_hash(curr_board);
-    if(TT.find(h) != TT.end()) {
-        return 0;
-    }
-    TT.insert(h);
+    // hash_val h = zobrist_hash(curr_board);
+    // if(TT.find(h) != TT.end()) {
+    //     return 0;
+    // }
+    // TT.insert(h);
 
     generate_moves(curr_board, &moves);
     order_moves(&moves);
@@ -144,15 +144,15 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
         if(best_eval > alpha) alpha = best_eval;
         if(alpha >= beta) break;
     }
-    TT.erase(h);
+    // TT.erase(h);
     return best_eval;
 }
 
 move_t find_best_move(board_t *board) {
     // runs under the assumption that there are legal moves
-    TT.clear();
-    hash_val h = zobrist_hash(board);
-    TT.insert(h);
+    // TT.clear();
+    // hash_val h = zobrist_hash(board);
+    // TT.insert(h);
     clock_t tStart;
     clock_t tStop;
     size_t depth = 5; // how do I know how deep to search?
@@ -183,7 +183,7 @@ move_t find_best_move(board_t *board) {
         unmake_move(&board_stack);
         count++;
     }
-    TT.erase(h); // don't erase because this position was played
+    // TT.erase(h); // don't erase because this position was played
     // TT.insert(zobrist_hash(make_move(board, &best_move))); // include the new board
     tStop = clock();
     // more speed debugging stuff

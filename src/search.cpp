@@ -330,4 +330,7 @@ move_t find_best_move(board_t *board) {
     still just need to reason through this more
 
     for speed consider using smaller types for numbers that aren't big
+
+    use an unordered_set and see about replacement strategies
+    maybe rename hashing.cpp to transpose.cpp
 */

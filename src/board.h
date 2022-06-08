@@ -126,9 +126,9 @@ void update_boards(board_t *board);
  * which that FEN string represents.
  * 
  * @param fen FEN-style string
- * @return Pointer to board represented by FEN string
+ * @return Board represented by FEN string
  */
-board_t *decode_fen(string fen);
+board_t decode_fen(string fen);
 
 /**
  * @brief Given a board state, gives back a FEN string representing

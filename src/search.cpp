@@ -15,11 +15,9 @@ using namespace std;
 
 size_t positions_searched = 0; // speed test purposes
 
-uint64_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
-    board_t *curr_board = (*board).top();
-    board_t *next_board;
+uint64_t num_nodes_bulk(stack<board_t> *board_stack, size_t depth) {
     vector<move_t> moves;
-    generate_moves(curr_board, &moves);
+    generate_moves(&(*board_stack).top(), &moves);
     if(depth == 1) {
         return moves.size();
     }
@@ -29,47 +27,42 @@ uint64_t num_nodes_bulk(stack<board_t *> *board, size_t depth) {
 
     uint64_t total_moves = 0;
     for(move_t move : moves) {
-        next_board = make_move(curr_board, &move);
-        (*board).push(next_board);
-        total_moves += num_nodes_bulk(board, depth - 1); 
-        unmake_move(board);
+        make_move(board_stack, &move);
+        total_moves += num_nodes_bulk(board_stack, depth - 1); 
+        unmake_move(board_stack);
     }
     return total_moves;
 }
 
-uint64_t num_nodes(stack<board_t *> *board, size_t depth) {
+uint64_t num_nodes(stack<board_t> *board_stack, size_t depth) {
     vector<move_t> moves;
-    board_t *curr_board = (*board).top();
-    board_t *next_board;
     if(depth == 0) {
         return 1;
     }
 
     uint64_t total_moves = 0;
-    generate_moves(curr_board, &moves);
+    generate_moves(&(*board_stack).top(), &moves);
     for(move_t move : moves) {
-        next_board = make_move(curr_board, &move);
-        (*board).push(next_board);
-        total_moves += num_nodes(board, depth - 1); 
-        unmake_move(board);
+        make_move(board_stack, &move);
+        total_moves += num_nodes(board_stack, depth - 1); 
+        unmake_move(board_stack);
     }
     return total_moves;
 }
 
-uint64_t perft(board_t *board, size_t depth) {
+uint64_t perft(stack<board_t> *board_stack, size_t depth) {
     vector<move_t> moves;
-    generate_moves(board, &moves);
-    stack<board_t *> board_stack;
-    board_stack.push(board);
+    board_t *curr_board = &(*board_stack).top();
+    generate_moves(curr_board, &moves);
     uint64_t total_nodes = 0; // this can overflow, should change
     uint64_t nodes_from_move = 0;
     for(move_t move : moves) {
-        board_stack.push(make_move(board, &move));
-        cout << notation_from_move(move, moves, board) << ": ";
-        nodes_from_move = num_nodes_bulk(&board_stack, depth - 1);
+        make_move(board_stack, &move);
+        cout << notation_from_move(move, moves, curr_board) << ": ";
+        nodes_from_move = num_nodes_bulk(board_stack, depth - 1);
         total_nodes += nodes_from_move;
         cout << nodes_from_move << endl;
-        unmake_move(&board_stack);
+        unmake_move(board_stack);
     }
     cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
@@ -78,29 +71,27 @@ uint64_t perft(board_t *board, size_t depth) {
 unordered_set<hash_val> TT;
 
 // go back through and comment this more to understand it
-int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
+int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
     vector<move_t> captures;
-    board_t *curr_board = (*board_stack).top();
-    board_t *next_board;
-    hash_val h = zobrist_hash(curr_board);
+    board_t *curr_board = &(*board_stack).top();
+    // hash_val h = zobrist_hash(curr_board);
     // if(TT.find(h) != TT.end()) {
     //     return 0;
     // }
-    TT.insert(h);
+    // TT.insert(h);
 
     int stand_pat = evaluate(curr_board); // fall back evaluation
-    if(stand_pat >= beta) {positions_searched++; TT.erase(h); return beta;}
+    if(stand_pat >= beta) {positions_searched++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(curr_board, &captures, true); // true flag generates only captures
     order_moves(&captures);
     for (move_t capture : captures) {
-        next_board = make_move(curr_board, &capture);
-        (*board_stack).push(next_board);
+        make_move(board_stack, &capture);
         int evaluation = -qsearch(board_stack, -beta, -alpha);
         unmake_move(board_stack);
 
-        if(evaluation >= beta) {positions_searched++; TT.erase(h); return beta;}
+        if(evaluation >= beta) {positions_searched++; return beta;}
         if(evaluation > alpha) alpha = evaluation;
     }
     positions_searched++;
@@ -108,15 +99,14 @@ int qsearch(stack<board_t *> *board_stack, int alpha, int beta) {
     return alpha;
 }
 
-int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
+int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
     vector<move_t> moves;
    
     if(depth == 0) {
         return qsearch(board_stack, alpha, beta);
     }
 
-    board_t *curr_board = (*board_stack).top();
-    board_t *next_board;
+    board_t *curr_board = &(*board_stack).top();
     
     // hash_val h = zobrist_hash(curr_board);
     // if(TT.find(h) != TT.end()) {
@@ -136,8 +126,7 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     int best_eval = INT_MIN + 1;
 
     for(move_t move : moves) {
-        next_board = make_move(curr_board, &move);
-        (*board_stack).push(next_board);
+        make_move(board_stack, &move);
         int evaluation = -search(board_stack, depth - 1, -beta, -alpha);
         unmake_move(board_stack);
         if(evaluation > best_eval) best_eval = evaluation;
@@ -148,7 +137,7 @@ int search(stack<board_t *> *board_stack, size_t depth, int alpha, int beta) {
     return best_eval;
 }
 
-move_t find_best_move(board_t *board) {
+move_t find_best_move(board_t board) {
     // runs under the assumption that there are legal moves
     // TT.clear();
     // hash_val h = zobrist_hash(board);
@@ -157,10 +146,10 @@ move_t find_best_move(board_t *board) {
     clock_t tStop;
     size_t depth = 5; // how do I know how deep to search?
     board_t *next_board;
-    stack<board_t *> board_stack;
+    stack<board_t> board_stack;
     board_stack.push(board);
     vector<move_t> moves;
-    generate_moves(board, &moves);
+    generate_moves(&board, &moves);
     order_moves(&moves);
     move_t best_move;
     int best_eval = INT_MIN + 1;
@@ -170,8 +159,7 @@ move_t find_best_move(board_t *board) {
     int count = 0;
     tStart = clock();
     for(move_t move : moves) {
-        next_board = make_move(board, &move);
-        board_stack.push(next_board);
+        make_move(&board_stack, &move);
         int eval = -search(&board_stack, depth - 1, -beta, -alpha); // now its black's move
 
         if(eval > best_eval) {

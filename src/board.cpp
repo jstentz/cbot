@@ -32,35 +32,35 @@ void update_boards(board_t *board) {
     return;
 }
 
-board_t *zero_board() {
-    board_t *board = (board_t *)malloc(sizeof(board_t));
+board_t zero_board() {
+    board_t board;
     
     for (size_t i = 0; i < 12; i++) {
-        board->piece_boards[i] = 0;
+        board.piece_boards[i] = 0;
     }
 
-    board->white_pieces = 0;
-    board->black_pieces = 0;
-    board->all_pieces = 0;
+    board.white_pieces = 0;
+    board.black_pieces = 0;
+    board.all_pieces = 0;
 
     for (size_t i = 0; i < 64; i++) {
-        board->sq_board[i] = EMPTY;
+        board.sq_board[i] = EMPTY;
     }
 
-    board->t = W;
-    board->en_passant = NONE;
-    board->white_king_side = false; // default to false so I can change to true in decode_fen
-    board->white_queen_side = false;
-    board->black_king_side = false;
-    board->black_queen_side = false;
+    board.t = W;
+    board.en_passant = NONE;
+    board.white_king_side = false; // default to false so I can change to true in decode_fen
+    board.white_queen_side = false;
+    board.black_king_side = false;
+    board.black_queen_side = false;
 
-    board->board_hash = 0;
+    board.board_hash = 0;
 
     return board;
 }
 
-board_t *decode_fen(string fen) {
-    board_t *board = zero_board();
+board_t decode_fen(string fen) {
+    board_t board = zero_board();
     bitboard *place_board;
     piece pc;
     int col = 0;
@@ -103,13 +103,13 @@ board_t *decode_fen(string fen) {
             }
             else {
                 pc = pc | KING;
-                if(pc == (WHITE | KING)) board->white_king_loc = (square)loc;
-                else                     board->black_king_loc = (square)loc;
+                if(pc == (WHITE | KING)) board.white_king_loc = (square)loc;
+                else                     board.black_king_loc = (square)loc;
             }
 
             /* place the piece in its boards */
-            board->sq_board[loc] = pc;
-            place_board = &board->piece_boards[index_from_piece(pc)];
+            board.sq_board[loc] = pc;
+            place_board = &board.piece_boards[index_from_piece(pc)];
             place_piece(place_board, (square)loc);
             col += 1;
         }
@@ -117,19 +117,19 @@ board_t *decode_fen(string fen) {
         c = fen[i];
     }
     i++;
-    if(fen[i] == 'w') board->t = W;
-    else              board->t = B;
+    if(fen[i] == 'w') board.t = W;
+    else              board.t = B;
     i++;
     while(i < fen.size()) {
         c = fen[i];
-        if(c == 'K') board->white_king_side = true;
-        if(c == 'Q') board->white_queen_side = true;
-        if(c == 'k') board->black_king_side = true;
-        if(c == 'q') board->black_queen_side = true;
+        if(c == 'K') board.white_king_side = true;
+        if(c == 'Q') board.white_queen_side = true;
+        if(c == 'k') board.black_king_side = true;
+        if(c == 'q') board.black_queen_side = true;
         i++;
     }
-    update_boards(board);
-    board->board_hash = zobrist_hash(board); // hash the board initially
+    update_boards(&board);
+    board.board_hash = zobrist_hash(&board); // hash the board initially
     return board;
 }
 

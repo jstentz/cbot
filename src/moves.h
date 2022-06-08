@@ -55,7 +55,7 @@ void order_moves(vector<move_t> *moves);
  * @param move 
  * @return board_t* 
  */
-board_t *make_move(board_t *board, move_t *move);
+void make_move(stack<board_t> *board_stack, move_t *move);
 
 /**
  * @brief Given a pointer to a stack of boards, it will undo the most
@@ -63,7 +63,7 @@ board_t *make_move(board_t *board, move_t *move);
  * 
  * @param boards 
  */
-void unmake_move(stack<board_t *> *board_stack);
+void unmake_move(stack<board_t> *board_stack);
 
 /**
  * @brief Given a move, a list of all legal moves, and the board state,

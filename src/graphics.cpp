@@ -169,17 +169,18 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    board_t *board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    // board_t *board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
-    // board_t *board = decode_fen("6k1/pp3pp1/4pn1p/8/2P5/5N1P/PP3PP1/6K1 w - - 0 1");
-    // board_t *board = decode_fen("8/nnn4/3k4/8/8/3K4/8/8 w - - 0 1");
-    // board_t *board = decode_fen("8/6r1/5k2/8/8/8/8/4K3 w - - 0 1");
-    stack<board_t *> game; // add functionality for going back
+    board_t board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // board_t board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
+    // board_t board = decode_fen("6k1/pp3pp1/4pn1p/8/2P5/5N1P/PP3PP1/6K1 w - - 0 1");
+    // board_t board = decode_fen("8/nnn4/3k4/8/8/3K4/8/8 w - - 0 1");
+    // board_t board = decode_fen("8/6r1/5k2/8/8/8/8/4K3 w - - 0 1");
+    stack<board_t> game; // add functionality for going back
+    game.push(board);
     move_t move;
     vector<move_t> legal_moves;
-    generate_moves(board, &legal_moves);
+    generate_moves(&board, &legal_moves);
 
-    LoadDisplayBoardFromGameState(board->sq_board);
+    LoadDisplayBoardFromGameState(board.sq_board);
     
     mv_piece_t selectedPiece;
     selectedPiece.pc = EMPTY;
@@ -223,7 +224,7 @@ int main(int argc, char** argv){
                             for (move_t legal_move : legal_moves) {
                                 if(move.start == legal_move.start &&
                                    move.target == legal_move.target) {
-                                    board = make_move(board, &move);
+                                    make_move(&game, &move);
                                     madeMove = true;
                                     break;
                                 }
@@ -258,7 +259,8 @@ int main(int argc, char** argv){
         }
 
         if(madeMove) {
-            LoadDisplayBoardFromGameState(board->sq_board);
+            board = game.top();
+            LoadDisplayBoardFromGameState(board.sq_board);
             SDL_RenderClear(renderer);
             DrawChessBoard();
             DrawPieces();
@@ -266,9 +268,9 @@ int main(int argc, char** argv){
             SDL_RenderPresent(renderer);
 
             legal_moves.clear();
-            generate_moves(board, &legal_moves);
+            generate_moves(&board, &legal_moves);
             if(legal_moves.size() == 0) {
-                if(checking_pieces(board)) {
+                if(checking_pieces(&board)) {
                     cout << "Checkmate!" << endl;
                     break;
                 }
@@ -277,11 +279,12 @@ int main(int argc, char** argv){
             }
 
             move = find_best_move(board);
-            board = make_move(board, &move); // leaking memory here
-            LoadDisplayBoardFromGameState(board->sq_board);
+            make_move(&game, &move); // leaking memory here
+            board = game.top();
+            LoadDisplayBoardFromGameState(board.sq_board);
 
             legal_moves.clear();
-            generate_moves(board, &legal_moves);
+            generate_moves(&board, &legal_moves);
 
             madeMove = false;
         }
@@ -297,7 +300,7 @@ int main(int argc, char** argv){
         SDL_RenderPresent(renderer);
 
         if(legal_moves.size() == 0) {
-            if(checking_pieces(board)) {
+            if(checking_pieces(&board)) {
                 cout << "Checkmate!" << endl;
                 break;
             }
@@ -313,7 +316,6 @@ int main(int argc, char** argv){
     SDL_DestroyWindow(window);
     IMG_Quit();
     SDL_Quit();
-    free(board);
     return 0;
 }
 

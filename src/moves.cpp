@@ -614,9 +614,9 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
     return str_move;
 }
 
-board_t *make_move(board_t *board, move_t *move) {
-    board_t *next_board = (board_t *)malloc(sizeof(board_t));
-    memcpy(next_board, board, sizeof(board_t));
+void make_move(stack<board_t> *board_stack, move_t *move) {
+    board_t curr_board = (*board_stack).top();
+    board_t next_board = curr_board;
 
     square start = move->start;
     square target = move->target;
@@ -624,122 +624,122 @@ board_t *make_move(board_t *board, move_t *move) {
     piece mv_piece = move->mv_piece;
     piece tar_piece = move->tar_piece;
 
-    bitboard *mv_board = &next_board->piece_boards[index_from_piece(mv_piece)];
+    bitboard *mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
     
     // always remove the piece from its board no matter what
     rem_piece(mv_board, start);
 
     /* update king locations */
-    if (mv_piece == (WHITE | KING)) next_board->white_king_loc = target;
-    else if (mv_piece == (BLACK | KING)) next_board->black_king_loc = target;
+    if (mv_piece == (WHITE | KING)) next_board.white_king_loc = target;
+    else if (mv_piece == (BLACK | KING)) next_board.black_king_loc = target;
 
     /* check for castling move */
     bitboard *castling_rook;
     if(mv_piece == (WHITE | KING) && (start == E1) && (target == G1)) {
-        castling_rook = &next_board->piece_boards[WHITE_ROOKS_INDEX];
+        castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
         rem_piece(castling_rook, H1);
         place_piece(castling_rook, F1);
-        next_board->sq_board[H1] = EMPTY;
-        next_board->sq_board[F1] = WHITE | ROOK;
-        next_board->white_king_side = false;
+        next_board.sq_board[H1] = EMPTY;
+        next_board.sq_board[F1] = WHITE | ROOK;
+        next_board.white_king_side = false;
     }
     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
-        castling_rook = &next_board->piece_boards[WHITE_ROOKS_INDEX];
+        castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
         rem_piece(castling_rook, A1);
         place_piece(castling_rook, D1);
-        next_board->sq_board[A1] = EMPTY;
-        next_board->sq_board[D1] = WHITE | ROOK;
-        next_board->white_queen_side = false;
+        next_board.sq_board[A1] = EMPTY;
+        next_board.sq_board[D1] = WHITE | ROOK;
+        next_board.white_queen_side = false;
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
-        castling_rook = &next_board->piece_boards[BLACK_ROOKS_INDEX];
+        castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
         rem_piece(castling_rook, H8);
         place_piece(castling_rook, F8);
-        next_board->sq_board[H8] = EMPTY;
-        next_board->sq_board[F8] = BLACK | ROOK;
-        next_board->black_king_side = false;
+        next_board.sq_board[H8] = EMPTY;
+        next_board.sq_board[F8] = BLACK | ROOK;
+        next_board.black_king_side = false;
     }
     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
-        castling_rook = &next_board->piece_boards[BLACK_ROOKS_INDEX];
+        castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
         rem_piece(castling_rook, A8);
         place_piece(castling_rook, D8);
-        next_board->sq_board[A8] = EMPTY;
-        next_board->sq_board[D8] = BLACK | ROOK;
-        next_board->black_queen_side = false;
+        next_board.sq_board[A8] = EMPTY;
+        next_board.sq_board[D8] = BLACK | ROOK;
+        next_board.black_queen_side = false;
     }
 
     /* check if promoting move */
     if(move->promotion_piece != EMPTY) {
         mv_piece = move->promotion_piece;
-        mv_board = &next_board->piece_boards[index_from_piece(mv_piece)];
+        mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
     }
 
     place_piece(mv_board, target);
 
     /* check for capturing move */
     if(tar_piece != EMPTY) {
-        bitboard *captured_board = &next_board->piece_boards[index_from_piece(tar_piece)];
+        bitboard *captured_board = &next_board.piece_boards[index_from_piece(tar_piece)];
         rem_piece(captured_board, target);
     }
 
-    next_board->sq_board[start] = EMPTY;
-    next_board->sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
+    next_board.sq_board[start] = EMPTY;
+    next_board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
 
     /* check for en passant move to remove the pawn being captured en passant */
-    if(mv_piece == (WHITE | PAWN) && target == next_board->en_passant) {
-        bitboard *black_pawns = &next_board->piece_boards[BLACK_PAWNS_INDEX];
-        square pawn_square = (square)((int)next_board->en_passant - 8);
+    if(mv_piece == (WHITE | PAWN) && target == next_board.en_passant) {
+        bitboard *black_pawns = &next_board.piece_boards[BLACK_PAWNS_INDEX];
+        square pawn_square = (square)((int)next_board.en_passant - 8);
         rem_piece(black_pawns, pawn_square);
-        next_board->sq_board[pawn_square] = EMPTY;
+        next_board.sq_board[pawn_square] = EMPTY;
     }
-    else if(mv_piece == (BLACK | PAWN) && target == next_board->en_passant) {
-        bitboard *white_pawns = &next_board->piece_boards[WHITE_PAWNS_INDEX];
-        square pawn_square = (square)((int)next_board->en_passant + 8);
+    else if(mv_piece == (BLACK | PAWN) && target == next_board.en_passant) {
+        bitboard *white_pawns = &next_board.piece_boards[WHITE_PAWNS_INDEX];
+        square pawn_square = (square)((int)next_board.en_passant + 8);
         rem_piece(white_pawns, pawn_square);
-        next_board->sq_board[pawn_square] = EMPTY;
+        next_board.sq_board[pawn_square] = EMPTY;
     }
 
     /* Update en passant squares */
     if(mv_piece == (WHITE | PAWN) && target - start == 16) {
-        next_board->en_passant = (square)(start + 8);
+        next_board.en_passant = (square)(start + 8);
     }
     else if(mv_piece == (BLACK | PAWN) && start - target == 16) {
-        next_board->en_passant = (square)(target + 8);
+        next_board.en_passant = (square)(target + 8);
     }
     else {
-        next_board->en_passant = NONE;
+        next_board.en_passant = NONE;
     }
 
     /* Update castling rights for king moves */
     if(mv_piece == (WHITE | KING)) {
-        next_board->white_king_side = false;
-        next_board->white_queen_side = false;
+        next_board.white_king_side = false;
+        next_board.white_queen_side = false;
     }
     else if(mv_piece == (BLACK | KING)) {
-        next_board->black_king_side = false;
-        next_board->black_queen_side = false;
+        next_board.black_king_side = false;
+        next_board.black_queen_side = false;
     }
     /* Update castling rights for rook moves */
     else if(mv_piece == (WHITE | ROOK) && start == H1) {
-        next_board->white_king_side = false;
+        next_board.white_king_side = false;
     }
     else if(mv_piece == (WHITE | ROOK) && start == A1) {
-        next_board->white_queen_side = false;
+        next_board.white_queen_side = false;
     }
     else if(mv_piece == (BLACK | ROOK) && start == H8) {
-        next_board->black_king_side = false;
+        next_board.black_king_side = false;
     }
     else if(mv_piece == (BLACK | ROOK) && start == A8) {
-        next_board->black_queen_side = false;
+        next_board.black_queen_side = false;
     }
 
-    next_board->t = !next_board->t;
-    update_boards(next_board);
-    return next_board;
+    next_board.t = !next_board.t;
+    update_boards(&next_board);
+    (*board_stack).push(next_board);
+    return;
 }
 
-void unmake_move(stack<board_t *> *board_stack) {
-    free((*board_stack).top());
+void unmake_move(stack<board_t> *board_stack) {
     (*board_stack).pop();
     return;
 }

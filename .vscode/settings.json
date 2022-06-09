@@ -8,7 +8,8 @@
         "stack": "cpp",
         "xlocale": "cpp",
         "xstring": "cpp",
-        "xhash": "cpp"
+        "xhash": "cpp",
+        "*.tcc": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

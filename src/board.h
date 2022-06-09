@@ -85,7 +85,7 @@ typedef struct Board
     square black_king_loc;
 
     /* hashing items */
-    hash_val board_hash;
+    // hash_val board_hash;
 } board_t;
 
 /**

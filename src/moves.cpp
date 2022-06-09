@@ -538,82 +538,6 @@ void order_captures(vector<move_t> *moves) {
     return;
 }
 
-/*
- * Goes from a move struct to the correct notation, given a move, a list of 
- * legal moves in the position, and the state of the board.
- */
-string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board) {
-    // conflicting doesn't work for knights right now
-    // need to update for check (+) and checkmate (#)
-    // need to add castling
-    vector<move_t> conflicting_moves;
-    for (move_t single_move : all_moves) {
-        if(single_move.target == move.target     && 
-           single_move.mv_piece == move.mv_piece &&
-           single_move.start != move.start) 
-        conflicting_moves.push_back(single_move);
-    }
-    const string files = "abcdefgh";
-    const string ranks = "12345678";
-    const string pieces = "PNBRQK";
-    string str_move;
-    char piece_name = pieces[index_from_piece(move.mv_piece) / 2];
-    bool capture = (move.tar_piece == EMPTY) ? false : true;
-    if(move.target == board->en_passant && (move.mv_piece & 0xE) == PAWN) capture = true;
-    bool promotion = (move.promotion_piece == EMPTY) ? false : true;
-    size_t start_file_num = move.start % 8;
-    size_t start_rank_num = move.start / 8;
-    size_t tar_file_num = move.target % 8;
-    size_t tar_rank_num = move.target / 8;
-    char start_file = files[start_file_num];
-    char start_rank = ranks[start_rank_num];
-    char tar_file = files[tar_file_num];
-    char tar_rank = ranks[tar_rank_num];
-    bool file_conflict = false;
-    bool rank_conflict = false;
-    size_t conflict_file_num;
-    size_t conflict_rank_num;
-
-    if(piece_name == 'P' && capture) {
-        str_move.push_back(start_file);
-    }
-    else if (piece_name == 'K' && 
-            (move.start == E1 && move.target == G1 || 
-             move.start == E8 && move.target == G8)) {
-        return "O-O"; // this won't quite work for adding check and checkmate
-    }
-    else if (piece_name == 'K' && 
-            (move.start == E1 && move.target == C1 || 
-             move.start == E8 && move.target == C8)) {
-        return "O-O-O"; // this won't quite work for adding check and checkmate
-    }
-    else if(piece_name != 'P') {
-        str_move.push_back(piece_name);
-        for(move_t single_move : conflicting_moves) {
-            conflict_file_num = single_move.start % 8;
-            conflict_rank_num = single_move.start / 8;
-            if(conflict_file_num == start_file_num) file_conflict = true;
-            else if(conflict_rank_num == start_rank_num) rank_conflict = true;
-        }
-        if(file_conflict) str_move.push_back(start_rank);
-        if(rank_conflict) str_move.push_back(start_file);
-        if(!file_conflict && !rank_conflict && 
-           conflicting_moves.size() > 0 && piece_name == 'N') {
-            str_move.push_back(start_file);
-        }
-    }
-
-    if(capture) str_move.push_back('x');
-    str_move.push_back(tar_file);
-    str_move.push_back(tar_rank);
-    if(promotion) {
-        str_move.push_back('=');
-        str_move.push_back(
-                pieces[index_from_piece(move.promotion_piece) / 2]);
-    }
-    return str_move;
-}
-
 void make_move(stack<board_t> *board_stack, move_t *move) {
     board_t curr_board = (*board_stack).top();
     board_t next_board = curr_board;
@@ -742,4 +666,87 @@ void make_move(stack<board_t> *board_stack, move_t *move) {
 void unmake_move(stack<board_t> *board_stack) {
     (*board_stack).pop();
     return;
+}
+
+/*
+ * Goes from a move struct to the correct notation, given a move, a list of 
+ * legal moves in the position, and the state of the board.
+ */
+string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board) {
+    // conflicting doesn't work for knights right now
+    // need to update for check (+) and checkmate (#)
+    // need to add castling
+    vector<move_t> conflicting_moves;
+    for (move_t single_move : all_moves) {
+        if(single_move.target == move.target     && 
+           single_move.mv_piece == move.mv_piece &&
+           single_move.start != move.start) 
+        conflicting_moves.push_back(single_move);
+    }
+    const string files = "abcdefgh";
+    const string ranks = "12345678";
+    const string pieces = "PNBRQK";
+    string str_move;
+    char piece_name = pieces[index_from_piece(move.mv_piece) / 2];
+    bool capture = (move.tar_piece == EMPTY) ? false : true;
+    if(move.target == board->en_passant && (move.mv_piece & 0xE) == PAWN) capture = true;
+    bool promotion = (move.promotion_piece == EMPTY) ? false : true;
+    size_t start_file_num = move.start % 8;
+    size_t start_rank_num = move.start / 8;
+    size_t tar_file_num = move.target % 8;
+    size_t tar_rank_num = move.target / 8;
+    char start_file = files[start_file_num];
+    char start_rank = ranks[start_rank_num];
+    char tar_file = files[tar_file_num];
+    char tar_rank = ranks[tar_rank_num];
+    bool file_conflict = false;
+    bool rank_conflict = false;
+    size_t conflict_file_num;
+    size_t conflict_rank_num;
+
+    if(piece_name == 'P' && capture) {
+        str_move.push_back(start_file);
+    }
+    else if (piece_name == 'K' && 
+            (move.start == E1 && move.target == G1 || 
+             move.start == E8 && move.target == G8)) {
+        return "O-O"; // this won't quite work for adding check and checkmate
+    }
+    else if (piece_name == 'K' && 
+            (move.start == E1 && move.target == C1 || 
+             move.start == E8 && move.target == C8)) {
+        return "O-O-O"; // this won't quite work for adding check and checkmate
+    }
+    else if(piece_name != 'P') {
+        str_move.push_back(piece_name);
+        for(move_t single_move : conflicting_moves) {
+            conflict_file_num = single_move.start % 8;
+            conflict_rank_num = single_move.start / 8;
+            if(conflict_file_num == start_file_num) file_conflict = true;
+            else if(conflict_rank_num == start_rank_num) rank_conflict = true;
+        }
+        if(file_conflict) str_move.push_back(start_rank);
+        if(rank_conflict) str_move.push_back(start_file);
+        if(!file_conflict && !rank_conflict && 
+           conflicting_moves.size() > 0 && piece_name == 'N') {
+            str_move.push_back(start_file);
+        }
+    }
+
+    if(capture) str_move.push_back('x');
+    str_move.push_back(tar_file);
+    str_move.push_back(tar_rank);
+    if(promotion) {
+        str_move.push_back('=');
+        str_move.push_back(
+                pieces[index_from_piece(move.promotion_piece) / 2]);
+    }
+    return str_move;
+}
+
+move_t move_from_notation(string notation, board_t *board) {
+    move_t move;
+    
+    /* get moving piece */
+    
 }

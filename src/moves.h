@@ -76,3 +76,13 @@ void unmake_move(stack<board_t> *board_stack);
  * @return Standard chess notation for input move. 
  */
 string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board);
+
+/**
+ * @brief Given the notation for a move and the current position, returns the
+ * move struct representing that move.
+ * 
+ * @param notation Move
+ * @param board Current position
+ * @return Move representing the notation
+ */
+move_t move_from_notation(string notation, board_t *board);

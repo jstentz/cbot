@@ -10,6 +10,7 @@
 #include <stack>
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 bitboard generate_knight_move_bitboard(square knight, board_t *board) {
     bitboard own_pieces;
@@ -745,8 +746,92 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
 }
 
 move_t move_from_notation(string notation, board_t *board) {
-    move_t move;
+    if(notation.length() == 0) {
+        exit(-1);
+    }
+    piece mv_piece;
+    char c = notation[0];
+    if(isupper(c)) {
+        mv_piece = piece_from_move_char(c);
+        notation = notation.substr(1, notation.length() - 1);
+    }
+    else mv_piece = PAWN;
+    if(board->t == W) mv_piece |= WHITE;
+    else mv_piece |= BLACK;
+
+    string delimiter = "=";
+
+    piece promotion_piece;
+    size_t promotion_marker = notation.find(delimiter);
+    if(promotion_marker == string::npos) { // didn't find = 
+        promotion_piece = EMPTY;
+    }
+    else {
+        promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
+        notation = notation.substr(0, promotion_marker);
+    }
+
+    if(board->t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
+    else {mv_piece |= BLACK; promotion_piece |= BLACK;}
     
-    /* get moving piece */
+    notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
+    const string files = "abcdefgh";
+    const string ranks = "12345678";
+
+    int target_rank;
+    int target_file;
+    int start_rank = -1;
+    int start_file = -1;
+    square target_square;
+
+
+    if(notation.length() == 2) { // no move conflict
+        target_rank = ranks.find(notation[1]);
+        target_file = files.find(notation[0]);
+    }
+    else if(notation.length() == 3) { // some conflict
+        target_rank = ranks.find(notation[2]);
+        target_file = files.find(notation[1]);
+
+        if(isalpha(notation[0])) {
+            start_file = files.find(notation[0]);
+        }
+        else {
+            start_rank = ranks.find(notation[0]);
+        }
+    }
+    else {
+        target_rank = ranks.find(notation[3]);
+        target_file = files.find(notation[2]);
+        
+        start_file = files.find(notation[0]);
+        start_rank = ranks.find(notation[1]);
+    }
+    target_square = (square)(target_rank * 8 + target_file);
+    if(start_rank != -1) start_rank++;
+    if(start_file != -1) start_file++;
+    vector<move_t> moves;
+    generate_moves(board, &moves);
     
+    for (move_t move : moves) {
+        if(move.mv_piece == mv_piece &&
+           move.promotion_piece == promotion_piece &&
+           move.target == target_square) {
+               if(start_rank == -1 && start_file == -1) return move;
+               if(start_rank == -1 && start_file == FILE(move.start)) return move;
+               if(start_rank == RANK(move.start) && start_file == -1) return move;
+               if(start_rank == RANK(move.start) && start_file == FILE(move.start)) return move;
+           }
+    }
+    exit(-1);
+}
+
+int main() {
+    string starting_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    board_t starting_pos = decode_fen(starting_FEN);
+    cout << move_from_notation("e4", &starting_pos).start << endl;
+    cout << move_from_notation("e4", &starting_pos).target << endl;
+    int x;
+    cin >> x;
+    return 0;
 }

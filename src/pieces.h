@@ -45,3 +45,11 @@ size_t index_from_piece(piece pc);
  * @return false if not
  */
 bool is_sliding_piece(piece pc);
+
+/**
+ * @brief Given a character representing a piece, returns the piece value.
+ * 
+ * @param pc Char representing piece
+ * @return Piece value
+ */
+piece piece_from_move_char(char pc);

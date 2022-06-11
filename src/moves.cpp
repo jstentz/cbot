@@ -823,15 +823,5 @@ move_t move_from_notation(string notation, board_t *board) {
                if(start_rank == RANK(move.start) && start_file == FILE(move.start)) return move;
            }
     }
-    exit(-1);
-}
-
-int main() {
-    string starting_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    board_t starting_pos = decode_fen(starting_FEN);
-    cout << move_from_notation("e4", &starting_pos).start << endl;
-    cout << move_from_notation("e4", &starting_pos).target << endl;
-    int x;
-    cin >> x;
-    return 0;
+    exit(-1); // should match to a move
 }

@@ -600,7 +600,17 @@ void make_move(stack<board_t> *board_stack, move_t move) {
         case KING_SIDE_CASTLE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             next_board.sq_board[to] = moving_piece;
-            
+            bitboard *rook_board;
+            if(from == E1) { // white king side
+                rook_board = &next_board.piece_boards[WHITE_ROOKS_INDEX];
+                REM_PIECE(*rook_board, H1);
+                PLACE_PIECE(*rook_board, F1);
+                next_board.sq_board[H1] = EMPTY;
+                next_board.sq_board[F1] = WHITE | ROOK;
+            }
+            else { // black king side
+
+            }
             break;
     }
 

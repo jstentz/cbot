@@ -29,10 +29,10 @@
 #define BISHOP_PROMO          0x9
 #define ROOK_PROMO            0xA
 #define QUEEN_PROMO           0xB
-#define KNIGHT_PROMO          0xC
-#define BISHOP_PROMO          0xD
-#define ROOK_PROMO            0xE
-#define QUEEN_PROMO           0xF
+#define KNIGHT_PROMO_CAPTURE  0xC
+#define BISHOP_PROMO_CAPTURE  0xD
+#define ROOK_PROMO_CAPTURE    0xE
+#define QUEEN_PROMO_CAPTURE   0xF
 
 #define FROM(move) (move & 0x3F)
 #define TO(move) ((move >> 6) & 0x3F)
@@ -105,4 +105,6 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
  * @param board Current position
  * @return Move representing the notation
  */
-move_t move_from_notation(string notation, board_t *board);
+// move_t move_from_notation(string notation, board_t *board);
+
+move_t construct_move(int from, int to, int flags);

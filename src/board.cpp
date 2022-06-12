@@ -99,8 +99,8 @@ board_t decode_fen(string fen) {
 
             /* place the piece in its boards */
             board.sq_board[loc] = pc;
-            place_board = &board.piece_boards[index_from_piece(pc)];
-            place_piece(place_board, (square)loc);
+            place_board = &board.piece_boards[INDEX_FROM_PIECE(pc)];
+            PLACE_PIECE(*place_board, (square)loc);
             col += 1;
         }
         i++;

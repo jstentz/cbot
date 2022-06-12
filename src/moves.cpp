@@ -550,7 +550,7 @@ void make_move(stack<board_t> *board_stack, move_t move) {
         always have to remove the piece from its square...
         if promotion, you cannot place the same piece on to square
      */
-    piece moving_piece = curr_board.piece_boards[from];
+    piece moving_piece = curr_board.sq_board[from];
     bitboard *moving_piece_board = &next_board.piece_boards[INDEX_FROM_PIECE(moving_piece)];
     REM_PIECE(*moving_piece_board, from);
     next_board.sq_board[from] = EMPTY;
@@ -582,7 +582,11 @@ void make_move(stack<board_t> *board_stack, move_t move) {
     /* default there to be no en passant square and set it if double pawn push */
     next_board.en_passant = NONE;
 
-    /* don't forget that if a rook is captured on A1, H1, A8, or H8, remove castling rights */
+    bitboard *rook_board;
+    bitboard *captured_board;
+    piece promo_piece;
+    bitboard *promo_board;
+    int opponent_pawn_sq;
     switch (flags) {
         case QUIET_MOVE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
@@ -600,7 +604,6 @@ void make_move(stack<board_t> *board_stack, move_t move) {
         case KING_SIDE_CASTLE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             next_board.sq_board[to] = moving_piece;
-            bitboard *rook_board;
             if(from == E1) { // white king side
                 rook_board = &next_board.piece_boards[WHITE_ROOKS_INDEX];
                 REM_PIECE(*rook_board, H1);
@@ -609,8 +612,99 @@ void make_move(stack<board_t> *board_stack, move_t move) {
                 next_board.sq_board[F1] = WHITE | ROOK;
             }
             else { // black king side
-
+                rook_board = &next_board.piece_boards[BLACK_ROOKS_INDEX];
+                REM_PIECE(*rook_board, H8);
+                PLACE_PIECE(*rook_board, F8);
+                next_board.sq_board[H8] = EMPTY;
+                next_board.sq_board[F8] = BLACK | ROOK;
             }
+            break;
+        case QUEEN_SIDE_CASTLE:
+            PLACE_PIECE(*moving_piece_board, to); // place the moving piece
+            next_board.sq_board[to] = moving_piece;
+            if(from == E1) { // white queen side
+                rook_board = &next_board.piece_boards[WHITE_ROOKS_INDEX];
+                REM_PIECE(*rook_board, A1);
+                PLACE_PIECE(*rook_board, D1);
+                next_board.sq_board[A1] = EMPTY;
+                next_board.sq_board[D1] = WHITE | ROOK;
+            }
+            else { // black queen side
+                rook_board = &next_board.piece_boards[BLACK_ROOKS_INDEX];
+                REM_PIECE(*rook_board, A8);
+                PLACE_PIECE(*rook_board, D8);
+                next_board.sq_board[A8] = EMPTY;
+                next_board.sq_board[D8] = BLACK | ROOK;
+            }
+            break;
+        case NORMAL_CAPTURE:
+            PLACE_PIECE(*moving_piece_board, to); // place the moving piece
+            next_board.sq_board[to] = moving_piece;
+            /* remove the captured piece from it's bitboard */
+            captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[to])];
+            REM_PIECE(*captured_board, to);
+
+            /* remove castling rights if rook is captured in corner */
+            if(to == H1) next_board.white_king_side = false;
+            else if(to == A1) next_board.white_queen_side = false;
+            else if(to == H8) next_board.black_king_side = false;
+            else if(to == A8) next_board.black_queen_side = false;
+            break;
+        case EN_PASSANT_CAPTURE:
+            PLACE_PIECE(*moving_piece_board, to); // place the moving piece
+            next_board.sq_board[to] = moving_piece;
+
+            /* distinguish between white and black en passant */
+            opponent_pawn_sq = (RANK(to) == 6) ? (to - 8) : (to + 8);
+
+            /* remove the captured pawn */
+            captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[opponent_pawn_sq])];
+            REM_PIECE(*captured_board, to);
+            next_board.sq_board[opponent_pawn_sq] = EMPTY;
+            break;
+        case KNIGHT_PROMO_CAPTURE:
+            /* remove the captured piece from it's bitboard */
+            captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[to])];
+            REM_PIECE(*captured_board, to);
+            /* fallthrough */
+        case KNIGHT_PROMO:
+            if(curr_board.t == W) {promo_piece = WHITE | KNIGHT; promo_board = &next_board.piece_boards[WHITE_KNIGHTS_INDEX];}
+            else                  {promo_piece = BLACK | KNIGHT; promo_board = &next_board.piece_boards[BLACK_KNIGHTS_INDEX];}
+            PLACE_PIECE(*promo_board, to);
+            next_board.sq_board[to] = promo_piece;
+            break;
+        case BISHOP_PROMO_CAPTURE:
+            /* remove the captured piece from it's bitboard */
+            captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[to])];
+            REM_PIECE(*captured_board, to);
+            /* fallthrough */
+        case BISHOP_PROMO:
+            if(curr_board.t == W) {promo_piece = WHITE | BISHOP; promo_board = &next_board.piece_boards[WHITE_BISHOPS_INDEX];}
+            else                  {promo_piece = BLACK | BISHOP; promo_board = &next_board.piece_boards[BLACK_BISHOPS_INDEX];}
+            PLACE_PIECE(*promo_board, to);
+            next_board.sq_board[to] = promo_piece;
+            break;
+        case ROOK_PROMO_CAPTURE:
+            /* remove the captured piece from it's bitboard */
+            captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[to])];
+            REM_PIECE(*captured_board, to);
+            /* fallthrough */
+        case ROOK_PROMO:
+            if(curr_board.t == W) {promo_piece = WHITE | ROOK; promo_board = &next_board.piece_boards[WHITE_ROOKS_INDEX];}
+            else                  {promo_piece = BLACK | ROOK; promo_board = &next_board.piece_boards[BLACK_ROOKS_INDEX];}
+            PLACE_PIECE(*promo_board, to);
+            next_board.sq_board[to] = promo_piece;
+            break;
+        case QUEEN_PROMO_CAPTURE:
+            /* remove the captured piece from it's bitboard */
+            captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[to])];
+            REM_PIECE(*captured_board, to);
+            /* fallthrough */
+        case QUEEN_PROMO:
+            if(curr_board.t == W) {promo_piece = WHITE | QUEEN; promo_board = &next_board.piece_boards[WHITE_QUEENS_INDEX];}
+            else                  {promo_piece = BLACK | QUEEN; promo_board = &next_board.piece_boards[BLACK_QUEENS_INDEX];}
+            PLACE_PIECE(*promo_board, to);
+            next_board.sq_board[to] = promo_piece;
             break;
     }
 
@@ -759,23 +853,21 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
     // need to add castling
     vector<move_t> conflicting_moves;
     for (move_t single_move : all_moves) {
-        if(single_move.target == move.target     && 
-           single_move.mv_piece == move.mv_piece &&
-           single_move.start != move.start) 
-        conflicting_moves.push_back(single_move);
+        if(TO(single_move) == TO(move) && FROM(single_move) != FROM(move))
+            conflicting_moves.push_back(single_move);
     }
     const string files = "abcdefgh";
     const string ranks = "12345678";
     const string pieces = "PNBRQK";
     string str_move;
-    char piece_name = pieces[index_from_piece(move.mv_piece) / 2];
-    bool capture = (move.tar_piece == EMPTY) ? false : true;
-    if(move.target == board->en_passant && (move.mv_piece & 0xE) == PAWN) capture = true;
-    bool promotion = (move.promotion_piece == EMPTY) ? false : true;
-    size_t start_file_num = move.start % 8;
-    size_t start_rank_num = move.start / 8;
-    size_t tar_file_num = move.target % 8;
-    size_t tar_rank_num = move.target / 8;
+    piece mv_piece = board->sq_board[FROM(move)];
+    char piece_name = pieces[INDEX_FROM_PIECE(mv_piece) / 2];
+    bool capture = IS_CAPTURE(move);
+    bool promotion = IS_PROMO(move);
+    size_t start_file_num = FILE(FROM(move));
+    size_t start_rank_num = RANK(FROM(move));
+    size_t tar_file_num = FILE(TO(move));
+    size_t tar_rank_num = RANK(TO(move));
     char start_file = files[start_file_num];
     char start_rank = ranks[start_rank_num];
     char tar_file = files[tar_file_num];
@@ -784,25 +876,27 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
     bool rank_conflict = false;
     size_t conflict_file_num;
     size_t conflict_rank_num;
+    square start = (square)FROM(move);
+    square target = (square)TO(move);
 
     if(piece_name == 'P' && capture) {
         str_move.push_back(start_file);
     }
     else if (piece_name == 'K' && 
-            (move.start == E1 && move.target == G1 || 
-             move.start == E8 && move.target == G8)) {
+            (start == E1 && target == G1 || 
+             start == E8 && target == G8)) {
         return "O-O"; // this won't quite work for adding check and checkmate
     }
     else if (piece_name == 'K' && 
-            (move.start == E1 && move.target == C1 || 
-             move.start == E8 && move.target == C8)) {
+            (start == E1 && target == C1 || 
+             start == E8 && target == C8)) {
         return "O-O-O"; // this won't quite work for adding check and checkmate
     }
     else if(piece_name != 'P') {
         str_move.push_back(piece_name);
         for(move_t single_move : conflicting_moves) {
-            conflict_file_num = single_move.start % 8;
-            conflict_rank_num = single_move.start / 8;
+            conflict_file_num = FILE(FROM(single_move));
+            conflict_rank_num = RANK(FROM(single_move));
             if(conflict_file_num == start_file_num) file_conflict = true;
             else if(conflict_rank_num == start_rank_num) rank_conflict = true;
         }
@@ -819,89 +913,94 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
     str_move.push_back(tar_rank);
     if(promotion) {
         str_move.push_back('=');
-        str_move.push_back(
-                pieces[index_from_piece(move.promotion_piece) / 2]);
+        int flags = FLAGS(move);
+        char promo_piece_c;
+        if(flags == KNIGHT_PROMO || flags == KNIGHT_PROMO_CAPTURE) promo_piece_c = 'N';
+        else if(flags == BISHOP_PROMO || flags == BISHOP_PROMO_CAPTURE) promo_piece_c = 'B';
+        else if(flags == ROOK_PROMO || flags == ROOK_PROMO_CAPTURE) promo_piece_c = 'R';
+        else promo_piece_c = 'Q';
+        str_move.push_back(promo_piece_c);
     }
     return str_move;
 }
 
-move_t move_from_notation(string notation, board_t *board) {
-    if(notation.length() == 0) {
-        exit(-1);
-    }
-    piece mv_piece;
-    char c = notation[0];
-    if(isupper(c)) {
-        mv_piece = piece_from_move_char(c);
-        notation = notation.substr(1, notation.length() - 1);
-    }
-    else mv_piece = PAWN;
-    if(board->t == W) mv_piece |= WHITE;
-    else mv_piece |= BLACK;
+// move_t move_from_notation(string notation, board_t *board) {
+//     if(notation.length() == 0) {
+//         exit(-1);
+//     }
+//     piece mv_piece;
+//     char c = notation[0];
+//     if(isupper(c)) {
+//         mv_piece = piece_from_move_char(c);
+//         notation = notation.substr(1, notation.length() - 1);
+//     }
+//     else mv_piece = PAWN;
+//     if(board->t == W) mv_piece |= WHITE;
+//     else mv_piece |= BLACK;
 
-    string delimiter = "=";
+//     string delimiter = "=";
 
-    piece promotion_piece;
-    size_t promotion_marker = notation.find(delimiter);
-    if(promotion_marker == string::npos) { // didn't find = 
-        promotion_piece = EMPTY;
-    }
-    else {
-        promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
-        notation = notation.substr(0, promotion_marker);
-    }
+//     piece promotion_piece;
+//     size_t promotion_marker = notation.find(delimiter);
+//     if(promotion_marker == string::npos) { // didn't find = 
+//         promotion_piece = EMPTY;
+//     }
+//     else {
+//         promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
+//         notation = notation.substr(0, promotion_marker);
+//     }
 
-    if(board->t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
-    else {mv_piece |= BLACK; promotion_piece |= BLACK;}
+//     if(board->t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
+//     else {mv_piece |= BLACK; promotion_piece |= BLACK;}
     
-    notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
-    const string files = "abcdefgh";
-    const string ranks = "12345678";
+//     notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
+//     const string files = "abcdefgh";
+//     const string ranks = "12345678";
 
-    int target_rank;
-    int target_file;
-    int start_rank = -1;
-    int start_file = -1;
-    square target_square;
+//     int target_rank;
+//     int target_file;
+//     int start_rank = -1;
+//     int start_file = -1;
+//     square target_square;
 
 
-    if(notation.length() == 2) { // no move conflict
-        target_rank = ranks.find(notation[1]);
-        target_file = files.find(notation[0]);
-    }
-    else if(notation.length() == 3) { // some conflict
-        target_rank = ranks.find(notation[2]);
-        target_file = files.find(notation[1]);
+//     if(notation.length() == 2) { // no move conflict
+//         target_rank = ranks.find(notation[1]);
+//         target_file = files.find(notation[0]);
+//     }
+//     else if(notation.length() == 3) { // some conflict
+//         target_rank = ranks.find(notation[2]);
+//         target_file = files.find(notation[1]);
 
-        if(isalpha(notation[0])) {
-            start_file = files.find(notation[0]);
-        }
-        else {
-            start_rank = ranks.find(notation[0]);
-        }
-    }
-    else {
-        target_rank = ranks.find(notation[3]);
-        target_file = files.find(notation[2]);
+//         if(isalpha(notation[0])) {
+//             start_file = files.find(notation[0]);
+//         }
+//         else {
+//             start_rank = ranks.find(notation[0]);
+//         }
+//     }
+//     else {
+//         target_rank = ranks.find(notation[3]);
+//         target_file = files.find(notation[2]);
         
-        start_file = files.find(notation[0]);
-        start_rank = ranks.find(notation[1]);
-    }
-    target_square = (square)(target_rank * 8 + target_file);
-    if(start_rank != -1) start_rank++;
-    if(start_file != -1) start_file++;
-    vector<move_t> moves;
-    generate_moves(board, &moves);
+//         start_file = files.find(notation[0]);
+//         start_rank = ranks.find(notation[1]);
+//     }
+//     target_square = (square)(target_rank * 8 + target_file);
+//     if(start_rank != -1) start_rank++;
+//     if(start_file != -1) start_file++;
+//     vector<move_t> moves;
+//     generate_moves(board, &moves);
     
-    for (move_t move : moves) {
-        if(move.mv_piece == mv_piece &&
-           move.promotion_piece == promotion_piece &&
-           move.target == target_square) {
-               if(start_rank == -1 && start_file == -1) return move;
-               if(start_rank == -1 && start_file == FILE(move.start)) return move;
-               if(start_rank == RANK(move.start) && start_file == -1) return move;
-               if(start_rank == RANK(move.start) && start_file == FILE(move.start)) return move;
-           }
-    }
-    exit(-1); // should match to a move
-}
+//     for (move_t move : moves) {
+//         if(move.mv_piece == mv_piece &&
+//            move.promotion_piece == promotion_piece &&
+//            move.target == target_square) {
+//                if(start_rank == -1 && start_file == -1) return move;
+//                if(start_rank == -1 && start_file == FILE(move.start)) return move;
+//                if(start_rank == RANK(move.start) && start_file == -1) return move;
+//                if(start_rank == RANK(move.start) && start_file == FILE(move.start)) return move;
+//            }
+//     }
+//     exit(-1); // should match to a move
+// }

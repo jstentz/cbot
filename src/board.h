@@ -45,8 +45,8 @@ typedef bool turn;
 #define SINGLE_CHECK 0x1
 #define DOUBLE_CHECK 0x2
 
-#define PLACE_PIECE(bb, sq) (bb = (bb | (0x1 << sq)))
-#define REM_PIECE(bb, sq) (bb = (bb & ~(0x1 << sq)))
+#define PLACE_PIECE(bb, sq) (bb = (bb | (((bitboard)0x1) << sq)))
+#define REM_PIECE(bb, sq) (bb = (bb & ~(((bitboard)0x1) << sq)))
 
 
 // would like to get rid of these enums in any non-user interacting code

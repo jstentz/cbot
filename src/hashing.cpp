@@ -45,7 +45,7 @@ hash_val zobrist_hash(board_t *board) {
     for(int i = 0; i < 64; i++) {
         piece pc = board->sq_board[i];
         if(pc != EMPTY) {
-            size_t j = index_from_piece(pc);
+            size_t j = INDEX_FROM_PIECE(pc);
             h ^= zobrist_table.table[i][j];
         }
     }

@@ -116,7 +116,7 @@ void DrawPieces() {
             square sq = (square)((7-row) * 8 + col);
             d_square_t display_square = Display_Board[sq];
             if(display_square.pc != EMPTY) {
-                SDL_RenderCopy(renderer, Piece_Textures[index_from_piece(display_square.pc)], NULL, &(display_square.rect));
+                SDL_RenderCopy(renderer, Piece_Textures[INDEX_FROM_PIECE(display_square.pc)], NULL, &(display_square.rect));
             }
         }
     }
@@ -125,7 +125,7 @@ void DrawPieces() {
 
 void DrawSelectedPiece(mv_piece_t selectedPiece) {
     if(selectedPiece.pc != EMPTY) {
-        SDL_RenderCopy(renderer, Piece_Textures[index_from_piece(selectedPiece.pc)], NULL, &(selectedPiece.rect));
+        SDL_RenderCopy(renderer, Piece_Textures[INDEX_FROM_PIECE(selectedPiece.pc)], NULL, &(selectedPiece.rect));
     }
 }
 
@@ -189,6 +189,11 @@ int main(int argc, char** argv){
     bool madeMove = false;
     SDL_Point mousePos;
     bool running = true;
+    square to;
+    square from;
+    piece mv_piece;
+    piece tar_piece;
+    piece promotion_piece;
     while(running){
         SDL_Event event;
         while(SDL_PollEvent(&event)){
@@ -208,23 +213,40 @@ int main(int argc, char** argv){
                     if(leftMouseButtonDown && event.button.button == SDL_BUTTON_LEFT) {
                         if(selectedPiece.pc != EMPTY) {
                             d_square_t *d_sq = SquareFromLoc(mousePos);
-                            square target = SquareNumFromLoc(mousePos);
-                            move.tar_piece = d_sq->pc;
-                            move.target = target;
-                            if(move.mv_piece == (WHITE | PAWN) && (target / 8) == 7) {
-                                move.promotion_piece = WHITE | QUEEN;
-                            }
-                            else if(move.mv_piece == (BLACK | PAWN) && (target / 8) == 0) {
-                                move.promotion_piece = BLACK | QUEEN;
-                            }
-                            else{
-                                move.promotion_piece = EMPTY;
-                            }
+                            to = SquareNumFromLoc(mousePos);
+                            tar_piece = d_sq->pc;
+                            int flags;
 
+                            if(PIECE(mv_piece) == PAWN && (RANK(to) == RANK_8 || RANK(to) == RANK_1)) {
+                                if(tar_piece != EMPTY) {
+                                    flags = QUEEN_PROMO_CAPTURE;
+                                }
+                                else {
+                                    flags = QUEEN_PROMO;
+                                }
+                            }
+                            else if(PIECE(mv_piece) == PAWN && (abs(RANK(from) - RANK(to)) == 2)) {
+                                flags == DOUBLE_PUSH;
+                            }
+                            else if(PIECE(mv_piece) == PAWN && to == board.en_passant) {
+                                flags == EN_PASSANT_CAPTURE;
+                            }
+                            else if(PIECE(mv_piece) == KING && (FILE(to) - FILE(from) == 2)) {
+                                flags == KING_SIDE_CASTLE;
+                            }
+                            else if(PIECE(mv_piece) == KING && (FILE(to) - FILE(from) == -2)) {
+                                flags == QUEEN_SIDE_CASTLE;
+                            }
+                            else if(tar_piece != EMPTY) {
+                                flags == NORMAL_CAPTURE;
+                            }
+                            else {
+                                flags == QUIET_MOVE;
+                            }
+                            move = construct_move(from, to, flags);
                             for (move_t legal_move : legal_moves) {
-                                if(move.start == legal_move.start &&
-                                   move.target == legal_move.target) {
-                                    make_move(&game, &move);
+                                if(legal_move == move) {
+                                    make_move(&game, move);
                                     madeMove = true;
                                     break;
                                 }
@@ -242,14 +264,14 @@ int main(int argc, char** argv){
                     if (!leftMouseButtonDown && event.button.button == SDL_BUTTON_LEFT) {
                         leftMouseButtonDown = true;
                         d_square_t *d_sq = SquareFromLoc(mousePos);
-                        square start = SquareNumFromLoc(mousePos);
+                        
                         if(d_sq->pc != EMPTY) {
                             selectedPiece.pc = d_sq->pc; // set whats inside equal to each other
-                            selectedPiece.start_sq = start;
+                            selectedPiece.start_sq = from;
                             selectedPiece.rect = d_sq->rect;
-                            move.mv_piece = d_sq->pc;
-                            move.start = start;
                             d_sq->pc = EMPTY;
+                            from = SquareNumFromLoc(mousePos);
+                            mv_piece = selectedPiece.pc;
                         }
                     }
                     break;
@@ -279,7 +301,7 @@ int main(int argc, char** argv){
             }
 
             move = find_best_move(board);
-            make_move(&game, &move); // leaking memory here
+            make_move(&game, move); // leaking memory here
             board = game.top();
             LoadDisplayBoardFromGameState(board.sq_board);
 

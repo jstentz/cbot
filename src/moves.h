@@ -18,16 +18,36 @@
 #include <iostream>
 #include <string>
 
+// defines the values in the flag of the move
+#define QUIET_MOVE            0x0
+#define DOUBLE_PUSH           0x1
+#define KING_SIDE_CASTLE      0x2
+#define QUEEN_SIDE_CASTLE     0x3
+#define NORMAL_CAPTURE        0x4
+#define EN_PASSANT_CAPTURE    0x5
+#define KNIGHT_PROMO          0x8
+#define BISHOP_PROMO          0x9
+#define ROOK_PROMO            0xA
+#define QUEEN_PROMO           0xB
+#define KNIGHT_PROMO          0xC
+#define BISHOP_PROMO          0xD
+#define ROOK_PROMO            0xE
+#define QUEEN_PROMO           0xF
+
+#define FROM(move) (move & 0x3F)
+#define TO(move) ((move >> 6) & 0x3F)
+#define FLAGS(move) ((move >> 12) & 0xF)
+#define IS_CAPTURE(move) (move & 0x4000)
+#define IS_PROMO(move) (move & 0x8000)
+
+// get rid of the square enum its kinda dumb
+
 /**
- * @brief Struct that represents a chess move.
+ * @brief Representation for a move. The first 16 bits hold the from square, 
+ * the to square, and the move type.
+ * 
  */
-typedef struct move_struct {
-    square start;
-    square target;
-    piece mv_piece;
-    piece tar_piece;
-    piece promotion_piece;
-} move_t;
+typedef unsigned int move_t;
 
 /**
  * @brief Given a board state, generates all legal moves in the position.
@@ -55,7 +75,7 @@ void order_moves(vector<move_t> *moves);
  * @param move 
  * @return board_t* 
  */
-void make_move(stack<board_t> *board_stack, move_t *move);
+void make_move(stack<board_t> *board_stack, move_t move);
 
 /**
  * @brief Given a pointer to a stack of boards, it will undo the most

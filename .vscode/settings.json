@@ -9,7 +9,8 @@
         "xlocale": "cpp",
         "xstring": "cpp",
         "xhash": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "vector": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

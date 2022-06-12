@@ -9,16 +9,6 @@
 #include "evaluation.h"
 #include "hashing.h"
 
-void place_piece(bitboard *bb, square sq) {
-    *bb = *bb | luts.pieces[sq];
-    return;
-}
-
-void rem_piece(bitboard *bb, square sq) {
-    *bb = *bb & ~(luts.pieces[sq]);
-    return;
-}
-
 void update_boards(board_t *board) {
     board->white_pieces = (board->piece_boards[WHITE_PAWNS_INDEX]   | board->piece_boards[WHITE_KNIGHTS_INDEX] | 
                            board->piece_boards[WHITE_BISHOPS_INDEX] | board->piece_boards[WHITE_ROOKS_INDEX]   |

@@ -45,6 +45,11 @@ typedef bool turn;
 #define SINGLE_CHECK 0x1
 #define DOUBLE_CHECK 0x2
 
+#define PLACE_PIECE(bb, sq) (bb = (bb | (0x1 << sq)))
+#define REM_PIECE(bb, sq) (bb = (bb & ~(0x1 << sq)))
+
+
+// would like to get rid of these enums in any non-user interacting code
 enum square { A1, B1, C1, D1, E1, F1, G1, H1,
               A2, B2, C2, D2, E2, F2, G2, H2,
               A3, B3, C3, D3, E3, F3, G3, H3,
@@ -96,22 +101,6 @@ typedef struct pin_struct {
     bitboard ray_at_sq[64];
     bitboard pinned_pieces;
 } pin_t;
-
-/**
- * @brief Sets a bit on the given bitboard at the given square.
- * 
- * @param bb Bitboard
- * @param sq Location of piece
- */
-void place_piece(bitboard *bb, square sq);
-
-/**
- * @brief Removes a bit on the given bitboard at the given square.
- * 
- * @param bb Bitboard
- * @param sq Location of piece
- */
-void rem_piece(bitboard *bb, square sq);
 
 /**
  * @brief Given a board, it makes sure that the extra boards, such as all_pieces

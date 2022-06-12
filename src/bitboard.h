@@ -12,6 +12,7 @@
 #pragma once
 
 #define REMOVE_FIRST(a) ((a) = ((a) & ((a)-1)))
+#define BIT_FROM_SQ(a) (0x1 << a)
 
 typedef long long unsigned int bitboard;
 typedef short unsigned int uint16_t;

@@ -28,14 +28,7 @@ typedef short unsigned int piece;
 #define COLOR(pc) (pc & 0x1)
 #define PIECE(pc) (pc & 0xE)
 
-/**
- * @brief Given a piece, it will return the index associated with that piece.
- * Each piece is mapped to an index 0 - 11 inclusive.
- * 
- * @param pc piece
- * @return index
- */
-size_t index_from_piece(piece pc);
+#define INDEX_FROM_PIECE(pc) (pc - 2)
 
 /**
  * @brief Given a piece, returns true iff it is a sliding piece.

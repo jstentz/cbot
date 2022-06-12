@@ -12,6 +12,8 @@
 #include <string>
 #include <algorithm>
 
+// considering just giving these functions the bitboards they need
+// do this after fixing move representation
 bitboard generate_knight_move_bitboard(square knight, board_t *board) {
     bitboard own_pieces;
     if(board->t == W)  own_pieces = board->white_pieces;
@@ -37,11 +39,11 @@ bitboard generate_king_move_bitboard(square king, board_t *board) {
     if(!king_pseudomoves) return 0; // if the king has no pseudolegal moves, it cannot castle
 
     bitboard king_legal_moves = 0;
-    bitboard blocking_pieces = board->all_pieces & ~luts.pieces[king]; // the king cannot block the attack on a square behind it
+    bitboard blocking_pieces = board->all_pieces & ~BIT_FROM_SQ(king); // the king cannot block the attack on a square behind it
 
     while(king_pseudomoves) {
         square loc = (square)first_set_bit(king_pseudomoves);
-        if(!is_attacked(board, loc, blocking_pieces)) king_legal_moves |= luts.pieces[loc];
+        if(!is_attacked(board, loc, blocking_pieces)) king_legal_moves |= BIT_FROM_SQ(loc);
         REMOVE_FIRST(king_pseudomoves);
     }
 
@@ -110,7 +112,6 @@ bitboard generate_king_move_bitboard(square king, board_t *board) {
 }
 
 bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
-    // will need to add en passant later
     bitboard enemy_pieces;
     bitboard all_pieces = board->all_pieces;
     bitboard captures;
@@ -130,7 +131,7 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
     bitboard black_pawn_attacks;
 
     if(en_passant_sq != NONE) {
-        en_passant_bit =  luts.pieces[en_passant_sq]; // used to and with attack pattern
+        en_passant_bit =  BIT_FROM_SQ(en_passant_sq); // used to and with attack pattern
     }
 
     if(board->t == W) {
@@ -148,7 +149,7 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
         if(en_passant_capture){
             opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
             opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
-            board_without_pawns = board->all_pieces & ~(luts.pieces[pawn]) & ~(en_passant_bit >> 8);
+            board_without_pawns = board->all_pieces & ~(BIT_FROM_SQ(pawn)) & ~(en_passant_bit >> 8);
             attackers = get_rook_attacks(board->white_king_loc, board_without_pawns) & (opponent_rooks | opponent_queens);
             side_attackers = attackers & luts.mask_rank[RANK(pawn)];
             if(side_attackers) {
@@ -171,7 +172,7 @@ bitboard generate_pawn_move_bitboard(square pawn, board_t *board) {
         if(en_passant_capture){
             opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
             opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
-            board_without_pawns = board->all_pieces & ~(luts.pieces[pawn]) & ~(en_passant_bit << 8);
+            board_without_pawns = board->all_pieces & ~(BIT_FROM_SQ(pawn)) & ~(en_passant_bit << 8);
             attackers = get_rook_attacks(board->black_king_loc, board_without_pawns) & (opponent_rooks | opponent_queens);
             side_attackers = attackers & luts.mask_rank[RANK(pawn)];
             if(side_attackers) {
@@ -210,42 +211,45 @@ bitboard generate_queen_move_bitboard(square queen, board_t *board) {
            | generate_bishop_move_bitboard(queen, board);
 }
 
+move_t construct_move(int from, int to, int flags) {
+    return (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12);
+}
+
 void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
-    move_t move;
-    uint16_t pc_loc;
-    uint16_t tar_loc;
-    move.promotion_piece = EMPTY;
+    int from;
+    int to;
+    int flags;
+    bitboard to_bit;
     bitboard knights;
     bitboard opponent_pieces;
-    piece color;
     if (board->t == W) {
         knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
         opponent_pieces = board->black_pieces;
-        color = WHITE;
     }
     else {
         knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
         opponent_pieces = board->white_pieces;
-        color = BLACK;
     }
     bitboard knight_moves;
     bitboard knight_bit;
     while(knights) {
-        pc_loc = first_set_bit(knights);
-        knight_bit = luts.pieces[pc_loc];
+        from = first_set_bit(knights);
+        knight_bit = BIT_FROM_SQ(from);
         if(knight_bit & pin->pinned_pieces) {
             REMOVE_FIRST(knights);
             continue;
         } // pinned knights cannot move at all
-        knight_moves = generate_knight_move_bitboard((square)pc_loc, board) & check_mask;
-        knight_moves = (captures_only) ? (knight_moves & opponent_pieces) : knight_moves; // filter out non-captures
+        knight_moves = generate_knight_move_bitboard((square)from, board) & check_mask;
+        if(captures_only) { // filter out non-captures
+            knight_moves &= opponent_pieces;
+        }
+        
         while(knight_moves) {
-            tar_loc = first_set_bit(knight_moves);
-            move.start = (square)pc_loc;
-            move.target = (square)tar_loc;
-            move.mv_piece = color | KNIGHT;
-            move.tar_piece = board->sq_board[tar_loc];
-            (*curr_moves).push_back(move);
+            to = first_set_bit(knight_moves);
+            to_bit = BIT_FROM_SQ(to);
+            if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
+            else                         flags = QUIET_MOVE;
+            (*curr_moves).push_back(construct_move(from, to, flags));
             REMOVE_FIRST(knight_moves);
         }
         REMOVE_FIRST(knights);
@@ -254,35 +258,42 @@ void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard 
 }
 
 void generate_king_moves(board_t *board, vector<move_t> *curr_moves, bool captures_only) {
-    move_t move;
-    uint16_t pc_loc;
-    uint16_t tar_loc;
-    move.promotion_piece = EMPTY;
+    int from;
+    int to;
+    int flags;
+    bitboard to_bit;
     bitboard kings;
     bitboard opponent_pieces;
-    piece color;
     if (board->t == W) {
         kings = board->piece_boards[WHITE_KINGS_INDEX];
         opponent_pieces = board->black_pieces;
-        color = WHITE;
     }
     else {
         kings = board->piece_boards[BLACK_KINGS_INDEX];
         opponent_pieces = board->white_pieces;
-        color = BLACK;
     }
     bitboard king_moves;
     while(kings) {
-        pc_loc = first_set_bit(kings);
-        king_moves = generate_king_move_bitboard((square)pc_loc, board);
-        king_moves = (captures_only) ? (king_moves & opponent_pieces) : king_moves; // filter out non-captures
+        from = first_set_bit(kings);
+        king_moves = generate_king_move_bitboard((square)from, board);
+        if(captures_only) { // filter out non-captures
+            king_moves &= opponent_pieces;
+        }
         while(king_moves) {
-            tar_loc = first_set_bit(king_moves);
-            move.start = (square)pc_loc;
-            move.target = (square)tar_loc;
-            move.mv_piece = color | KING;
-            move.tar_piece = board->sq_board[tar_loc];
-            (*curr_moves).push_back(move);
+            to = first_set_bit(king_moves);
+            to_bit = BIT_FROM_SQ(to);
+            if(to - from == 2) { // king side castle
+                (*curr_moves).push_back(construct_move(from, to, KING_SIDE_CASTLE));
+            }
+            else if (to - from == -2) { // queen side castle
+                (*curr_moves).push_back(construct_move(from, to, QUEEN_SIDE_CASTLE));
+            } 
+            else{
+                if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
+                else                         flags = QUIET_MOVE;
+                (*curr_moves).push_back(construct_move(from, to, flags));
+            }
+            
             REMOVE_FIRST(king_moves);
         }
         REMOVE_FIRST(kings);
@@ -291,60 +302,57 @@ void generate_king_moves(board_t *board, vector<move_t> *curr_moves, bool captur
 }
 
 void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
-    move_t move;
-    uint16_t pc_loc;
-    uint16_t tar_loc;
-    move.promotion_piece = EMPTY;
+    int from;
+    int to;
+    int flags;
+    bitboard to_bit;
     bitboard pin_mask;
     bitboard pawns;
     bitboard opponent_pieces; // used for captures only
-    piece color;
     if (board->t == W) {
         pawns = board->piece_boards[WHITE_PAWNS_INDEX];
         opponent_pieces = board->black_pieces;
-        color = WHITE;
     }
     else {
         pawns = board->piece_boards[BLACK_PAWNS_INDEX];
         opponent_pieces = board->white_pieces;
-        color = BLACK;
     }
     bitboard pawn_moves;
     bitboard pawn_bit;
     bitboard en_passant_bit = 0;
-    if(board->en_passant != NONE && pawn_check) {
-        en_passant_bit = luts.pieces[board->en_passant];
-        check_mask |= en_passant_bit;
+    if(board->en_passant != NONE) {
+        en_passant_bit = BIT_FROM_SQ(board->en_passant);
+        if(pawn_check) {
+            check_mask |= en_passant_bit;
+        }
     }
     while(pawns) {
-        pc_loc = first_set_bit(pawns);
-        pawn_bit = luts.pieces[pc_loc];
+        from = first_set_bit(pawns);
+        pawn_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
-        if(pawn_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
-        pawn_moves = generate_pawn_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
-        pawn_moves = (captures_only) ? (pawn_moves & (opponent_pieces | en_passant_bit)) : pawn_moves; // choose between captures only or all moves
-        // and it with opponent_pieces and the en_passant square if it exists to generate captures only
+        if(pawn_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
+        pawn_moves = generate_pawn_move_bitboard((square)from, board) & check_mask & pin_mask;
+        if(captures_only) { // only keep captures if captures_only is set
+            pawn_moves &= (opponent_pieces | en_passant_bit);
+        }
         while(pawn_moves) {
-            tar_loc = first_set_bit(pawn_moves);
-            move.start = (square)pc_loc;
-            move.target = (square)tar_loc;
-            move.mv_piece = color | PAWN;
-            move.tar_piece = board->sq_board[tar_loc];
-            size_t tar_rank = RANK(tar_loc);
-            if(tar_rank == RANK_8 || tar_rank == RANK_1) {
-                piece color = (tar_rank == RANK_8) ? WHITE : BLACK;
-                move.promotion_piece = color | KNIGHT;
-                (*curr_moves).push_back(move);
-                move.promotion_piece = color | BISHOP;
-                (*curr_moves).push_back(move);
-                move.promotion_piece = color | ROOK;
-                (*curr_moves).push_back(move);
-                move.promotion_piece = color | QUEEN;
-                (*curr_moves).push_back(move);
+            to = first_set_bit(pawn_moves);
+            to_bit = BIT_FROM_SQ(to);
+            if(to_bit & en_passant_bit)         flags = EN_PASSANT_CAPTURE;
+            else if(to_bit & opponent_pieces)   flags = NORMAL_CAPTURE;
+            else                                flags = QUIET_MOVE;
+            int to_rank = RANK(to);
+            if(to_rank == RANK_8 || to_rank == RANK_1) {
+                (*curr_moves).push_back(construct_move(from, to, flags | KNIGHT_PROMO)); // or this on to flag because we check for captures prior to this
+                (*curr_moves).push_back(construct_move(from, to, flags | BISHOP_PROMO));
+                (*curr_moves).push_back(construct_move(from, to, flags | ROOK_PROMO));
+                (*curr_moves).push_back(construct_move(from, to, flags | QUEEN_PROMO));
             }
-            else{
-                move.promotion_piece = EMPTY;
-                (*curr_moves).push_back(move);
+            else if (abs(from - to) == 16) { // double pawn push
+                (*curr_moves).push_back(construct_move(from, to, DOUBLE_PUSH));
+            }
+            else {
+                (*curr_moves).push_back(construct_move(from, to, flags)); // should already be set to quiet or capture
             }
             REMOVE_FIRST(pawn_moves);
         }
@@ -354,42 +362,39 @@ void generate_pawn_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
 }
 
 void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
-    uint16_t pc_loc;
-    uint16_t tar_loc;
-
-    move_t move;
-    move.promotion_piece = EMPTY; // default to empty for sliding pieces
+    int from;
+    int to;
+    int flags;
+    bitboard to_bit;
     bitboard pin_mask;
     bitboard rooks;
     bitboard opponent_pieces;
-    piece color;
     if (board->t == W) {
         rooks = board->piece_boards[WHITE_ROOKS_INDEX];
         opponent_pieces = board->black_pieces;
-        color = WHITE;
     }
     else {
         rooks = board->piece_boards[BLACK_ROOKS_INDEX];
         opponent_pieces = board->white_pieces;
-        color = BLACK;
     }
 
     bitboard rook_moves;
     bitboard rook_bit;
     while(rooks) {
-        pc_loc = first_set_bit(rooks);
-        rook_bit = luts.pieces[pc_loc];
+        from = first_set_bit(rooks);
+        rook_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
-        if(rook_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
-        rook_moves = generate_rook_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
-        rook_moves = (captures_only) ? (rook_moves & opponent_pieces) : rook_moves; // filter out non-captures
+        if(rook_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
+        rook_moves = generate_rook_move_bitboard((square)from, board) & check_mask & pin_mask;
+        if(captures_only) { // filter out for captures only
+            rook_moves &= opponent_pieces;
+        }
         while(rook_moves) {
-            tar_loc = first_set_bit(rook_moves);
-            move.start = (square)pc_loc;
-            move.target = (square)tar_loc;
-            move.mv_piece = color | ROOK;
-            move.tar_piece = board->sq_board[tar_loc];
-            (*curr_moves).push_back(move);
+            to = first_set_bit(rook_moves);
+            to_bit = BIT_FROM_SQ(to);
+            if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
+            else                         flags = QUIET_MOVE;
+            (*curr_moves).push_back(construct_move(from, to, flags));
             REMOVE_FIRST(rook_moves);
         }
         REMOVE_FIRST(rooks);
@@ -398,42 +403,39 @@ void generate_rook_moves(board_t *board, vector<move_t> *curr_moves, bitboard ch
 }
 
 void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
-    uint16_t pc_loc;
-    uint16_t tar_loc;
-
-    move_t move;
-    move.promotion_piece = EMPTY; // default to empty for sliding pieces
+    int from;
+    int to;
+    int flags;
+    bitboard to_bit;
     bitboard pin_mask;
     bitboard bishops;
     bitboard opponent_pieces;
-    piece color;
     if (board->t == W) {
         bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
         opponent_pieces = board->black_pieces;
-        color = WHITE;
     }
     else {
         bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
         opponent_pieces = board->white_pieces;
-        color = BLACK;
     }
 
     bitboard bishop_moves;
     bitboard bishop_bit;
     while(bishops) {
-        pc_loc = first_set_bit(bishops);
-        bishop_bit = luts.pieces[pc_loc];
+        from = first_set_bit(bishops);
+        bishop_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
-        if(bishop_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
-        bishop_moves = generate_bishop_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
-        bishop_moves = (captures_only) ? (bishop_moves & opponent_pieces) : bishop_moves; // filter out non-captures
+        if(bishop_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
+        bishop_moves = generate_bishop_move_bitboard((square)from, board) & check_mask & pin_mask;
+        if(captures_only){ // filter out the non captures
+            bishop_moves &= opponent_pieces;
+        }
         while(bishop_moves) {
-            tar_loc = first_set_bit(bishop_moves);
-            move.start = (square)pc_loc;
-            move.target = (square)tar_loc;
-            move.mv_piece = color | BISHOP;
-            move.tar_piece = board->sq_board[tar_loc];
-            (*curr_moves).push_back(move);
+            to = first_set_bit(bishop_moves);
+            to_bit = BIT_FROM_SQ(to);
+            if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
+            else                         flags = QUIET_MOVE;
+            (*curr_moves).push_back(construct_move(from, to, flags));
             REMOVE_FIRST(bishop_moves);
         }
         REMOVE_FIRST(bishops);
@@ -442,42 +444,39 @@ void generate_bishop_moves(board_t *board, vector<move_t> *curr_moves, bitboard 
 }
 
 void generate_queen_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
-    uint16_t pc_loc;
-    uint16_t tar_loc;
-
-    move_t move;
-    move.promotion_piece = EMPTY; // default to empty for sliding pieces
+    int from;
+    int to;
+    int flags;
+    bitboard to_bit;
     bitboard pin_mask;
     bitboard queens;
     bitboard opponent_pieces;
-    piece color;
     if (board->t == W) {
         queens = board->piece_boards[WHITE_QUEENS_INDEX];
         opponent_pieces = board->black_pieces;
-        color = WHITE;
     }
     else {
         queens = board->piece_boards[BLACK_QUEENS_INDEX];
         opponent_pieces = board->white_pieces;
-        color = BLACK;
     }
 
     bitboard queen_moves;
     bitboard queen_bit;
     while(queens) {
-        pc_loc = first_set_bit(queens);
-        queen_bit = luts.pieces[pc_loc];
+        from = first_set_bit(queens);
+        queen_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
-        if(queen_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[pc_loc];
-        queen_moves = generate_queen_move_bitboard((square)pc_loc, board) & check_mask & pin_mask;
-        queen_moves = (captures_only) ? (queen_moves & opponent_pieces) : queen_moves; // filter out non-captures
+        if(queen_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
+        queen_moves = generate_queen_move_bitboard((square)from, board) & check_mask & pin_mask;
+        if(captures_only) { // filter out non captures
+            queen_moves &= opponent_pieces;
+        }
         while(queen_moves) {
-            tar_loc = first_set_bit(queen_moves);
-            move.start = (square)pc_loc;
-            move.target = (square)tar_loc;
-            move.mv_piece = color | QUEEN;
-            move.tar_piece = board->sq_board[tar_loc];
-            (*curr_moves).push_back(move);
+            to = first_set_bit(queen_moves);
+            to_bit = BIT_FROM_SQ(to);
+            if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
+            else                         flags = QUIET_MOVE;
+            (*curr_moves).push_back(construct_move(from, to, flags));
             REMOVE_FIRST(queen_moves);
         }
         REMOVE_FIRST(queens);
@@ -520,17 +519,17 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_on
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
 void order_moves(vector<move_t> *moves) {
-    vector<move_t> new_order;
-    for(move_t move : (*moves)) {
-        if(move.promotion_piece != EMPTY){
-            new_order.insert(new_order.begin(), move);
-        }
-        else if(move.tar_piece != EMPTY && (abs(piece_values[move.tar_piece]) >= abs(piece_values[move.mv_piece]))){
-            new_order.insert(new_order.begin(), move);
-        }
-        else new_order.push_back(move);
-    }
-    *moves = new_order;
+    // vector<move_t> new_order;
+    // for(move_t move : (*moves)) {
+    //     if(move.promotion_piece != EMPTY){
+    //         new_order.insert(new_order.begin(), move);
+    //     }
+    //     else if(move.tar_piece != EMPTY && (abs(piece_values[move.tar_piece]) >= abs(piece_values[move.mv_piece]))){
+    //         new_order.insert(new_order.begin(), move);
+    //     }
+    //     else new_order.push_back(move);
+    // }
+    // *moves = new_order;
     return;
 }
 
@@ -539,123 +538,70 @@ void order_captures(vector<move_t> *moves) {
     return;
 }
 
-void make_move(stack<board_t> *board_stack, move_t *move) {
+void make_move(stack<board_t> *board_stack, move_t move) {
     board_t curr_board = (*board_stack).top();
     board_t next_board = curr_board;
 
-    square start = move->start;
-    square target = move->target;
+    int from = FROM(move);
+    int to = TO(move);
+    int flags = FLAGS(move);
 
-    piece mv_piece = move->mv_piece;
-    piece tar_piece = move->tar_piece;
-
-    bitboard *mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
+    /* 
+        always have to remove the piece from its square...
+        if promotion, you cannot place the same piece on to square
+     */
+    piece moving_piece = curr_board.piece_boards[from];
+    bitboard *moving_piece_board = &next_board.piece_boards[INDEX_FROM_PIECE(moving_piece)];
+    REM_PIECE(*moving_piece_board, from);
+    next_board.sq_board[from] = EMPTY;
     
-    // always remove the piece from its board no matter what
-    rem_piece(mv_board, start);
-
-    /* update king locations */
-    if (mv_piece == (WHITE | KING)) next_board.white_king_loc = target;
-    else if (mv_piece == (BLACK | KING)) next_board.black_king_loc = target;
-
-    /* check for castling move */
-    bitboard *castling_rook;
-    if(mv_piece == (WHITE | KING) && (start == E1) && (target == G1)) {
-        castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
-        rem_piece(castling_rook, H1);
-        place_piece(castling_rook, F1);
-        next_board.sq_board[H1] = EMPTY;
-        next_board.sq_board[F1] = WHITE | ROOK;
-        next_board.white_king_side = false;
-    }
-    else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
-        castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
-        rem_piece(castling_rook, A1);
-        place_piece(castling_rook, D1);
-        next_board.sq_board[A1] = EMPTY;
-        next_board.sq_board[D1] = WHITE | ROOK;
-        next_board.white_queen_side = false;
-    }
-    else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
-        castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
-        rem_piece(castling_rook, H8);
-        place_piece(castling_rook, F8);
-        next_board.sq_board[H8] = EMPTY;
-        next_board.sq_board[F8] = BLACK | ROOK;
-        next_board.black_king_side = false;
-    }
-    else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
-        castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
-        rem_piece(castling_rook, A8);
-        place_piece(castling_rook, D8);
-        next_board.sq_board[A8] = EMPTY;
-        next_board.sq_board[D8] = BLACK | ROOK;
-        next_board.black_queen_side = false;
-    }
-
-    /* check if promoting move */
-    if(move->promotion_piece != EMPTY) {
-        mv_piece = move->promotion_piece;
-        mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
-    }
-
-    place_piece(mv_board, target);
-
-    /* check for capturing move */
-    if(tar_piece != EMPTY) {
-        bitboard *captured_board = &next_board.piece_boards[index_from_piece(tar_piece)];
-        rem_piece(captured_board, target);
-    }
-
-    next_board.sq_board[start] = EMPTY;
-    next_board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
-
-    /* check for en passant move to remove the pawn being captured en passant */
-    if(mv_piece == (WHITE | PAWN) && target == next_board.en_passant) {
-        bitboard *black_pawns = &next_board.piece_boards[BLACK_PAWNS_INDEX];
-        square pawn_square = (square)((int)next_board.en_passant - 8);
-        rem_piece(black_pawns, pawn_square);
-        next_board.sq_board[pawn_square] = EMPTY;
-    }
-    else if(mv_piece == (BLACK | PAWN) && target == next_board.en_passant) {
-        bitboard *white_pawns = &next_board.piece_boards[WHITE_PAWNS_INDEX];
-        square pawn_square = (square)((int)next_board.en_passant + 8);
-        rem_piece(white_pawns, pawn_square);
-        next_board.sq_board[pawn_square] = EMPTY;
-    }
-
-    /* Update en passant squares */
-    if(mv_piece == (WHITE | PAWN) && target - start == 16) {
-        next_board.en_passant = (square)(start + 8);
-    }
-    else if(mv_piece == (BLACK | PAWN) && start - target == 16) {
-        next_board.en_passant = (square)(target + 8);
-    }
-    else {
-        next_board.en_passant = NONE;
-    }
-
-    /* Update castling rights for king moves */
-    if(mv_piece == (WHITE | KING)) {
+    /* update the king locations and castling rights */
+    if(moving_piece == (WHITE | KING)) {
+        next_board.white_king_loc = (square)to;
         next_board.white_king_side = false;
         next_board.white_queen_side = false;
     }
-    else if(mv_piece == (BLACK | KING)) {
+    else if(moving_piece == (BLACK | KING)) {
+        next_board.black_king_loc = (square)to;
         next_board.black_king_side = false;
         next_board.black_queen_side = false;
     }
-    /* Update castling rights for rook moves */
-    else if(mv_piece == (WHITE | ROOK) && start == H1) {
+    else if(moving_piece == (WHITE | ROOK) && from == H1) {
         next_board.white_king_side = false;
     }
-    else if(mv_piece == (WHITE | ROOK) && start == A1) {
+    else if(moving_piece == (WHITE | ROOK) && from == A1) {
         next_board.white_queen_side = false;
     }
-    else if(mv_piece == (BLACK | ROOK) && start == H8) {
+    else if(moving_piece == (BLACK | ROOK) && from == H8) {
         next_board.black_king_side = false;
     }
-    else if(mv_piece == (BLACK | ROOK) && start == A8) {
+    else if(moving_piece == (BLACK | ROOK) && from == A8) {
         next_board.black_queen_side = false;
+    }
+
+    /* default there to be no en passant square and set it if double pawn push */
+    next_board.en_passant = NONE;
+
+    /* don't forget that if a rook is captured on A1, H1, A8, or H8, remove castling rights */
+    switch (flags) {
+        case QUIET_MOVE:
+            PLACE_PIECE(*moving_piece_board, to); // place the moving piece
+            next_board.sq_board[to] = moving_piece;
+            break;
+        case DOUBLE_PUSH:
+            PLACE_PIECE(*moving_piece_board, to); // place the moving piece
+            next_board.sq_board[to] = moving_piece;
+            /* 
+                if it's a double pawn push and we are starting on rank 2, its white pushing
+                otherwise it is black pushing the pawn
+            */
+            next_board.en_passant = (RANK(from) == RANK_2) ? ((square)(from + 8)) : ((square)(from - 8));
+            break;
+        case KING_SIDE_CASTLE:
+            PLACE_PIECE(*moving_piece_board, to); // place the moving piece
+            next_board.sq_board[to] = moving_piece;
+            
+            break;
     }
 
     next_board.t = !next_board.t;
@@ -663,6 +609,130 @@ void make_move(stack<board_t> *board_stack, move_t *move) {
     (*board_stack).push(next_board);
     return;
 }
+// void make_move(stack<board_t> *board_stack, move_t move) {
+//     board_t curr_board = (*board_stack).top();
+//     board_t next_board = curr_board;
+
+//     square start = move->start;
+//     square target = move->target;
+
+//     piece mv_piece = move->mv_piece;
+//     piece tar_piece = move->tar_piece;
+
+//     bitboard *mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
+    
+//     // always remove the piece from its board no matter what
+//     rem_piece(mv_board, start);
+
+//     /* update king locations */
+//     if (mv_piece == (WHITE | KING)) next_board.white_king_loc = target;
+//     else if (mv_piece == (BLACK | KING)) next_board.black_king_loc = target;
+
+//     /* check for castling move */
+//     bitboard *castling_rook;
+//     if(mv_piece == (WHITE | KING) && (start == E1) && (target == G1)) {
+//         castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
+//         rem_piece(castling_rook, H1);
+//         place_piece(castling_rook, F1);
+//         next_board.sq_board[H1] = EMPTY;
+//         next_board.sq_board[F1] = WHITE | ROOK;
+//         next_board.white_king_side = false;
+//     }
+//     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
+//         castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
+//         rem_piece(castling_rook, A1);
+//         place_piece(castling_rook, D1);
+//         next_board.sq_board[A1] = EMPTY;
+//         next_board.sq_board[D1] = WHITE | ROOK;
+//         next_board.white_queen_side = false;
+//     }
+//     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
+//         castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
+//         rem_piece(castling_rook, H8);
+//         place_piece(castling_rook, F8);
+//         next_board.sq_board[H8] = EMPTY;
+//         next_board.sq_board[F8] = BLACK | ROOK;
+//         next_board.black_king_side = false;
+//     }
+//     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
+//         castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
+//         rem_piece(castling_rook, A8);
+//         place_piece(castling_rook, D8);
+//         next_board.sq_board[A8] = EMPTY;
+//         next_board.sq_board[D8] = BLACK | ROOK;
+//         next_board.black_queen_side = false;
+//     }
+
+//     /* check if promoting move */
+//     if(move->promotion_piece != EMPTY) {
+//         mv_piece = move->promotion_piece;
+//         mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
+//     }
+
+//     place_piece(mv_board, target);
+
+//     /* check for capturing move */
+//     if(tar_piece != EMPTY) {
+//         bitboard *captured_board = &next_board.piece_boards[index_from_piece(tar_piece)];
+//         rem_piece(captured_board, target);
+//     }
+
+//     next_board.sq_board[start] = EMPTY;
+//     next_board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
+
+//     /* check for en passant move to remove the pawn being captured en passant */
+//     if(mv_piece == (WHITE | PAWN) && target == next_board.en_passant) {
+//         bitboard *black_pawns = &next_board.piece_boards[BLACK_PAWNS_INDEX];
+//         square pawn_square = (square)((int)next_board.en_passant - 8);
+//         rem_piece(black_pawns, pawn_square);
+//         next_board.sq_board[pawn_square] = EMPTY;
+//     }
+//     else if(mv_piece == (BLACK | PAWN) && target == next_board.en_passant) {
+//         bitboard *white_pawns = &next_board.piece_boards[WHITE_PAWNS_INDEX];
+//         square pawn_square = (square)((int)next_board.en_passant + 8);
+//         rem_piece(white_pawns, pawn_square);
+//         next_board.sq_board[pawn_square] = EMPTY;
+//     }
+
+//     /* Update en passant squares */
+//     if(mv_piece == (WHITE | PAWN) && target - start == 16) {
+//         next_board.en_passant = (square)(start + 8);
+//     }
+//     else if(mv_piece == (BLACK | PAWN) && start - target == 16) {
+//         next_board.en_passant = (square)(target + 8);
+//     }
+//     else {
+//         next_board.en_passant = NONE;
+//     }
+
+//     /* Update castling rights for king moves */
+//     if(mv_piece == (WHITE | KING)) {
+//         next_board.white_king_side = false;
+//         next_board.white_queen_side = false;
+//     }
+//     else if(mv_piece == (BLACK | KING)) {
+//         next_board.black_king_side = false;
+//         next_board.black_queen_side = false;
+//     }
+//     /* Update castling rights for rook moves */
+//     else if(mv_piece == (WHITE | ROOK) && start == H1) {
+//         next_board.white_king_side = false;
+//     }
+//     else if(mv_piece == (WHITE | ROOK) && start == A1) {
+//         next_board.white_queen_side = false;
+//     }
+//     else if(mv_piece == (BLACK | ROOK) && start == H8) {
+//         next_board.black_king_side = false;
+//     }
+//     else if(mv_piece == (BLACK | ROOK) && start == A8) {
+//         next_board.black_queen_side = false;
+//     }
+
+//     next_board.t = !next_board.t;
+//     update_boards(&next_board);
+//     (*board_stack).push(next_board);
+//     return;
+// }
 
 void unmake_move(stack<board_t> *board_stack) {
     (*board_stack).pop();

@@ -655,11 +655,11 @@ void make_move(stack<board_t> *board_stack, move_t move) {
             next_board.sq_board[to] = moving_piece;
 
             /* distinguish between white and black en passant */
-            opponent_pawn_sq = (RANK(to) == 6) ? (to - 8) : (to + 8);
+            opponent_pawn_sq = (RANK(to) == RANK_6) ? (to - 8) : (to + 8);
 
             /* remove the captured pawn */
             captured_board = &next_board.piece_boards[INDEX_FROM_PIECE(curr_board.sq_board[opponent_pawn_sq])];
-            REM_PIECE(*captured_board, to);
+            REM_PIECE(*captured_board, opponent_pawn_sq);
             next_board.sq_board[opponent_pawn_sq] = EMPTY;
             break;
         case KNIGHT_PROMO_CAPTURE:
@@ -853,7 +853,9 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
     // need to add castling
     vector<move_t> conflicting_moves;
     for (move_t single_move : all_moves) {
-        if(TO(single_move) == TO(move) && FROM(single_move) != FROM(move))
+        if(TO(single_move) == TO(move) && 
+           FROM(single_move) != FROM(move) &&
+           board->sq_board[FROM(single_move)] == board->sq_board[FROM(move)])
             conflicting_moves.push_back(single_move);
     }
     const string files = "abcdefgh";

@@ -226,22 +226,22 @@ int main(int argc, char** argv){
                                 }
                             }
                             else if(PIECE(mv_piece) == PAWN && (abs(RANK(from) - RANK(to)) == 2)) {
-                                flags == DOUBLE_PUSH;
+                                flags = DOUBLE_PUSH;
                             }
                             else if(PIECE(mv_piece) == PAWN && to == board.en_passant) {
-                                flags == EN_PASSANT_CAPTURE;
+                                flags = EN_PASSANT_CAPTURE;
                             }
                             else if(PIECE(mv_piece) == KING && (FILE(to) - FILE(from) == 2)) {
-                                flags == KING_SIDE_CASTLE;
+                                flags = KING_SIDE_CASTLE;
                             }
                             else if(PIECE(mv_piece) == KING && (FILE(to) - FILE(from) == -2)) {
-                                flags == QUEEN_SIDE_CASTLE;
+                                flags = QUEEN_SIDE_CASTLE;
                             }
                             else if(tar_piece != EMPTY) {
-                                flags == NORMAL_CAPTURE;
+                                flags = NORMAL_CAPTURE;
                             }
                             else {
-                                flags == QUIET_MOVE;
+                                flags = QUIET_MOVE;
                             }
                             move = construct_move(from, to, flags);
                             for (move_t legal_move : legal_moves) {
@@ -264,13 +264,13 @@ int main(int argc, char** argv){
                     if (!leftMouseButtonDown && event.button.button == SDL_BUTTON_LEFT) {
                         leftMouseButtonDown = true;
                         d_square_t *d_sq = SquareFromLoc(mousePos);
+                        from = SquareNumFromLoc(mousePos);
                         
                         if(d_sq->pc != EMPTY) {
                             selectedPiece.pc = d_sq->pc; // set whats inside equal to each other
                             selectedPiece.start_sq = from;
                             selectedPiece.rect = d_sq->rect;
                             d_sq->pc = EMPTY;
-                            from = SquareNumFromLoc(mousePos);
                             mv_piece = selectedPiece.pc;
                         }
                     }

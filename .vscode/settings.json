@@ -10,7 +10,15 @@
         "xstring": "cpp",
         "xhash": "cpp",
         "*.tcc": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "set": "cpp",
+        "array": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

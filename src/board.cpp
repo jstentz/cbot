@@ -44,6 +44,8 @@ board_t zero_board() {
     board.black_king_side = false;
     board.black_queen_side = false;
 
+    board.last_move = NO_MOVE;
+
     // board.board_hash = 0;
 
     return board;

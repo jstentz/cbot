@@ -4,6 +4,8 @@
 #include "moves.h"
 #include "evaluation.h"
 #include "hashing.h"
+#include "openings.h"
+#include "debugging.h"
 
 #include <stddef.h>
 #include <stack>
@@ -85,7 +87,7 @@ int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(curr_board, &captures, true); // true flag generates only captures
-    order_moves(&captures);
+    order_moves(&captures, curr_board);
     for (move_t capture : captures) {
         make_move(board_stack, capture);
         int evaluation = -qsearch(board_stack, -beta, -alpha);
@@ -104,6 +106,8 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
    
     if(depth == 0) {
         return qsearch(board_stack, alpha, beta);
+        // positions_searched++;
+        // return evaluate(&(*board_stack).top());
     }
 
     board_t *curr_board = &(*board_stack).top();
@@ -115,7 +119,7 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
     // TT.insert(h);
 
     generate_moves(curr_board, &moves);
-    order_moves(&moves);
+    order_moves(&moves, curr_board);
     if(moves.size() == 0) {
         if(checking_pieces(curr_board) != 0) {
             return INT_MIN + 1 + (*board_stack).size(); // the deeper in the search we are, the less good the checkmate is
@@ -142,15 +146,23 @@ move_t find_best_move(board_t board) {
     // TT.clear();
     // hash_val h = zobrist_hash(board);
     // TT.insert(h);
+    /* check in opening book */
+    move_t opening_move = get_opening_move(&board);
+    if(opening_move != 0) {
+        cout << "Played from book!" << endl;
+        return opening_move;
+    }
+
     clock_t tStart;
     clock_t tStop;
-    size_t depth = 5; // how do I know how deep to search?
+    size_t depth = 5;
     board_t *next_board;
     stack<board_t> board_stack;
     board_stack.push(board);
     vector<move_t> moves;
     generate_moves(&board, &moves);
-    order_moves(&moves);
+    order_moves(&moves, &board);
+    // print_moves(moves, &board);
     move_t best_move;
     int best_eval = INT_MIN + 1;
     int alpha = INT_MIN + 1;
@@ -330,4 +342,12 @@ move_t find_best_move(board_t board) {
     might have to get visual studio in order to get the intel compiler
 
     no clue how to use visual studio 2019
+
+    next up:
+        1. store the results of the openings stuff in the form of the position's hash val and
+        the 32 bit number moves
+        this way we don't have to generate the moves from the notation every time
+        or make the moves
+        2. make sure that it doesn't crash
+        3. move ordering
 */

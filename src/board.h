@@ -21,6 +21,7 @@
 using namespace std;
 
 typedef bool turn;
+typedef signed int move_t;
 
 #define WHITE_PAWNS_INDEX 0x0
 #define BLACK_PAWNS_INDEX 0x1
@@ -47,6 +48,8 @@ typedef bool turn;
 
 #define PLACE_PIECE(bb, sq) (bb = (bb | (((bitboard)0x1) << sq)))
 #define REM_PIECE(bb, sq) (bb = (bb & ~(((bitboard)0x1) << sq)))
+
+#define NO_MOVE ((move_t)0x0)
 
 
 // would like to get rid of these enums in any non-user interacting code
@@ -88,6 +91,8 @@ typedef struct Board
 
     square white_king_loc;
     square black_king_loc;
+
+    move_t last_move;
 
     /* hashing items */
     // hash_val board_hash;

@@ -75,11 +75,15 @@ def listFiles(path):
 #     newPath = path.replace("unformattedOpenings", "formattedOpenings")
 #     formatOpening(path, newPath)
 
-allFiles = listFiles("openingBook/formattedOpenings")
+# allFiles = listFiles("openingBook/formattedOpenings")
 
-for path in allFiles:
-    newPath = "openingBook/formattedOpenings/openingBook.pgn"
-    name = path.replace("openingBook/formattedOpenings/", "")
-    name = name.replace(".pgn", "")
-    name = ":" + name
-    writeFile(newPath, readFile(newPath) + readFile(path))
+# for path in allFiles:
+#     newPath = "openingBook/formattedOpenings/openingBook.pgn"
+#     name = path.replace("openingBook/formattedOpenings/", "")
+#     name = name.replace(".pgn", "")
+#     name = ":" + name
+#     writeFile(newPath, readFile(newPath) + readFile(path))
+
+# contents = readFile("../../assets/opening_book_no_spaces.pgn")
+# contents = contents.replace("  ", " ")
+# writeFile("../../assets/opening_book_no_spaces.pgn", contents)

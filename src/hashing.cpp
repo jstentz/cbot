@@ -18,7 +18,15 @@ hash_val rand64() {
 }
 
 zobrist_table_t init_zobrist() {
-    srand(time(0));
+    // srand(time(0));
+    /** 
+     * IMPORTANT I DON'T RESEED THIS EVERYTIME 
+     * IM NOT SURE IF THIS COULD MEAN THAT THERE WOULD BE ISSUES WHEN HASHING BOARDS
+     * THE SAME BOARD WILL ALWAYS HASH TO THE SAME NUMBER ACROSS PROGRAM LAUCHES
+     * ... I don't think this matters though because that just means that if there
+     * is a conflict (which there shouldn't be) it'll always be the same boards
+     * conflicting
+     */
     zobrist_table_t zobrist_table;
     for(int i = 0; i < 64; i++) {
         for(int j = 0; j < 12; j++) {

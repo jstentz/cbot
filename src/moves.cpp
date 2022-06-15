@@ -5,6 +5,7 @@
 #include "pieces.h"
 #include "evaluation.h"
 #include "hashing.h"
+#include "debugging.h"
 
 #include <vector>
 #include <stack>
@@ -214,6 +215,15 @@ bitboard generate_queen_move_bitboard(square queen, board_t *board) {
 move_t construct_move(int from, int to, int flags) {
     return (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12);
 }
+
+// int flags_from_fromto(int from, int to, board_t *board) {
+//     piece mv_piece = board->sq_board[from];
+//     piece tar_piece = board->sq_board[to];
+//     if(PIECE(mv_piece) == PAWN && abs(RANK(from) - RANK(to)) == 2) {
+//         return DOUBLE_PUSH;
+//     }
+//     else if(PIECE(mv_piece) == PAWN &&)
+// }
 
 void generate_knight_moves(board_t *board, vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     int from;
@@ -518,18 +528,67 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_on
 
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
-void order_moves(vector<move_t> *moves) {
-    // vector<move_t> new_order;
-    // for(move_t move : (*moves)) {
-    //     if(move.promotion_piece != EMPTY){
-    //         new_order.insert(new_order.begin(), move);
-    //     }
-    //     else if(move.tar_piece != EMPTY && (abs(piece_values[move.tar_piece]) >= abs(piece_values[move.mv_piece]))){
-    //         new_order.insert(new_order.begin(), move);
-    //     }
-    //     else new_order.push_back(move);
-    // }
-    // *moves = new_order;
+void order_moves(vector<move_t> *moves, board_t *board) {
+    // how do I assign negative scores here
+    // make moves signed?
+    // DOESN'T TAKE INTO ACCOUNT KING ENDGAME
+    // wait the end bits might fuck this up I need to think about this
+    // all move scores are assigned positive values for sorting at the end (regardless of white or black to move)
+    // if a move is a capture and its moving to an unattacked square, that's probably a good move
+    if((*moves).size() == 0) return;
+    signed short int score;
+    vector<move_t> mvs = *moves;
+    piece mv_piece;
+    piece tar_piece;
+    int to;
+    int from;
+    move_t mv;
+    int flags;
+    // maybe add a bonus for castling moves
+    // add recapturing the piece that was last captured as a good bonus to check first
+    // bigger bonus for the higher value piece being captured
+    // just have the board store the move that was made to get to that position
+    move_t last_move = board->last_move;
+    int recapture_square = -1;
+    if(last_move != NO_MOVE && IS_CAPTURE(last_move)) {
+        recapture_square = TO(last_move);
+    }
+    for(int i = 0; i < mvs.size(); i++) {
+        score = 0;
+        mv = mvs[i];
+        to = TO(mv);
+        from = FROM(mv);
+        mv_piece = board->sq_board[from];
+        if(IS_PROMO(mv)) {
+            flags = FLAGS(mv);
+            if(flags == KNIGHT_PROMO || flags == KNIGHT_PROMO_CAPTURE) {
+                score += piece_values[WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
+            }
+            else if(flags == BISHOP_PROMO || flags == BISHOP_PROMO_CAPTURE) {
+                score += piece_values[WHITE_BISHOPS_INDEX];
+            }
+            else if(flags == ROOK_PROMO || flags == ROOK_PROMO_CAPTURE) {
+                score += piece_values[WHITE_ROOKS_INDEX];
+            }
+            else {
+                score += piece_values[WHITE_QUEENS_INDEX];
+            }
+        }
+        if(IS_CAPTURE(mv)) {
+            tar_piece = board->sq_board[to];
+            score += abs(piece_values[INDEX_FROM_PIECE(tar_piece)]) - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]);
+        }
+        score += abs(piece_scores[INDEX_FROM_PIECE(mv_piece)][to]) - abs(piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
+        /* score moves to squares attacked by pawns */
+        if(is_attacked_by_pawn(board, (square)to)) 
+            score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
+
+        /* check recapturing moves */
+        if(to == recapture_square) 
+            score += 5 * abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // arbitrary multiplication
+        (*moves)[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
+    }
+    std::sort(moves->begin(), moves->end(), greater<move_t>());
     return;
 }
 
@@ -710,133 +769,10 @@ void make_move(stack<board_t> *board_stack, move_t move) {
 
     next_board.t = !next_board.t;
     update_boards(&next_board);
+    next_board.last_move = move;
     (*board_stack).push(next_board);
     return;
 }
-// void make_move(stack<board_t> *board_stack, move_t move) {
-//     board_t curr_board = (*board_stack).top();
-//     board_t next_board = curr_board;
-
-//     square start = move->start;
-//     square target = move->target;
-
-//     piece mv_piece = move->mv_piece;
-//     piece tar_piece = move->tar_piece;
-
-//     bitboard *mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
-    
-//     // always remove the piece from its board no matter what
-//     rem_piece(mv_board, start);
-
-//     /* update king locations */
-//     if (mv_piece == (WHITE | KING)) next_board.white_king_loc = target;
-//     else if (mv_piece == (BLACK | KING)) next_board.black_king_loc = target;
-
-//     /* check for castling move */
-//     bitboard *castling_rook;
-//     if(mv_piece == (WHITE | KING) && (start == E1) && (target == G1)) {
-//         castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
-//         rem_piece(castling_rook, H1);
-//         place_piece(castling_rook, F1);
-//         next_board.sq_board[H1] = EMPTY;
-//         next_board.sq_board[F1] = WHITE | ROOK;
-//         next_board.white_king_side = false;
-//     }
-//     else if(mv_piece == (WHITE | KING) && (start == E1) && (target == C1)) {
-//         castling_rook = &next_board.piece_boards[WHITE_ROOKS_INDEX];
-//         rem_piece(castling_rook, A1);
-//         place_piece(castling_rook, D1);
-//         next_board.sq_board[A1] = EMPTY;
-//         next_board.sq_board[D1] = WHITE | ROOK;
-//         next_board.white_queen_side = false;
-//     }
-//     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == G8)) {
-//         castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
-//         rem_piece(castling_rook, H8);
-//         place_piece(castling_rook, F8);
-//         next_board.sq_board[H8] = EMPTY;
-//         next_board.sq_board[F8] = BLACK | ROOK;
-//         next_board.black_king_side = false;
-//     }
-//     else if(mv_piece == (BLACK | KING) && (start == E8) && (target == C8)) {
-//         castling_rook = &next_board.piece_boards[BLACK_ROOKS_INDEX];
-//         rem_piece(castling_rook, A8);
-//         place_piece(castling_rook, D8);
-//         next_board.sq_board[A8] = EMPTY;
-//         next_board.sq_board[D8] = BLACK | ROOK;
-//         next_board.black_queen_side = false;
-//     }
-
-//     /* check if promoting move */
-//     if(move->promotion_piece != EMPTY) {
-//         mv_piece = move->promotion_piece;
-//         mv_board = &next_board.piece_boards[index_from_piece(mv_piece)];
-//     }
-
-//     place_piece(mv_board, target);
-
-//     /* check for capturing move */
-//     if(tar_piece != EMPTY) {
-//         bitboard *captured_board = &next_board.piece_boards[index_from_piece(tar_piece)];
-//         rem_piece(captured_board, target);
-//     }
-
-//     next_board.sq_board[start] = EMPTY;
-//     next_board.sq_board[target] = mv_piece; // mv_piece will be updated to queen if promoting move
-
-//     /* check for en passant move to remove the pawn being captured en passant */
-//     if(mv_piece == (WHITE | PAWN) && target == next_board.en_passant) {
-//         bitboard *black_pawns = &next_board.piece_boards[BLACK_PAWNS_INDEX];
-//         square pawn_square = (square)((int)next_board.en_passant - 8);
-//         rem_piece(black_pawns, pawn_square);
-//         next_board.sq_board[pawn_square] = EMPTY;
-//     }
-//     else if(mv_piece == (BLACK | PAWN) && target == next_board.en_passant) {
-//         bitboard *white_pawns = &next_board.piece_boards[WHITE_PAWNS_INDEX];
-//         square pawn_square = (square)((int)next_board.en_passant + 8);
-//         rem_piece(white_pawns, pawn_square);
-//         next_board.sq_board[pawn_square] = EMPTY;
-//     }
-
-//     /* Update en passant squares */
-//     if(mv_piece == (WHITE | PAWN) && target - start == 16) {
-//         next_board.en_passant = (square)(start + 8);
-//     }
-//     else if(mv_piece == (BLACK | PAWN) && start - target == 16) {
-//         next_board.en_passant = (square)(target + 8);
-//     }
-//     else {
-//         next_board.en_passant = NONE;
-//     }
-
-//     /* Update castling rights for king moves */
-//     if(mv_piece == (WHITE | KING)) {
-//         next_board.white_king_side = false;
-//         next_board.white_queen_side = false;
-//     }
-//     else if(mv_piece == (BLACK | KING)) {
-//         next_board.black_king_side = false;
-//         next_board.black_queen_side = false;
-//     }
-//     /* Update castling rights for rook moves */
-//     else if(mv_piece == (WHITE | ROOK) && start == H1) {
-//         next_board.white_king_side = false;
-//     }
-//     else if(mv_piece == (WHITE | ROOK) && start == A1) {
-//         next_board.white_queen_side = false;
-//     }
-//     else if(mv_piece == (BLACK | ROOK) && start == H8) {
-//         next_board.black_king_side = false;
-//     }
-//     else if(mv_piece == (BLACK | ROOK) && start == A8) {
-//         next_board.black_queen_side = false;
-//     }
-
-//     next_board.t = !next_board.t;
-//     update_boards(&next_board);
-//     (*board_stack).push(next_board);
-//     return;
-// }
 
 void unmake_move(stack<board_t> *board_stack) {
     (*board_stack).pop();
@@ -926,83 +862,105 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
     return str_move;
 }
 
-// move_t move_from_notation(string notation, board_t *board) {
-//     if(notation.length() == 0) {
-//         exit(-1);
-//     }
-//     piece mv_piece;
-//     char c = notation[0];
-//     if(isupper(c)) {
-//         mv_piece = piece_from_move_char(c);
-//         notation = notation.substr(1, notation.length() - 1);
-//     }
-//     else mv_piece = PAWN;
-//     if(board->t == W) mv_piece |= WHITE;
-//     else mv_piece |= BLACK;
+// this doesn't work for promotions yet, but that shouldn't be a problem in opening
+move_t move_from_notation(string notation, board_t *board) {
+    // cout << notation << endl;
+    string notation_copy = notation;
+    if(notation.length() == 0) {
+        cout << "Empty notation!\n";
+        int y;
+        cin >> y;
+        exit(-1);
+    }
+    notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
+    vector<move_t> moves;
+    generate_moves(board, &moves);
+    // this is so ugly
+    if(notation == "O-O") {
+        for (move_t move : moves) {
+            if(FLAGS(move) == KING_SIDE_CASTLE) return move;
+        }
+    }
+    else if(notation == "O-O-O") {
+        for (move_t move : moves) {
+            if(FLAGS(move) == QUEEN_SIDE_CASTLE) return move;
+        }
+    }
+    piece mv_piece;
+    char c = notation[0];
+    if(isupper(c)) {
+        mv_piece = piece_from_move_char(c);
+        notation = notation.substr(1, notation.length() - 1);
+    }
+    else mv_piece = PAWN;
+    if(board->t == W) mv_piece |= WHITE;
+    else mv_piece |= BLACK;
 
-//     string delimiter = "=";
+    string delimiter = "=";
 
-//     piece promotion_piece;
-//     size_t promotion_marker = notation.find(delimiter);
-//     if(promotion_marker == string::npos) { // didn't find = 
-//         promotion_piece = EMPTY;
-//     }
-//     else {
-//         promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
-//         notation = notation.substr(0, promotion_marker);
-//     }
+    piece promotion_piece;
+    size_t promotion_marker = notation.find(delimiter);
+    if(promotion_marker == string::npos) { // didn't find = 
+        promotion_piece = EMPTY;
+    }
+    else {
+        promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
+        notation = notation.substr(0, promotion_marker);
+    }
 
-//     if(board->t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
-//     else {mv_piece |= BLACK; promotion_piece |= BLACK;}
+    if(board->t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
+    else {mv_piece |= BLACK; promotion_piece |= BLACK;}
     
-//     notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
-//     const string files = "abcdefgh";
-//     const string ranks = "12345678";
+    notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
+    const string files = "abcdefgh";
+    const string ranks = "12345678";
 
-//     int target_rank;
-//     int target_file;
-//     int start_rank = -1;
-//     int start_file = -1;
-//     square target_square;
+    int target_rank;
+    int target_file;
+    int start_rank = -1;
+    int start_file = -1;
+    square target_square;
 
+    // cout << notation << endl;
+    if(notation.length() == 2) { // no move conflict
+        target_rank = ranks.find(notation[1]);
+        target_file = files.find(notation[0]);
+    }
+    else if(notation.length() == 3) { // some conflict
+        target_rank = ranks.find(notation[2]);
+        target_file = files.find(notation[1]);
 
-//     if(notation.length() == 2) { // no move conflict
-//         target_rank = ranks.find(notation[1]);
-//         target_file = files.find(notation[0]);
-//     }
-//     else if(notation.length() == 3) { // some conflict
-//         target_rank = ranks.find(notation[2]);
-//         target_file = files.find(notation[1]);
-
-//         if(isalpha(notation[0])) {
-//             start_file = files.find(notation[0]);
-//         }
-//         else {
-//             start_rank = ranks.find(notation[0]);
-//         }
-//     }
-//     else {
-//         target_rank = ranks.find(notation[3]);
-//         target_file = files.find(notation[2]);
+        if(isalpha(notation[0])) {
+            start_file = files.find(notation[0]);
+        }
+        else {
+            start_rank = ranks.find(notation[0]);
+        }
+    }
+    else {
+        target_rank = ranks.find(notation[3]);
+        target_file = files.find(notation[2]);
         
-//         start_file = files.find(notation[0]);
-//         start_rank = ranks.find(notation[1]);
-//     }
-//     target_square = (square)(target_rank * 8 + target_file);
-//     if(start_rank != -1) start_rank++;
-//     if(start_file != -1) start_file++;
-//     vector<move_t> moves;
-//     generate_moves(board, &moves);
-    
-//     for (move_t move : moves) {
-//         if(move.mv_piece == mv_piece &&
-//            move.promotion_piece == promotion_piece &&
-//            move.target == target_square) {
-//                if(start_rank == -1 && start_file == -1) return move;
-//                if(start_rank == -1 && start_file == FILE(move.start)) return move;
-//                if(start_rank == RANK(move.start) && start_file == -1) return move;
-//                if(start_rank == RANK(move.start) && start_file == FILE(move.start)) return move;
-//            }
-//     }
-//     exit(-1); // should match to a move
-// }
+        start_file = files.find(notation[0]);
+        start_rank = ranks.find(notation[1]);
+    }
+    target_square = (square)(target_rank * 8 + target_file);
+    // if(start_rank != -1) start_rank++;
+    // if(start_file != -1) start_file++;
+    // int x;
+    // cin >> x;
+    for (move_t move : moves) {
+        if(TO(move) == target_square && board->sq_board[FROM(move)] == mv_piece) {
+            if(start_rank == -1 && start_file == -1) return move;
+            if(start_rank == -1 && start_file == FILE(FROM(move))) return move;
+            if(start_rank == RANK(FROM(move)) && start_file == -1) return move;
+            if(start_rank == RANK(FROM(move)) && start_file == FILE(FROM(move))) return move;
+        }
+    }
+    cout << "Move: " << notation_copy << endl;
+    print_squarewise(board->sq_board);
+    int x;
+    cout << "No match found!" << endl;
+    cin >> x;
+    exit(-1); // should match to a move
+}

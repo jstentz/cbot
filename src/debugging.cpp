@@ -2,6 +2,7 @@
 #include "bitboard.h"
 #include "board.h"
 #include "pieces.h"
+#include "moves.h"
 
 #include <bitset>
 #include <stddef.h>
@@ -9,6 +10,12 @@
 #include <stdio.h>
 
 using namespace std;
+
+void print_moves(vector<move_t> moves, board_t *board) {
+    for(move_t move : moves) {
+        cout << notation_from_move(move, moves, board) << endl;
+    }
+}
 
 void print_bitboard(bitboard b) {
     bitset<64> bs(b);

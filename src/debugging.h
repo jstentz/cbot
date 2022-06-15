@@ -14,6 +14,9 @@
 #include "bitboard.h"
 #include "pieces.h"
 #include "board.h"
+#include "moves.h"
+
+void print_moves(vector<move_t> moves, board_t *board);
 
 /**
  * @brief Prints a bitboard in a nice format.

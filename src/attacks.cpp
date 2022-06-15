@@ -250,7 +250,7 @@ lut_t init_LUT () {
     return luts;
 }
 
-lut_t luts = init_LUT();
+lut_t luts;
 
 bitboard get_knight_attacks(square knight) {
     // doesn't depend on the current position
@@ -382,6 +382,16 @@ bitboard get_ray_from_queen_to_king(square queen, square king) {
 
 bitboard get_ray_from_sq_to_sq(square start, square target) {
     return get_ray_from_queen_to_king(start, target);
+}
+
+bool is_attacked_by_pawn(board_t *board, square sq) {
+    bitboard opponent_pawns;
+    if(board->t == W)
+        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+    else
+        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
+    if(get_pawn_attacks(sq, board->t) & opponent_pawns) return true;
+    return false;
 }
 
 bool is_attacked(board_t *board, square sq, bitboard blocking_pieces) {

@@ -180,3 +180,5 @@ bitboard attackers_from_square(board_t *board, square sq);
  * @return Bitboard containing all the rays
  */
 bitboard opponent_slider_rays_to_square(board_t *board, square sq);
+
+bool is_attacked_by_pawn(board_t *board, square sq);

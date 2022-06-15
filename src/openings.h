@@ -11,3 +11,19 @@
  */
 
 #pragma once
+
+#include "moves.h"
+#include "hashing.h"
+
+#include <unordered_map>
+#include <vector>
+
+unordered_map<hash_val, vector<move_t>> create_opening_book();
+
+move_t get_opening_move(board_t *board);
+
+extern unordered_map<hash_val, vector<move_t>> opening_book;
+
+void generate_num_data();
+
+unordered_map<hash_val, vector<move_t>> populate_opening_book();

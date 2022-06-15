@@ -78,3 +78,5 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta);
  * @return Best move 
  */
 move_t find_best_move(board_t board);
+
+extern size_t positions_searched; // debugging

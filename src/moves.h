@@ -40,14 +40,19 @@
 #define IS_CAPTURE(move) (move & 0x4000)
 #define IS_PROMO(move) (move & 0x8000)
 
+#define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
+
+#define NO_MOVE ((move_t)0x0)
+
 // get rid of the square enum its kinda dumb
 
 /**
  * @brief Representation for a move. The first 16 bits hold the from square, 
- * the to square, and the move type.
+ * the to square, and the move type. This is signed so the higher order bits can
+ * give us moves with a negative score, therefore easier sorting.
  * 
  */
-typedef unsigned int move_t;
+typedef signed int move_t;
 
 /**
  * @brief Given a board state, generates all legal moves in the position.
@@ -64,7 +69,7 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_on
  * 
  * @param moves Vector of moves to reorder
  */
-void order_moves(vector<move_t> *moves);
+void order_moves(vector<move_t> *moves, board_t *board);
 
 /**
  * @brief Takes in a pointer to the current board state, along with a move
@@ -105,6 +110,6 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
  * @param board Current position
  * @return Move representing the notation
  */
-// move_t move_from_notation(string notation, board_t *board);
+move_t move_from_notation(string notation, board_t *board);
 
 move_t construct_move(int from, int to, int flags);

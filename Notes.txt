@@ -1,0 +1,5 @@
+Right now you can force a draw from the opening with the Amar opening (Nh3, Na3, and going back)
+
+I can play as the computer by using my unmake_move feature (right click)
+
+Need to remove a lot of troublesome lines in the opening book that just straight up hang a piece

@@ -27,3 +27,5 @@ typedef struct zobrist_table {
 } zobrist_table_t;
 
 hash_val zobrist_hash(board_t *board);
+
+hash_val rand64();

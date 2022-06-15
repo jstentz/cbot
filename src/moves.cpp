@@ -576,7 +576,12 @@ void order_moves(vector<move_t> *moves, board_t *board) {
         }
         if(IS_CAPTURE(mv)) {
             tar_piece = board->sq_board[to];
-            score += abs(piece_values[INDEX_FROM_PIECE(tar_piece)]) - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]);
+            if(is_attacked(board, (square)to, board->all_pieces)) {
+                score += 5 * abs(piece_values[INDEX_FROM_PIECE(tar_piece)]);
+            }
+            else {
+                score += abs(piece_values[INDEX_FROM_PIECE(tar_piece)]) - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]);    
+            }
         }
         score += abs(piece_scores[INDEX_FROM_PIECE(mv_piece)][to]) - abs(piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
         /* score moves to squares attacked by pawns */

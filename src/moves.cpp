@@ -576,7 +576,7 @@ void order_moves(vector<move_t> *moves, board_t *board) {
         }
         if(IS_CAPTURE(mv)) {
             tar_piece = board->sq_board[to];
-            if(is_attacked(board, (square)to, board->all_pieces)) {
+            if(!is_attacked(board, (square)to, board->all_pieces)) {
                 score += 5 * abs(piece_values[INDEX_FROM_PIECE(tar_piece)]);
             }
             else {

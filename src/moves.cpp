@@ -544,6 +544,7 @@ void order_moves(vector<move_t> *moves, board_t *board) {
     int from;
     move_t mv;
     int flags;
+    int perspective = (board->t == W) ? 1 : -1;
     // maybe add a bonus for castling moves
     // add recapturing the piece that was last captured as a good bonus to check first
     // bigger bonus for the higher value piece being captured
@@ -583,10 +584,13 @@ void order_moves(vector<move_t> *moves, board_t *board) {
                 score += abs(piece_values[INDEX_FROM_PIECE(tar_piece)]) - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]);    
             }
         }
-        score += abs(piece_scores[INDEX_FROM_PIECE(mv_piece)][to]) - abs(piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
-        /* score moves to squares attacked by pawns */
-        if(is_attacked_by_pawn(board, (square)to)) 
-            score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
+        else {
+            /* score moves to squares attacked by pawns */
+            if(is_attacked_by_pawn(board, (square)to)) 
+                score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
+        }
+        score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
+        
 
         /* check recapturing moves */
         if(to == recapture_square) 

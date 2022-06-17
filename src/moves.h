@@ -41,6 +41,7 @@
 #define IS_PROMO(move) (move & 0x8000)
 
 #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
+#define SCORE(move) (move >> 16)
 
 #define NO_MOVE ((move_t)0x0)
 

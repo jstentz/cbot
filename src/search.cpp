@@ -162,7 +162,7 @@ move_t find_best_move(board_t board) {
     vector<move_t> moves;
     generate_moves(&board, &moves);
     order_moves(&moves, &board);
-    // print_moves(moves, &board);
+    print_moves(moves, &board);
     move_t best_move;
     int best_eval = INT_MIN + 1;
     int alpha = INT_MIN + 1;
@@ -350,4 +350,11 @@ move_t find_best_move(board_t board) {
         or make the moves
         2. make sure that it doesn't crash
         3. move ordering
+
+    maybe add like a piece least_valuable_attacker(square sq, board_t board)
+    which checks pawns, then knights, then bishops, etc...
+
+    A better evaluation function likely speeds up the program, since you will
+    have fewer positions that end up with the same evaluation, meaning there
+    should be better alpha beta pruning
 */

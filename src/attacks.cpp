@@ -384,6 +384,39 @@ bitboard get_ray_from_sq_to_sq(square start, square target) {
     return get_ray_from_queen_to_king(start, target);
 }
 
+// this function does include the king
+piece least_valued_attacker(board_t *board, square sq) {
+    bitboard opponent_knights;
+    bitboard opponent_kings;
+    bitboard opponent_pawns;
+    bitboard opponent_rooks;
+    bitboard opponent_bishops;
+    bitboard opponent_queens;
+    if(board->t == W) {
+        opponent_knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = board->piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+    }
+    else {
+        opponent_knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = board->piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+    }
+    if(get_pawn_attacks(sq, board->t) & opponent_pawns) return PAWN;
+    if(get_knight_attacks(sq) & opponent_knights) return KNIGHT;
+    if(get_bishop_attacks(sq, board->all_pieces) & opponent_bishops) return BISHOP;
+    if(get_rook_attacks(sq, board->all_pieces) & opponent_rooks) return ROOK;
+    if(get_queen_attacks(sq, board->all_pieces) & opponent_queens) return QUEEN;
+    if(get_king_attacks(sq) & opponent_kings) return QUEEN;
+    return EMPTY;
+}
+
 bool is_attacked_by_pawn(board_t *board, square sq) {
     bitboard opponent_pawns;
     if(board->t == W)

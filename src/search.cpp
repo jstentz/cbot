@@ -186,12 +186,14 @@ move_t find_best_move(board_t board) {
     // TT.erase(h); // don't erase because this position was played
     // TT.insert(zobrist_hash(make_move(board, &best_move))); // include the new board
     tStop = clock();
+    int perspective = (board.t == W) ? 1 : -1;
     // more speed debugging stuff
     cout << "Positions searched: " << positions_searched << endl;
     cout << "This move was in position " << move_num << " out of " << count << endl;
     double time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
     cout << "Time elapsed: " << time_elapsed << endl;
     cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl << endl;
+    cout << "Eval: " << (((double)best_eval) / 100.0) * perspective << endl;
     positions_searched = 0;
     return best_move;
 }
@@ -353,6 +355,11 @@ move_t find_best_move(board_t board) {
 
     maybe add like a piece least_valuable_attacker(square sq, board_t board)
     which checks pawns, then knights, then bishops, etc...
+
+    ^^^ THIS WOULD BE VERY HELPFUL FOR CHECKING HANGING PIECES 
+
+    CHECK TO SEE IF THE SQUARE THEY ARE COMING FROM IS ATTACKED AND SCORE IT 
+    BASED ON THAT AS WELL
 
     A better evaluation function likely speeds up the program, since you will
     have fewer positions that end up with the same evaluation, meaning there

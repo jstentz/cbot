@@ -549,6 +549,7 @@ void order_moves(vector<move_t> *moves, board_t *board) {
     // add recapturing the piece that was last captured as a good bonus to check first
     // bigger bonus for the higher value piece being captured
     // just have the board store the move that was made to get to that position
+    // still need to add the least_valued_attacker logic, not exactly sure how to implement
     move_t last_move = board->last_move;
     int recapture_square = -1;
     if(last_move != NO_MOVE && IS_CAPTURE(last_move)) {
@@ -590,7 +591,6 @@ void order_moves(vector<move_t> *moves, board_t *board) {
                 score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
         }
         score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
-        
 
         /* check recapturing moves */
         if(to == recapture_square) 
@@ -598,11 +598,6 @@ void order_moves(vector<move_t> *moves, board_t *board) {
         (*moves)[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
     }
     std::sort(moves->begin(), moves->end(), greater<move_t>());
-    return;
-}
-
-// requires that the input moves are captures only
-void order_captures(vector<move_t> *moves) {
     return;
 }
 

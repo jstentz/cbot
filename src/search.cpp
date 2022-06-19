@@ -201,10 +201,10 @@ move_t find_best_move(board_t board) {
 
 // int main() {
 //     luts = init_LUT(); // must do this first
+//     zobrist_table = init_zobrist();
 //     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
 //     // generate_num_data(); // uncomment if you need to update opening_book
 //     opening_book = populate_opening_book();
-//     zobrist_table = init_zobrist();
 //     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 //     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 //     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";

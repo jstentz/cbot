@@ -6,6 +6,7 @@
 #include "hashing.h"
 #include "openings.h"
 #include "debugging.h"
+#include "attacks.h"
 
 #include <stddef.h>
 #include <stack>
@@ -148,7 +149,7 @@ move_t find_best_move(board_t board) {
     // TT.insert(h);
     /* check in opening book */
     move_t opening_move = get_opening_move(&board);
-    if(opening_move != 0) {
+    if(opening_move != NO_MOVE) {
         cout << "Played from book!" << endl;
         return opening_move;
     }
@@ -192,13 +193,18 @@ move_t find_best_move(board_t board) {
     cout << "This move was in position " << move_num << " out of " << count << endl;
     double time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
     cout << "Time elapsed: " << time_elapsed << endl;
-    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl << endl;
-    cout << "Eval: " << (((double)best_eval) / 100.0) * perspective << endl;
+    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl;
+    cout << "Eval: " << (((double)best_eval) / 100.0) * perspective << endl << endl;
     positions_searched = 0;
     return best_move;
 }
 
 // int main() {
+//     luts = init_LUT(); // must do this first
+//     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
+//     // generate_num_data(); // uncomment if you need to update opening_book
+//     opening_book = populate_opening_book();
+//     zobrist_table = init_zobrist();
 //     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 //     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 //     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";

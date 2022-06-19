@@ -95,7 +95,7 @@ typedef struct Board
     move_t last_move;
 
     /* hashing items */
-    // hash_val board_hash;
+    hash_val board_hash;
 } board_t;
 
 /**

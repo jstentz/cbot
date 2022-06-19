@@ -10,6 +10,7 @@
 #include "hashing.h"
 #include "openings.h"
 #include "attacks.h"
+#include "hashing.h"
 
 using namespace std;
 
@@ -144,9 +145,12 @@ square SquareNumFromLoc(SDL_Point mousePos) {
 
 int main(int argc, char** argv){
     luts = init_LUT(); // must do this first
+    zobrist_table = init_zobrist();
     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
     // generate_num_data(); // uncomment if you need to update opening_book
     opening_book = populate_opening_book();
+    
+
 
     if(SDL_Init(SDL_INIT_VIDEO) < 0){
         printf("Error: SDL failed to initialize\nSDL Error: '%s'\n", SDL_GetError());

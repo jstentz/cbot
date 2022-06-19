@@ -26,6 +26,10 @@ typedef struct zobrist_table {
     hash_val en_passant_file[8];
 } zobrist_table_t;
 
+extern zobrist_table_t zobrist_table;
+
+zobrist_table_t init_zobrist();
+
 hash_val zobrist_hash(board_t *board);
 
 hash_val rand64();

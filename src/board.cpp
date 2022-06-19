@@ -46,7 +46,7 @@ board_t zero_board() {
 
     board.last_move = NO_MOVE;
 
-    // board.board_hash = 0;
+    board.board_hash = 0;
 
     return board;
 }
@@ -121,7 +121,7 @@ board_t decode_fen(string fen) {
         i++;
     }
     update_boards(&board);
-    // board.board_hash = zobrist_hash(&board); // hash the board initially
+    board.board_hash = zobrist_hash(&board); // hash the board initially
     return board;
 }
 

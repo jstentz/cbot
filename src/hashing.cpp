@@ -45,7 +45,7 @@ zobrist_table_t init_zobrist() {
     return zobrist_table;
 }
 
-static zobrist_table_t zobrist_table = init_zobrist();
+zobrist_table_t zobrist_table;
 
 hash_val zobrist_hash(board_t *board) {
     hash_val h = 0;

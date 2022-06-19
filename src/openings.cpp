@@ -124,10 +124,11 @@ unordered_map<hash_val, vector<move_t>> populate_opening_book() {
 
 
 move_t get_opening_move(board_t *board) {
-    hash_val h = zobrist_hash(board);
+    hash_val h = board->board_hash;
+    cout << board->board_hash << endl;
     unordered_map<hash_val, vector<move_t>>::iterator got_board = opening_book.find(h);
     if(got_board == opening_book.end()) {
-        return 0; // position not found
+        return NO_MOVE; // position not found
     }
     unsigned int r = rand64() % got_board->second.size();
     cout << "Random num: " << r << endl;

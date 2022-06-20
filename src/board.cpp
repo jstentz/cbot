@@ -8,6 +8,7 @@
 #include "attacks.h"
 #include "evaluation.h"
 #include "hashing.h"
+#include "tt.h"
 
 void update_boards(board_t *board) {
     board->white_pieces = (board->piece_boards[WHITE_PAWNS_INDEX]   | board->piece_boards[WHITE_KNIGHTS_INDEX] | 
@@ -122,6 +123,7 @@ board_t decode_fen(string fen) {
     }
     update_boards(&board);
     board.board_hash = zobrist_hash(&board); // hash the board initially
+    game_history.insert(board.board_hash);
     return board;
 }
 

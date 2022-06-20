@@ -7,6 +7,7 @@
 #include "openings.h"
 #include "debugging.h"
 #include "attacks.h"
+#include "tt.h"
 
 #include <stddef.h>
 #include <stack>
@@ -77,14 +78,14 @@ unordered_set<hash_val> TT;
 int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
     vector<move_t> captures;
     board_t *curr_board = &(*board_stack).top();
-    // hash_val h = zobrist_hash(curr_board);
-    // if(TT.find(h) != TT.end()) {
-    //     return 0;
-    // }
-    // TT.insert(h);
+    hash_val h = curr_board->board_hash;
+    if(game_history.find(h) != game_history.end()) {
+        return 0;
+    }
+    game_history.insert(h);
 
     int stand_pat = evaluate(curr_board); // fall back evaluation
-    if(stand_pat >= beta) {positions_searched++; return beta;}
+    if(stand_pat >= beta) {positions_searched++; game_history.erase(h); return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(curr_board, &captures, true); // true flag generates only captures
@@ -94,11 +95,11 @@ int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
         int evaluation = -qsearch(board_stack, -beta, -alpha);
         unmake_move(board_stack);
 
-        if(evaluation >= beta) {positions_searched++; return beta;}
+        if(evaluation >= beta) {positions_searched++; game_history.erase(h); return beta;}
         if(evaluation > alpha) alpha = evaluation;
     }
     positions_searched++;
-    // TT.erase(h);
+    game_history.erase(h);
     return alpha;
 }
 
@@ -106,18 +107,18 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
     vector<move_t> moves;
    
     if(depth == 0) {
-        return qsearch(board_stack, alpha, beta);
-        // positions_searched++;
-        // return evaluate(&(*board_stack).top());
+        // return qsearch(board_stack, alpha, beta);
+        positions_searched++;
+        return evaluate(&(*board_stack).top());
     }
 
     board_t *curr_board = &(*board_stack).top();
     
-    // hash_val h = zobrist_hash(curr_board);
-    // if(TT.find(h) != TT.end()) {
-    //     return 0;
-    // }
-    // TT.insert(h);
+    hash_val h = curr_board->board_hash;
+    if(game_history.find(h) != game_history.end()) {
+        return 0;
+    }
+    game_history.insert(h);
 
     generate_moves(curr_board, &moves);
     order_moves(&moves, curr_board);
@@ -138,15 +139,17 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
         if(best_eval > alpha) alpha = best_eval;
         if(alpha >= beta) break;
     }
-    // TT.erase(h);
+    game_history.erase(h);
     return best_eval;
 }
 
 move_t find_best_move(board_t board) {
     // runs under the assumption that there are legal moves
     // TT.clear();
-    // hash_val h = zobrist_hash(board);
+    hash_val h = board.board_hash;
     // TT.insert(h);
+    game_history.insert(h); // insert the board hash from the user's move
+
     /* check in opening book */
     move_t opening_move = get_opening_move(&board);
     if(opening_move != NO_MOVE) {
@@ -185,7 +188,10 @@ move_t find_best_move(board_t board) {
         count++;
     }
     // TT.erase(h); // don't erase because this position was played
-    // TT.insert(zobrist_hash(make_move(board, &best_move))); // include the new board
+    /* include the move that was made in the history */
+    make_move(&board_stack, best_move);
+    game_history.insert(board_stack.top().board_hash);
+    unmake_move(&board_stack);
     tStop = clock();
     int perspective = (board.t == W) ? 1 : -1;
     // more speed debugging stuff

@@ -30,3 +30,7 @@ typedef struct tt {
     int score;
     move_t best_move;
 } tt_entry;
+
+typedef unordered_set<hash_val> history_t;
+
+extern history_t game_history;

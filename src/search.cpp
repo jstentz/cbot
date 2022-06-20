@@ -150,18 +150,24 @@ move_t find_best_move(board_t board) {
     // TT.insert(h);
     game_history.insert(h); // insert the board hash from the user's move
 
+    board_t *next_board;
+    stack<board_t> board_stack;
+
     /* check in opening book */
     move_t opening_move = get_opening_move(&board);
     if(opening_move != NO_MOVE) {
         cout << "Played from book!" << endl;
+        /* include the move that was made in the history */
+        make_move(&board_stack, opening_move);
+        game_history.insert(board_stack.top().board_hash);
+        unmake_move(&board_stack);
         return opening_move;
     }
 
     clock_t tStart;
     clock_t tStop;
     size_t depth = 5;
-    board_t *next_board;
-    stack<board_t> board_stack;
+    
     board_stack.push(board);
     vector<move_t> moves;
     generate_moves(&board, &moves);

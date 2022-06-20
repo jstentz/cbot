@@ -105,20 +105,13 @@ int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
 
 int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
     vector<move_t> moves;
-   
-    if(depth == 0) {
-        // return qsearch(board_stack, alpha, beta);
-        positions_searched++;
-        return evaluate(&(*board_stack).top());
-    }
-
     board_t *curr_board = &(*board_stack).top();
-    
-    hash_val h = curr_board->board_hash;
-    if(game_history.find(h) != game_history.end()) {
-        return 0;
+
+    if(depth == 0) {
+        return qsearch(board_stack, alpha, beta);
+        // positions_searched++;
+        // return evaluate(curr_board);
     }
-    game_history.insert(h);
 
     generate_moves(curr_board, &moves);
     order_moves(&moves, curr_board);
@@ -128,6 +121,12 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
         }
         return 0;
     }
+
+    hash_val h = curr_board->board_hash;
+    if(game_history.find(h) != game_history.end()) {
+        return 0;
+    }
+    game_history.insert(h);
 
     int best_eval = INT_MIN + 1;
 
@@ -152,6 +151,7 @@ move_t find_best_move(board_t board) {
 
     board_t *next_board;
     stack<board_t> board_stack;
+    board_stack.push(board);
 
     /* check in opening book */
     move_t opening_move = get_opening_move(&board);
@@ -168,11 +168,11 @@ move_t find_best_move(board_t board) {
     clock_t tStop;
     size_t depth = 5;
     
-    board_stack.push(board);
+    
     vector<move_t> moves;
     generate_moves(&board, &moves);
     order_moves(&moves, &board);
-    print_moves(moves, &board);
+    // print_moves(moves, &board);
     move_t best_move;
     int best_eval = INT_MIN + 1;
     int alpha = INT_MIN + 1;
@@ -183,7 +183,7 @@ move_t find_best_move(board_t board) {
     for(move_t move : moves) {
         make_move(&board_stack, move);
         int eval = -search(&board_stack, depth - 1, -beta, -alpha); // now its black's move
-
+        
         if(eval > best_eval) {
             best_eval = eval;
             best_move = move;
@@ -191,6 +191,8 @@ move_t find_best_move(board_t board) {
             if(best_eval > alpha) alpha = best_eval; // not sure if this is right
         }
         unmake_move(&board_stack);
+        // cout << notation_from_move(move, moves, &(board_stack.top())) << ": ";
+        // cout << eval << endl;
         count++;
     }
     // TT.erase(h); // don't erase because this position was played
@@ -382,4 +384,7 @@ move_t find_best_move(board_t board) {
     A better evaluation function likely speeds up the program, since you will
     have fewer positions that end up with the same evaluation, meaning there
     should be better alpha beta pruning
+
+    consider adding the position to the set of positions in make_move
+    and removing it in unmake_move
 */

@@ -47,7 +47,7 @@ int mop_up_eval(board_t *board, turn winning_side) {
         perspective = -1;
     }
 
-    eval = 5 * cmd(losing_king) + 2 * (14 - md(losing_king, winning_king));
+    eval = 10 * cmd(losing_king) + 4 * (14 - md(losing_king, winning_king));
     return eval * perspective;
 }
 

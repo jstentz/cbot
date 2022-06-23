@@ -528,7 +528,7 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_on
 
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
-void order_moves(vector<move_t> *moves, board_t *board) {
+void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move) {
     // how do I assign negative scores here
     // make moves signed?
     // DOESN'T TAKE INTO ACCOUNT KING ENDGAME
@@ -558,6 +558,9 @@ void order_moves(vector<move_t> *moves, board_t *board) {
     for(int i = 0; i < mvs.size(); i++) {
         score = 0;
         mv = mvs[i];
+        if(tt_best_move != NO_MOVE && mv == tt_best_move) {
+            score += 10000; // idk try the PV node first
+        }
         to = TO(mv);
         from = FROM(mv);
         mv_piece = board->sq_board[from];

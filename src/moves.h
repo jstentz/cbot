@@ -70,7 +70,7 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_on
  * 
  * @param moves Vector of moves to reorder
  */
-void order_moves(vector<move_t> *moves, board_t *board);
+void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move);
 
 /**
  * @brief Takes in a pointer to the current board state, along with a move

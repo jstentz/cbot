@@ -14,6 +14,7 @@
 #include <vector>
 #include <time.h>
 #include <unordered_set>
+#include <algorithm>
 
 using namespace std;
 
@@ -72,81 +73,116 @@ uint64_t perft(stack<board_t> *board_stack, size_t depth) {
     return total_nodes;
 }
 
-unordered_set<hash_val> TT;
+search_t search_result;
 
 // go back through and comment this more to understand it
 int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
     vector<move_t> captures;
     board_t *curr_board = &(*board_stack).top();
     hash_val h = curr_board->board_hash;
-    if(game_history.find(h) != game_history.end()) {
-        return 0;
-    }
-    game_history.insert(h);
+    /* I don't think I need to do this, since all capture moves could not
+       possibly create a position that has already happened */
+    // if(game_history.find(h) != game_history.end()) {
+    //     return 0;
+    // }
+    // game_history.insert(h);
 
     int stand_pat = evaluate(curr_board); // fall back evaluation
-    if(stand_pat >= beta) {positions_searched++; game_history.erase(h); return beta;}
+    if(stand_pat >= beta) {positions_searched++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(curr_board, &captures, true); // true flag generates only captures
-    order_moves(&captures, curr_board);
+    order_moves(&captures, curr_board, NO_MOVE);
     for (move_t capture : captures) {
         make_move(board_stack, capture);
         int evaluation = -qsearch(board_stack, -beta, -alpha);
         unmake_move(board_stack);
 
-        if(evaluation >= beta) {positions_searched++; game_history.erase(h); return beta;}
+        if(evaluation >= beta) {positions_searched++; return beta;}
         if(evaluation > alpha) alpha = evaluation;
     }
     positions_searched++;
-    game_history.erase(h);
     return alpha;
 }
 
-int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta) {
+/* DO IT LIKE THAT ONE WEBSITE */
+int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha, int beta) {
     vector<move_t> moves;
     board_t *curr_board = &(*board_stack).top();
+    hash_val h = curr_board->board_hash;
+
+    int flags = ALPHA;
+
+    if(ply_from_root > 0) {
+        if(game_history.find(h) != game_history.end()) {
+            return 0;
+        }
+    }
+
+    int original_alpha = alpha;
+    /* look up the hash value in the transposition table 
+       this will set the tt best move global variable */
+    int tt_score = probe_tt_table(h, depth, alpha, beta);
+    if(tt_score != FAILED_LOOKUP)
+        return tt_score;
+    // cout << "here!" << endl;
 
     if(depth == 0) {
         return qsearch(board_stack, alpha, beta);
-        // positions_searched++;
-        // return evaluate(curr_board);
+        // positions_searched++; 
+        // // here I probably want to add boards of depth 0 at some point
+        // int static_eval = evaluate(curr_board);
+        // return static_eval;
     }
-
+    move_t best_tt_move = TT.best_move;
     generate_moves(curr_board, &moves);
-    order_moves(&moves, curr_board);
+    order_moves(&moves, curr_board, best_tt_move);
     if(moves.size() == 0) {
         if(checking_pieces(curr_board) != 0) {
-            return INT_MIN + 1 + (*board_stack).size(); // the deeper in the search we are, the less good the checkmate is
+            return INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
         }
         return 0;
     }
 
-    hash_val h = curr_board->board_hash;
-    if(game_history.find(h) != game_history.end()) {
-        return 0;
-    }
-    game_history.insert(h);
-
-    int best_eval = INT_MIN + 1;
-
+    // game_history.insert(h);
+    
+    move_t best_move = NO_MOVE;
     for(move_t move : moves) {
         make_move(board_stack, move);
-        int evaluation = -search(board_stack, depth - 1, -beta, -alpha);
+        int evaluation = -search(board_stack, ply_from_root + 1, depth - 1, -beta, -alpha);
         unmake_move(board_stack);
-        if(evaluation > best_eval) best_eval = evaluation;
-        if(best_eval > alpha) alpha = best_eval;
-        if(alpha >= beta) break;
+        // I don't think a beta cutoff is possible if ply_from_root == 0
+        if(evaluation >= beta) {
+            store_entry(h, depth, BETA, beta, move);
+            return beta;
+        }
+        if(evaluation > alpha) {
+            flags = EXACT;
+            alpha = evaluation;
+            best_move = move;
+        }
     }
-    game_history.erase(h);
-    return best_eval;
+
+    /* remove this position from the current path for repetition draws */
+    // game_history.erase(h);
+
+    /* store this in the transposition table */
+    store_entry(h, depth, flags, alpha, best_move);
+
+    if(ply_from_root == 0) {
+        search_result.best_move = best_move;
+        search_result.score = alpha;
+    }
+    return alpha;
 }
 
 move_t find_best_move(board_t board) {
-    // runs under the assumption that there are legal moves
-    // TT.clear();
+    /* clear the transposition table */
+    clear_tt_table();
+    transpositions = 0;
+    num_entries = 0;
+
     hash_val h = board.board_hash;
-    // TT.insert(h);
     game_history.insert(h); // insert the board hash from the user's move
 
     board_t *next_board;
@@ -157,6 +193,7 @@ move_t find_best_move(board_t board) {
     move_t opening_move = get_opening_move(&board);
     if(opening_move != NO_MOVE) {
         cout << "Played from book!" << endl;
+
         /* include the move that was made in the history */
         make_move(&board_stack, opening_move);
         game_history.insert(board_stack.top().board_hash);
@@ -164,52 +201,33 @@ move_t find_best_move(board_t board) {
         return opening_move;
     }
 
-    clock_t tStart;
-    clock_t tStop;
-    size_t depth = 5;
-    
-    
-    vector<move_t> moves;
-    generate_moves(&board, &moves);
-    order_moves(&moves, &board);
-    // print_moves(moves, &board);
-    move_t best_move;
-    int best_eval = INT_MIN + 1;
+    size_t depth = 0;
     int alpha = INT_MIN + 1;
     int beta = INT_MAX;
-    int move_num = 0;
-    int count = 0;
-    tStart = clock();
-    for(move_t move : moves) {
-        make_move(&board_stack, move);
-        int eval = -search(&board_stack, depth - 1, -beta, -alpha); // now its black's move
-        
-        if(eval > best_eval) {
-            best_eval = eval;
-            best_move = move;
-            move_num = count;
-            if(best_eval > alpha) alpha = best_eval; // not sure if this is right
+    clock_t tStart = clock();
+    clock_t tStop = clock();
+    while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
+        depth++;
+        search(&board_stack, 0, depth, alpha, beta);
+        tStop = clock();
+        if(search_result.score > 100000) { // mating score
+            break;
         }
-        unmake_move(&board_stack);
-        // cout << notation_from_move(move, moves, &(board_stack.top())) << ": ";
-        // cout << eval << endl;
-        count++;
     }
-    // TT.erase(h); // don't erase because this position was played
+    cout << "IDSS Depth: " << depth << endl;
+
+    move_t best_move = search_result.best_move;
+
+    int perspective = (board.t == W) ? 1 : -1;
+    cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
+    cout << "Transpositions: " << transpositions << endl;
+    cout << "Number of entries: " << num_entries << endl;
+
     /* include the move that was made in the history */
     make_move(&board_stack, best_move);
     game_history.insert(board_stack.top().board_hash);
     unmake_move(&board_stack);
-    tStop = clock();
-    int perspective = (board.t == W) ? 1 : -1;
-    // more speed debugging stuff
-    cout << "Positions searched: " << positions_searched << endl;
-    cout << "This move was in position " << move_num << " out of " << count << endl;
-    double time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-    cout << "Time elapsed: " << time_elapsed << endl;
-    cout << "Nodes per second: " << ((double)positions_searched / time_elapsed) << endl;
-    cout << "Eval: " << (((double)best_eval) / 100.0) * perspective << endl << endl;
-    positions_searched = 0;
+
     return best_move;
 }
 
@@ -387,4 +405,7 @@ move_t find_best_move(board_t board) {
 
     consider adding the position to the set of positions in make_move
     and removing it in unmake_move
+
+    maybe just make it so search returns a pair of eval and move instead of
+    the find best move function
 */

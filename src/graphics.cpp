@@ -150,6 +150,7 @@ int main(int argc, char** argv){
     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
     // generate_num_data(); // uncomment if you need to update opening_book
     opening_book = populate_opening_book();
+    init_tt_table();
     
 
 
@@ -181,10 +182,10 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    board_t board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // board_t board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // board_t board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
     // board_t board = decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-    // board_t board = decode_fen("8/nnn4/3k4/8/8/3K4/8/8 w - - 0 1");
+    board_t board = decode_fen("8/nnn4/3k4/8/8/3K4/8/8 w - - 0 1");
     // board_t board = decode_fen("8/bbb5/5k2/8/8/8/8/4K3 w - - 0 1");
     stack<board_t> game; // add functionality for going back
     game.push(board);
@@ -359,6 +360,7 @@ int main(int argc, char** argv){
     SDL_DestroyWindow(window);
     IMG_Quit();
     SDL_Quit();
+    free_tt_table();
     return 0;
 }
 

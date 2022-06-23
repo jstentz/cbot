@@ -19,6 +19,13 @@
 
 typedef unsigned long long int uint64_t;
 
+extern size_t transpositions;
+
+typedef struct search_result_struct {
+    move_t best_move;
+    int score;
+} search_t;
+
 /**
  * @brief Given a stack of the board history and a depth to search,
  * returns the number of nodes reached in bulk.
@@ -78,5 +85,7 @@ int search(stack<board_t> *board_stack, size_t depth, int alpha, int beta);
  * @return Best move 
  */
 move_t find_best_move(board_t board);
+
+move_t idss(board_t board);
 
 extern size_t positions_searched; // debugging

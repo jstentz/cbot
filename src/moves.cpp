@@ -559,6 +559,7 @@ void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move) {
         score = 0;
         mv = mvs[i];
         if(tt_best_move != NO_MOVE && mv == tt_best_move) {
+            // cout << "trying pv move" << endl;
             score += 10000; // idk try the PV node first
         }
         to = TO(mv);
@@ -593,7 +594,13 @@ void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move) {
             if(is_attacked_by_pawn(board, (square)to)) 
                 score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
         }
-        score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
+        // done for better endgame move ordering of king moves
+        if(PIECE(mv_piece) == KING && board->piece_boards[WHITE_QUEENS_INDEX] == 0 && board->piece_boards[BLACK_QUEENS_INDEX] == 0){
+            score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][to] - piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][from]);
+        }
+        else{
+            score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
+        }
 
         /* check recapturing moves */
         if(to == recapture_square) 

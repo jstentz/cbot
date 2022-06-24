@@ -73,3 +73,5 @@ bitboard undo_pseudo_rotate_45_anticlockwise(bitboard b);
  * @return index (0..63) of least significant one bit
  */
 uint16_t first_set_bit(bitboard bits); 
+
+int pop_count(bitboard b);

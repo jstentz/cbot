@@ -214,6 +214,8 @@ static const int *piece_scores[14] =
     black_king_endgame_score
 };
 
+extern float game_phase;
+
 /**
  * @brief Returns a static evaluation of the board state
  * 

@@ -75,7 +75,7 @@ uint64_t perft(stack<board_t> *board_stack, size_t depth) {
 
 search_t search_result;
 
-// go back through and comment this more to understand it
+// never really checked this for bugs
 int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
     vector<move_t> captures;
     board_t *curr_board = &(*board_stack).top();
@@ -94,6 +94,7 @@ int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
     generate_moves(curr_board, &captures, true); // true flag generates only captures
     order_moves(&captures, curr_board, NO_MOVE);
     for (move_t capture : captures) {
+        // cout << notation_from_move(capture, captures, curr_board) << endl;
         make_move(board_stack, capture);
         int evaluation = -qsearch(board_stack, -beta, -alpha);
         unmake_move(board_stack);
@@ -114,12 +115,13 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
     int flags = ALPHA;
 
     if(ply_from_root > 0) {
-        if(game_history.find(h) != game_history.end()) {
+        if(probe_game_history(h)) {
+            // print_squarewise(curr_board->sq_board);
+            // cout << endl;
             return 0;
         }
     }
 
-    int original_alpha = alpha;
     /* look up the hash value in the transposition table 
        this will set the tt best move global variable */
     int tt_score = probe_tt_table(h, depth, alpha, beta);
@@ -141,6 +143,7 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
         if(checking_pieces(curr_board) != 0) {
             return INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
         }
+        // cout << "stalemate!" << endl;
         return 0;
     }
 
@@ -408,4 +411,10 @@ move_t find_best_move(board_t board) {
 
     maybe just make it so search returns a pair of eval and move instead of
     the find best move function
+
+    need to have a penalty for pinned pieces in terms of mobility maybe
+    calculate middlegame mobility scores weighted higher for bishops and knights
+    calculate endgame mobility scores weighted higher for rooks and queens
+
+    threading so I can kill the thread
 */

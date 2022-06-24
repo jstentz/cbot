@@ -21,7 +21,8 @@
         "initializer_list": "cpp",
         "moves.h": "c",
         "probe.h": "c",
-        "board.h": "c"
+        "board.h": "c",
+        "cstdlib": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

@@ -4,6 +4,57 @@
 #include "pieces.h"
 
 
+float game_phase;
+
+int piece_counts[10];
+
+/* 
+    can probably incrementally update this value in the future 
+    can also probably incrementally update number of pieces and positional scores
+*/
+void calculate_game_phase() {
+    int pawn_phase = 0;
+    int knight_phase = 1;
+    int bishop_phase = 1;
+    int rook_phase = 2;
+    int queen_phase = 4;
+    float total_phase = pawn_phase * 16 + 
+                        knight_phase * 4 + 
+                        bishop_phase * 4 + 
+                        rook_phase * 4 + 
+                        queen_phase * 2;
+
+    float phase = total_phase;
+    /* count the number of each piece */
+    int wp = piece_counts[WHITE_PAWNS_INDEX];
+    int wn = piece_counts[WHITE_KNIGHTS_INDEX];
+    int wb = piece_counts[WHITE_BISHOPS_INDEX];
+    int wr = piece_counts[WHITE_ROOKS_INDEX];
+    int wq = piece_counts[WHITE_QUEENS_INDEX];
+
+    int bp = piece_counts[BLACK_PAWNS_INDEX];
+    int bn = piece_counts[BLACK_KNIGHTS_INDEX];
+    int bb = piece_counts[BLACK_BISHOPS_INDEX];
+    int br = piece_counts[BLACK_ROOKS_INDEX];
+    int bq = piece_counts[BLACK_QUEENS_INDEX];
+
+    phase -= wp * pawn_phase;
+    phase -= wn * knight_phase;
+    phase -= wb * bishop_phase;
+    phase -= wr * rook_phase;
+    phase -= wq * queen_phase;
+
+    phase -= bp * pawn_phase;
+    phase -= bn * knight_phase;
+    phase -= bb * bishop_phase;
+    phase -= br * rook_phase;
+    phase -= bq * queen_phase;
+
+    game_phase = (phase * 256 + (total_phase / 2)) / total_phase;
+    // cout << "Game phase: " << game_phase << endl;
+    return;
+}
+
 const int center_manhattan_distance_arr[64] = {
   6, 5, 4, 3, 3, 4, 5, 6,
   5, 4, 3, 2, 2, 3, 4, 5,
@@ -52,8 +103,12 @@ int mop_up_eval(board_t *board, turn winning_side) {
 }
 
 int evaluate(board_t *board) {
-    int eval = 0;
-    int piece_counts[10];
+    /*
+        eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256
+    */
+    int eval;
+    int middlegame_eval;
+    int endgame_eval;
     int total_material_count = 0;
 
     // positive number initially means it is good for white
@@ -77,47 +132,35 @@ int evaluate(board_t *board) {
             REMOVE_FIRST(piece_board);
         }
     }
+    /* make sure that piece_counts is populated (as is above) before calling */
+    calculate_game_phase();
 
     square white_king_loc = board->white_king_loc;
     square black_king_loc = board->black_king_loc;
 
-    // check if its the end game
-    if(total_material_count < 2000) {
-        positional_score += piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc]; // access the endgame positional scores
-        positional_score += piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
-    }
-    else{
-        positional_score += piece_scores[WHITE_KINGS_INDEX][white_king_loc]; // access the middle game positional scores
-        positional_score += piece_scores[BLACK_KINGS_INDEX][black_king_loc];
-    }
+    int middlegame_positional = positional_score + 
+                                piece_scores[WHITE_KINGS_INDEX][white_king_loc];
+                                piece_scores[BLACK_KINGS_INDEX][black_king_loc];
 
-    // int white_king_rank = RANK(white_king_loc);
-    // int white_king_file = FILE(white_king_loc);
-    // int black_king_rank = RANK(black_king_loc);
-    // int black_king_file = FILE(black_king_loc);
-    // int rank_distance = abs(white_king_rank - black_king_rank);
-    // int file_distance = abs(white_king_file - black_king_file);
-    // int distance_between_kings = (rank_distance > file_distance) ? rank_distance : file_distance;
+    int endgame_positional = positional_score + 
+                             piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc];
+                             piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
 
-    // cout << distance_between_kings << endl;
+    middlegame_eval = middlegame_positional + material_score;
+    endgame_eval = endgame_positional + material_score;
 
-    // double endgame_weight = 1.0 - (((double)total_material_count) / 8000.0); // total material on both sides at start = 8000
+    eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256;
 
-    // cout << endgame_weight << endl;
-    // need to add functionality for repeat draws so it doesn't repeat in the endgame
-    // int king_distance_eval = (int)(endgame_weight * (double)((7 - distance_between_kings) * 5));
-    // cout << king_distance_eval << endl;
     /*
         All scores are calculated as positive meaning "good for white."
         Therefore, if it is black's turn, we have to negate our evaluation
         so that positive means "good for black."
     */
-   if(piece_counts[WHITE_PAWNS_INDEX] == 0 && 
+    if(piece_counts[WHITE_PAWNS_INDEX] == 0 && 
       piece_counts[BLACK_PAWNS_INDEX] == 0) {
           if(material_score >= 0) eval += mop_up_eval(board, W);
           else eval += mop_up_eval(board, B);
     }
-    eval += (material_score + positional_score);
     int perspective = (board->t == W) ? 1 : -1;
     return eval * perspective;
 }

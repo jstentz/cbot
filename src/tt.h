@@ -47,6 +47,8 @@ typedef unordered_set<hash_val> history_t;
 
 extern history_t game_history;
 
+bool probe_game_history(hash_val h);
+
 extern tt_t TT;
 
 extern size_t transpositions; // number of transpositions

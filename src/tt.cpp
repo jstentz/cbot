@@ -87,4 +87,6 @@ void clear_tt_table() {
  * 
  * create global abort search variable that can be set to abort the search
  * still might need to start a thread or I can check the time
+ * 
+ * slowness could be due to bad move ordering for king moves in the end game
  */

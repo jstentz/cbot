@@ -92,3 +92,19 @@ uint16_t first_set_bit(bitboard bits) {
 bitboard rem_first_bit(bitboard bits) {
     return bits & (bits - 1);
 }
+
+int pop_count(bitboard b) {
+    const bitboard k1 = (bitboard)0x5555555555555555;
+    const bitboard k2 = (bitboard)0x3333333333333333;
+    const bitboard k4 = (bitboard)0x0F0F0F0F0F0F0F0F;
+    b = b - ((b >> 1) & k1);
+    b = (b & k2) + ((b >> 2) & k2);
+    b = (b + (b >> 4)) & k4;
+    b = (b * ((bitboard)0x0101010101010101)) >> 56;
+    return (int) b;
+    // bitboard b1 = (b & 0x2222222222222222) + ((b + b) & 0x2222222222222222);
+    // bitboard b2 = (b >> 1 & 0x2222222222222222) + (b >> 2 & 0x2222222222222222);
+    // b1 = b1 + (b1 >> 4) & 0x0F0F0F0F0F0F0F0F;
+    // b2 = b2 + (b2 >> 4) & 0x0F0F0F0F0F0F0F0F;
+    // return (b1 + b2) * 0x0101010101010101 >> 57;
+}

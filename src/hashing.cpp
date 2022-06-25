@@ -18,7 +18,7 @@ hash_val rand64() {
 }
 
 zobrist_table_t init_zobrist() {
-    srand(1234123);
+    srand(1234124);
     /** 
      * IMPORTANT I DON'T RESEED THIS EVERYTIME 
      * IM NOT SURE IF THIS COULD MEAN THAT THERE WOULD BE ISSUES WHEN HASHING BOARDS

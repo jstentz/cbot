@@ -141,6 +141,7 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
     order_moves(&moves, curr_board, best_tt_move);
     if(moves.size() == 0) {
         if(checking_pieces(curr_board) != 0) {
+            checkmates++;
             return INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
         }
         // cout << "stalemate!" << endl;
@@ -154,7 +155,7 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
         make_move(board_stack, move);
         int evaluation = -search(board_stack, ply_from_root + 1, depth - 1, -beta, -alpha);
         unmake_move(board_stack);
-        // I don't think a beta cutoff is possible if ply_from_root == 0
+        
         if(evaluation >= beta) {
             store_entry(h, depth, BETA, beta, move);
             return beta;
@@ -210,6 +211,8 @@ move_t find_best_move(board_t board) {
     clock_t tStart = clock();
     clock_t tStop = clock();
     while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
+        transpositions = 0;
+        checkmates = 0;
         depth++;
         search(&board_stack, 0, depth, alpha, beta);
         tStop = clock();
@@ -225,6 +228,7 @@ move_t find_best_move(board_t board) {
     cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
     cout << "Transpositions: " << transpositions << endl;
     cout << "Number of entries: " << num_entries << endl;
+    cout << "Checkmates: " << checkmates << endl;
 
     /* include the move that was made in the history */
     make_move(&board_stack, best_move);

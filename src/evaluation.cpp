@@ -8,6 +8,15 @@ float game_phase;
 
 int piece_counts[10];
 
+/* this is not done */
+bool sufficient_checkmating_material(board_t *board) {
+    /* check for bare kings */
+    if(pop_count(board->all_pieces) == 2) {
+        return false;
+    }
+    return true;
+}
+
 /* 
     can probably incrementally update this value in the future 
     can also probably incrementally update number of pieces and positional scores
@@ -132,6 +141,10 @@ int evaluate(board_t *board) {
             REMOVE_FIRST(piece_board);
         }
     }
+
+    if(!sufficient_checkmating_material(board)) {
+        return 0;
+    }
     /* make sure that piece_counts is populated (as is above) before calling */
     calculate_game_phase();
 
@@ -149,18 +162,17 @@ int evaluate(board_t *board) {
     middlegame_eval = middlegame_positional + material_score;
     endgame_eval = endgame_positional + material_score;
 
-    eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256;
 
     /*
         All scores are calculated as positive meaning "good for white."
         Therefore, if it is black's turn, we have to negate our evaluation
         so that positive means "good for black."
     */
-    if(piece_counts[WHITE_PAWNS_INDEX] == 0 && 
-      piece_counts[BLACK_PAWNS_INDEX] == 0) {
-          if(material_score >= 0) eval += mop_up_eval(board, W);
-          else eval += mop_up_eval(board, B);
-    }
+    if(material_score >= 0) endgame_eval += mop_up_eval(board, W);
+    else endgame_eval += mop_up_eval(board, B);
+
+    eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256;
+
     int perspective = (board->t == W) ? 1 : -1;
     return eval * perspective;
 }

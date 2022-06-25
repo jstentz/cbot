@@ -22,7 +22,7 @@
 
 #define FAILED_LOOKUP INT_MIN
 
-#define TABLE_SIZE 262144 // this is 2^18
+#define TABLE_SIZE 64000 // this is 2^18
 
 // I need to learn more about the difference between alpha and beta cuttoffs
 // what is a good size for a transposition table
@@ -30,7 +30,7 @@
 
 // use a union here
 typedef struct tt {
-    bool valid;
+    // bool valid;
     hash_val key;
     int depth;
     int flags;
@@ -53,6 +53,7 @@ extern tt_t TT;
 
 extern size_t transpositions; // number of transpositions
 extern size_t num_entries;
+extern size_t checkmates;
 
 void init_tt_table();
 

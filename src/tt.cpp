@@ -19,6 +19,8 @@ size_t transpositions = 0;
 
 size_t num_entries = 0;
 
+size_t checkmates = 0;
+
 void init_tt_table() {
     TT.table = (tt_entry *)calloc(sizeof(tt_entry), TABLE_SIZE);
     TT.best_move = NO_MOVE;
@@ -26,7 +28,7 @@ void init_tt_table() {
 
 int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
     tt_entry entry = TT.table[h % TABLE_SIZE];
-    if(entry.valid && entry.key == h) {
+    if(entry.key == h) {
         transpositions++;
         if(entry.depth >= depth) {
             if(entry.flags == EXACT)
@@ -46,7 +48,7 @@ int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
 void store_entry(hash_val key, int depth, int flags, int score, move_t best_move) {
     num_entries++;
     tt_entry* entry = &TT.table[key % TABLE_SIZE];
-    entry->valid = true;
+    // entry->valid = true;
     entry->key = key;
     entry->depth = depth;
     entry->flags = flags;

@@ -91,4 +91,6 @@ void clear_tt_table() {
  * still might need to start a thread or I can check the time
  * 
  * slowness could be due to bad move ordering for king moves in the end game
+ * 
+ * try searching to a fixed depths with and without transposition table to see if there are bugs
  */

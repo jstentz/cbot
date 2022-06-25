@@ -6,8 +6,6 @@
 
 float game_phase;
 
-int piece_counts[10];
-
 /* this is not done */
 bool sufficient_checkmating_material(board_t *board) {
     /* check for bare kings */
@@ -21,7 +19,7 @@ bool sufficient_checkmating_material(board_t *board) {
     can probably incrementally update this value in the future 
     can also probably incrementally update number of pieces and positional scores
 */
-void calculate_game_phase() {
+void calculate_game_phase(board_t *board) {
     int pawn_phase = 0;
     int knight_phase = 1;
     int bishop_phase = 1;
@@ -35,17 +33,17 @@ void calculate_game_phase() {
 
     float phase = total_phase;
     /* count the number of each piece */
-    int wp = piece_counts[WHITE_PAWNS_INDEX];
-    int wn = piece_counts[WHITE_KNIGHTS_INDEX];
-    int wb = piece_counts[WHITE_BISHOPS_INDEX];
-    int wr = piece_counts[WHITE_ROOKS_INDEX];
-    int wq = piece_counts[WHITE_QUEENS_INDEX];
+    int wp = board->piece_counts[WHITE_PAWNS_INDEX];
+    int wn = board->piece_counts[WHITE_KNIGHTS_INDEX];
+    int wb = board->piece_counts[WHITE_BISHOPS_INDEX];
+    int wr = board->piece_counts[WHITE_ROOKS_INDEX];
+    int wq = board->piece_counts[WHITE_QUEENS_INDEX];
 
-    int bp = piece_counts[BLACK_PAWNS_INDEX];
-    int bn = piece_counts[BLACK_KNIGHTS_INDEX];
-    int bb = piece_counts[BLACK_BISHOPS_INDEX];
-    int br = piece_counts[BLACK_ROOKS_INDEX];
-    int bq = piece_counts[BLACK_QUEENS_INDEX];
+    int bp = board->piece_counts[BLACK_PAWNS_INDEX];
+    int bn = board->piece_counts[BLACK_KNIGHTS_INDEX];
+    int bb = board->piece_counts[BLACK_BISHOPS_INDEX];
+    int br = board->piece_counts[BLACK_ROOKS_INDEX];
+    int bq = board->piece_counts[BLACK_QUEENS_INDEX];
 
     phase -= wp * pawn_phase;
     phase -= wn * knight_phase;
@@ -60,7 +58,6 @@ void calculate_game_phase() {
     phase -= bq * queen_phase;
 
     game_phase = (phase * 256 + (total_phase / 2)) / total_phase;
-    // cout << "Game phase: " << game_phase << endl;
     return;
 }
 
@@ -118,58 +115,33 @@ int evaluate(board_t *board) {
     int eval;
     int middlegame_eval;
     int endgame_eval;
-    int total_material_count = 0;
-
-    // positive number initially means it is good for white
-    // when returning we will negate based on who's turn it is
-    int material_score = 0; 
-    int positional_score = 0;
-
-    bitboard piece_board;
-    square piece_sq;
-    int piece_value;
-    for(int i = 0; i < 10; i++) { // only 10 because handle kings seperately
-        piece_board = board->piece_boards[i];
-        piece_counts[i] = 0;
-        while(piece_board) {
-            piece_sq = (square)first_set_bit(piece_board);
-            piece_value = piece_values[i];
-            positional_score += piece_scores[i][piece_sq]; // get the correct board and index it at its square location
-            material_score += piece_value;
-            piece_counts[i]++; // we've seen 1 of this piece type
-            total_material_count += abs(piece_value);
-            REMOVE_FIRST(piece_board);
-        }
-    }
 
     if(!sufficient_checkmating_material(board)) {
         return 0;
     }
-    /* make sure that piece_counts is populated (as is above) before calling */
-    calculate_game_phase();
+
+    calculate_game_phase(board);
 
     square white_king_loc = board->white_king_loc;
     square black_king_loc = board->black_king_loc;
 
-    int middlegame_positional = positional_score + 
-                                piece_scores[WHITE_KINGS_INDEX][white_king_loc];
+    int middlegame_positional = board->positional_score + 
+                                piece_scores[WHITE_KINGS_INDEX][white_king_loc] +
                                 piece_scores[BLACK_KINGS_INDEX][black_king_loc];
 
-    int endgame_positional = positional_score + 
-                             piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc];
+    int endgame_positional = board->positional_score + 
+                             piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc] +
                              piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
 
-    middlegame_eval = middlegame_positional + material_score;
-    endgame_eval = endgame_positional + material_score;
+    middlegame_eval = middlegame_positional + board->material_score;
+    endgame_eval = endgame_positional + board->material_score;
 
-
-    /*
-        All scores are calculated as positive meaning "good for white."
-        Therefore, if it is black's turn, we have to negate our evaluation
-        so that positive means "good for black."
-    */
-    if(material_score >= 0) endgame_eval += mop_up_eval(board, W);
-    else endgame_eval += mop_up_eval(board, B);
+    /* mop up eval for winning side */
+    if(board->material_score != 0){
+        if(board->material_score > 0) endgame_eval += mop_up_eval(board, W);
+        else endgame_eval += mop_up_eval(board, B);
+    }
+    
 
     eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256;
 

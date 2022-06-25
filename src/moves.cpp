@@ -629,6 +629,10 @@ void make_move(stack<board_t> *board_stack, move_t move) {
     REM_PIECE(*moving_piece_board, from);
     next_board.sq_board[from] = EMPTY;
 
+    
+    if(PIECE(moving_piece) != KING) // king done seperately during eval for endgame
+        next_board.positional_score -= piece_scores[INDEX_FROM_PIECE(moving_piece)][from];
+    
     /* XOR out the piece from hash value */
     h ^= zobrist_table.table[from][INDEX_FROM_PIECE(moving_piece)];
     
@@ -660,9 +664,9 @@ void make_move(stack<board_t> *board_stack, move_t move) {
     next_board.en_passant = NONE;
 
     bitboard *rook_board;
-    piece captured_piece;
+    piece captured_piece = EMPTY;
     bitboard *captured_board;
-    piece promo_piece;
+    piece promo_piece = EMPTY;
     bitboard *promo_board;
     int opponent_pawn_sq;
     switch (flags) {
@@ -847,6 +851,30 @@ void make_move(stack<board_t> *board_stack, move_t move) {
     /* reverse the black_to_move hash */
     h ^= zobrist_table.black_to_move;
 
+    /* update evaluation items */
+    if(captured_piece != EMPTY){
+        next_board.material_score -= piece_values[INDEX_FROM_PIECE(captured_piece)];
+        next_board.positional_score -= piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
+        next_board.piece_counts[INDEX_FROM_PIECE(captured_piece)]--;
+    }
+
+    if(promo_piece != EMPTY) {
+        if(COLOR(promo_piece) == WHITE) {
+            next_board.material_score -= piece_values[WHITE_PAWNS_INDEX];
+            next_board.piece_counts[WHITE_PAWNS_INDEX]--;
+        }
+        else {
+            next_board.material_score -= piece_values[BLACK_PAWNS_INDEX];
+            next_board.piece_counts[BLACK_PAWNS_INDEX]--;
+        }
+        next_board.material_score += piece_values[INDEX_FROM_PIECE(promo_piece)];
+        next_board.positional_score += piece_scores[INDEX_FROM_PIECE(promo_piece)][to];
+        next_board.piece_counts[INDEX_FROM_PIECE(promo_piece)]++;
+    }
+    else if(PIECE(moving_piece) != KING) {
+        next_board.positional_score += piece_scores[INDEX_FROM_PIECE(moving_piece)][to];
+    }
+    
     update_boards(&next_board);
     next_board.last_move = move;
     next_board.board_hash = h;

@@ -220,6 +220,7 @@ move_t find_best_move(board_t board) {
             break;
         }
     }
+    // search(&board_stack, 0, 15, alpha, beta);
     cout << "IDSS Depth: " << depth << endl;
 
     move_t best_move = search_result.best_move;
@@ -421,4 +422,7 @@ move_t find_best_move(board_t board) {
     calculate endgame mobility scores weighted higher for rooks and queens
 
     threading so I can kill the thread
+
+    revisit move ordering and make sure its fixed with new game phase
+    
 */

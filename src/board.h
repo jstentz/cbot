@@ -92,10 +92,16 @@ typedef struct Board
     square white_king_loc;
     square black_king_loc;
 
-    move_t last_move;
-
     /* hashing items */
     hash_val board_hash;
+    
+    /* move ordering items */
+    move_t last_move;
+
+    /* evaluation items */
+    int material_score;
+    int positional_score; // doesn't include kings
+    int piece_counts[10];
 } board_t;
 
 /**

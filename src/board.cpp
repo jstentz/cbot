@@ -49,6 +49,13 @@ board_t zero_board() {
 
     board.board_hash = 0;
 
+    board.material_score = 0;
+    board.positional_score = 0;
+    
+    for(int i = 0; i < 10; i++) {
+        board.piece_counts[i] = 0;
+    }
+
     return board;
 }
 
@@ -62,7 +69,7 @@ board_t decode_fen(string fen) {
     size_t i = 0;
     char c = fen[i];
     while(c != ' ') {
-        pc = 0;
+        pc = EMPTY;
         loc = row * 8 + col;
         if (isdigit(c)) {
             col += c - '0'; // adds c onto loc
@@ -104,6 +111,14 @@ board_t decode_fen(string fen) {
             board.sq_board[loc] = pc;
             place_board = &board.piece_boards[INDEX_FROM_PIECE(pc)];
             PLACE_PIECE(*place_board, (square)loc);
+
+            /* eval stuff */
+            if(PIECE(pc) != KING && PIECE(pc) != EMPTY) {
+                board.material_score += piece_values[INDEX_FROM_PIECE(pc)];
+                board.positional_score += piece_scores[INDEX_FROM_PIECE(pc)][loc];
+            }
+            
+            
             col += 1;
         }
         i++;
@@ -123,7 +138,12 @@ board_t decode_fen(string fen) {
     }
     update_boards(&board);
     board.board_hash = zobrist_hash(&board); // hash the board initially
-    game_history.insert(board.board_hash);
+    game_history.insert(board.board_hash); // might not need this
+
+    /* more eval stuff */
+    for(int i = 0; i < 10; i++) {
+        board.piece_counts[i] = pop_count(board.piece_boards[i]);
+    }
     return board;
 }
 

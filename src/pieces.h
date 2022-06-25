@@ -30,6 +30,9 @@ typedef short unsigned int piece;
 
 #define INDEX_FROM_PIECE(pc) (pc - 2)
 
+#define IS_MINOR(pc) ((PIECE(pc) == 0x4) || (PIECE(pc) == 0x6))
+#define IS_MAJOR(pc) ((PIECE(pc) == 0x8) || (PIECE(pc) == 0xA))
+
 /**
  * @brief Given a piece, returns true iff it is a sliding piece.
  * 

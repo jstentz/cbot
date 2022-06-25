@@ -182,8 +182,8 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    // board_t board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    board_t board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
+    board_t board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // board_t board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
     /* there is some weird behavior happening above... the computer is losing this as black in ways that I wouldn't expect */
     // board_t board = decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
     // board_t board = decode_fen("8/nnn4/3k4/8/8/3K4/8/8 w - - 0 1");

@@ -13,7 +13,7 @@
 
 #include "board.h"
 
-#define EVAL_SIZE 1000000
+#define EVAL_SIZE 64000
 
 #define FAILED_LOOKUP INT_MIN
 

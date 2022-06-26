@@ -22,7 +22,8 @@
         "moves.h": "c",
         "probe.h": "c",
         "board.h": "c",
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "istream": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

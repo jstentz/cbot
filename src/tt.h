@@ -22,7 +22,7 @@
 
 #define FAILED_LOOKUP INT_MIN
 
-#define TABLE_SIZE 256000
+#define TABLE_SIZE 64000
 
 // I need to learn more about the difference between alpha and beta cuttoffs
 // what is a good size for a transposition table

@@ -15,9 +15,9 @@ bool probe_game_history(hash_val h) {
 
 tt_t TT;
 
-size_t transpositions = 0;
+size_t tt_hits = 0;
 
-size_t num_entries = 0;
+size_t tt_probes = 0;
 
 size_t checkmates = 0;
 
@@ -27,9 +27,10 @@ void init_tt_table() {
 }
 
 int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
+    tt_probes++;
     tt_entry entry = TT.table[h % TABLE_SIZE];
     if(entry.key == h) {
-        transpositions++;
+        tt_hits++;
         if(entry.depth >= depth) {
             if(entry.flags == EXACT)
                 return entry.score;
@@ -46,8 +47,11 @@ int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
 
 // always replace
 void store_entry(hash_val key, int depth, int flags, int score, move_t best_move) {
-    num_entries++;
     tt_entry* entry = &TT.table[key % TABLE_SIZE];
+
+    /* no need to replace it if we are making it worse */
+    if((entry->key == key) && (entry->depth > depth)) 
+        return;
     // entry->valid = true;
     entry->key = key;
     entry->depth = depth;

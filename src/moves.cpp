@@ -589,11 +589,10 @@ void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move) {
                 score += abs(piece_values[INDEX_FROM_PIECE(tar_piece)]) - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]);    
             }
         }
-        else {
-            /* score moves to squares attacked by pawns */
-            if(is_attacked_by_pawn(board, (square)to)) 
-                score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
-        }
+        /* score moves to squares attacked by pawns */
+        if(is_attacked_by_pawn(board, (square)to)) 
+            score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
+        
         // done for better endgame move ordering of king moves
         if(PIECE(mv_piece) == KING && board->piece_boards[WHITE_QUEENS_INDEX] == 0 && board->piece_boards[BLACK_QUEENS_INDEX] == 0){
             score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][to] - piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][from]);

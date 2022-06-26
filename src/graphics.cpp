@@ -12,6 +12,7 @@
 #include "attacks.h"
 #include "hashing.h"
 #include "tt.h"
+#include "evaluation.h"
 
 using namespace std;
 
@@ -151,6 +152,7 @@ int main(int argc, char** argv){
     // generate_num_data(); // uncomment if you need to update opening_book
     opening_book = populate_opening_book();
     init_tt_table();
+    init_eval_table();
     
 
 
@@ -364,6 +366,7 @@ int main(int argc, char** argv){
     IMG_Quit();
     SDL_Quit();
     free_tt_table();
+    free_eval_table();
     return 0;
 }
 

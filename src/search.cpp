@@ -181,10 +181,14 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
 }
 
 move_t find_best_move(board_t board) {
+    /* clear the eval table */
+    clear_eval_table();
+    eval_hits = 0;
+    eval_probes = 0;
     /* clear the transposition table */
     clear_tt_table();
-    transpositions = 0;
-    num_entries = 0;
+    tt_hits = 0;
+    tt_probes = 0;
 
     hash_val h = board.board_hash;
     game_history.insert(h); // insert the board hash from the user's move
@@ -196,7 +200,7 @@ move_t find_best_move(board_t board) {
     /* check in opening book */
     move_t opening_move = get_opening_move(&board);
     if(opening_move != NO_MOVE) {
-        cout << "Played from book!" << endl;
+        cout << "Played from book!" << endl << endl;
 
         /* include the move that was made in the history */
         make_move(&board_stack, opening_move);
@@ -211,7 +215,6 @@ move_t find_best_move(board_t board) {
     clock_t tStart = clock();
     clock_t tStop = clock();
     while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
-        transpositions = 0;
         checkmates = 0;
         depth++;
         search(&board_stack, 0, depth, alpha, beta);
@@ -221,15 +224,15 @@ move_t find_best_move(board_t board) {
         }
     }
     // search(&board_stack, 0, 15, alpha, beta);
-    cout << "IDSS Depth: " << depth << endl;
+    cout << "IDDFS Depth: " << depth << endl;
 
     move_t best_move = search_result.best_move;
 
     int perspective = (board.t == W) ? 1 : -1;
     cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
-    cout << "Transpositions: " << transpositions << endl;
-    cout << "Number of entries: " << num_entries << endl;
-    cout << "Checkmates: " << checkmates << endl;
+    cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
+    cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
+    cout << "Checkmates: " << checkmates << endl << endl;
 
     /* include the move that was made in the history */
     make_move(&board_stack, best_move);
@@ -259,12 +262,6 @@ move_t find_best_move(board_t board) {
 //     board_t board_4 = decode_fen(test_pos_4);
 //     board_t board_5 = decode_fen(test_pos_5);
 //     board_t board_6 = decode_fen(test_pos_6);
-
-//     // string test_pos = "3R4/3Q4/8/8/2k5/4K3/8/8 b - - 0 1";
-//     // board_t *board = decode_fen(test_pos);
-//     // vector<move_t> moves;
-//     // generate_moves(board, &moves);
-//     // cout << notation_from_move(find_best_move(board, 5), moves, board) << endl;
 
 //     size_t depth;
 //     size_t total_nodes;
@@ -424,5 +421,7 @@ move_t find_best_move(board_t board) {
     threading so I can kill the thread
 
     revisit move ordering and make sure its fixed with new game phase
+
+    look at how the CPW-Engine does the sizing for the transposition table
     
 */

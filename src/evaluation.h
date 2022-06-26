@@ -13,6 +13,10 @@
 
 #include "board.h"
 
+#define EVAL_SIZE 1000000
+
+#define FAILED_LOOKUP INT_MIN
+
 const int piece_values[10] = {100, // white pawn
                              -100, // black pawn
                               320, // white knight
@@ -216,6 +220,11 @@ static const int *piece_scores[14] =
 
 extern float game_phase;
 
+typedef struct eval_entry_struct {
+    hash_val key;
+    int score;
+} eval_entry;
+
 /**
  * @brief Returns a static evaluation of the board state
  * 
@@ -223,3 +232,13 @@ extern float game_phase;
  * @return score from the perspective of who's turn it is
  */
 int evaluate(board_t *board);
+
+void init_eval_table();
+
+void free_eval_table();
+
+void clear_eval_table();
+
+extern int eval_hits;
+
+extern int eval_probes;

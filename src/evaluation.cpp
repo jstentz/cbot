@@ -3,6 +3,41 @@
 #include "bitboard.h"
 #include "pieces.h"
 
+#include <cstdlib>
+
+eval_entry *eval_table;
+
+int eval_hits = 0;
+int eval_probes = 0;
+
+void init_eval_table() {
+    eval_table = (eval_entry *)calloc(sizeof(eval_entry), EVAL_SIZE);
+}
+
+void free_eval_table() {
+    free(eval_table);
+}
+
+void clear_eval_table() {
+    free_eval_table();
+    init_eval_table();
+}
+
+int probe_eval_table(hash_val key) {
+    eval_probes++;
+    eval_entry entry = eval_table[key % EVAL_SIZE];
+    if(entry.key == key) {
+        eval_hits++;
+        return entry.score;
+    }
+    return FAILED_LOOKUP;
+}
+
+void store_eval_entry(hash_val key, int score) {
+    eval_entry* entry = &eval_table[key % EVAL_SIZE];
+    entry->key = key;
+    entry->score = score;
+}
 
 float game_phase;
 
@@ -109,9 +144,13 @@ int mop_up_eval(board_t *board, turn winning_side) {
 }
 
 int evaluate(board_t *board) {
-    /*
-        eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256
-    */
+    /* probe the eval table */
+    int table_score = probe_eval_table(board->board_hash);
+    // cout << "probed!" << endl;
+    if(table_score != FAILED_LOOKUP)
+        return table_score;
+
+
     int eval;
     int middlegame_eval;
     int endgame_eval;
@@ -142,9 +181,11 @@ int evaluate(board_t *board) {
         else endgame_eval += mop_up_eval(board, B);
     }
     
-
-    eval = ((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256;
-
     int perspective = (board->t == W) ? 1 : -1;
-    return eval * perspective;
+    eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256) * perspective;
+
+    /* save the evaluation we just made */
+    store_eval_entry(board->board_hash, eval);
+
+    return eval;
 }

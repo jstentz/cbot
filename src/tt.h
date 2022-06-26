@@ -22,7 +22,7 @@
 
 #define FAILED_LOOKUP INT_MIN
 
-#define TABLE_SIZE 256000 // this is 2^18
+#define TABLE_SIZE 256000
 
 // I need to learn more about the difference between alpha and beta cuttoffs
 // what is a good size for a transposition table
@@ -51,8 +51,8 @@ bool probe_game_history(hash_val h);
 
 extern tt_t TT;
 
-extern size_t transpositions; // number of transpositions
-extern size_t num_entries;
+extern size_t tt_hits; // number of transpositions
+extern size_t tt_probes;
 extern size_t checkmates;
 
 void init_tt_table();

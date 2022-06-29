@@ -42,19 +42,19 @@ void store_eval_entry(hash_val key, int score) {
 float game_phase;
 
 /* this is not done */
-bool sufficient_checkmating_material(board_t *board) {
+bool sufficient_checkmating_material() {
     /* check for bare kings */
-    if(pop_count(board->all_pieces) == 2) {
+    if(pop_count(b.all_pieces) == 2) {
         return false;
     }
     return true;
 }
 
 /* 
-    can probably incrementally update this value in the future 
+    can probably incrementally update this value in the future and store it in the board
     can also probably incrementally update number of pieces and positional scores
 */
-void calculate_game_phase(board_t *board) {
+void calculate_game_phase() {
     int pawn_phase = 0;
     int knight_phase = 1;
     int bishop_phase = 1;
@@ -68,17 +68,17 @@ void calculate_game_phase(board_t *board) {
 
     float phase = total_phase;
     /* count the number of each piece */
-    int wp = board->piece_counts[WHITE_PAWNS_INDEX];
-    int wn = board->piece_counts[WHITE_KNIGHTS_INDEX];
-    int wb = board->piece_counts[WHITE_BISHOPS_INDEX];
-    int wr = board->piece_counts[WHITE_ROOKS_INDEX];
-    int wq = board->piece_counts[WHITE_QUEENS_INDEX];
+    int wp = b.piece_counts[WHITE_PAWNS_INDEX];
+    int wn = b.piece_counts[WHITE_KNIGHTS_INDEX];
+    int wb = b.piece_counts[WHITE_BISHOPS_INDEX];
+    int wr = b.piece_counts[WHITE_ROOKS_INDEX];
+    int wq = b.piece_counts[WHITE_QUEENS_INDEX];
 
-    int bp = board->piece_counts[BLACK_PAWNS_INDEX];
-    int bn = board->piece_counts[BLACK_KNIGHTS_INDEX];
-    int bb = board->piece_counts[BLACK_BISHOPS_INDEX];
-    int br = board->piece_counts[BLACK_ROOKS_INDEX];
-    int bq = board->piece_counts[BLACK_QUEENS_INDEX];
+    int bp = b.piece_counts[BLACK_PAWNS_INDEX];
+    int bn = b.piece_counts[BLACK_KNIGHTS_INDEX];
+    int bb = b.piece_counts[BLACK_BISHOPS_INDEX];
+    int br = b.piece_counts[BLACK_ROOKS_INDEX];
+    int bq = b.piece_counts[BLACK_QUEENS_INDEX];
 
     phase -= wp * pawn_phase;
     phase -= wn * knight_phase;
@@ -120,7 +120,7 @@ int md(square sq1, square sq2) {
 }
 
 
-int mop_up_eval(board_t *board, turn winning_side) {
+int mop_up_eval(turn winning_side) {
     // this function assumes that there are no pawns for either side
     // always returns from white's perspective
     int eval;
@@ -129,13 +129,13 @@ int mop_up_eval(board_t *board, turn winning_side) {
     int perspective;
 
     if(winning_side == W) {
-        losing_king = board->black_king_loc;
-        winning_king = board->white_king_loc;
+        losing_king = b.black_king_loc;
+        winning_king = b.white_king_loc;
         perspective = 1;
     }
     else {
-        losing_king = board->white_king_loc;
-        winning_king = board->black_king_loc;
+        losing_king = b.white_king_loc;
+        winning_king = b.black_king_loc;
         perspective = -1;
     }
 
@@ -143,9 +143,9 @@ int mop_up_eval(board_t *board, turn winning_side) {
     return eval * perspective;
 }
 
-int evaluate(board_t *board) {
+int evaluate() {
     /* probe the eval table */
-    int table_score = probe_eval_table(board->board_hash);
+    int table_score = probe_eval_table(b.board_hash);
     // cout << "probed!" << endl;
     if(table_score != FAILED_LOOKUP)
         return table_score;
@@ -155,37 +155,38 @@ int evaluate(board_t *board) {
     int middlegame_eval;
     int endgame_eval;
 
-    if(!sufficient_checkmating_material(board)) {
+    if(!sufficient_checkmating_material()) {
         return 0;
     }
 
-    calculate_game_phase(board);
+    calculate_game_phase();
 
-    square white_king_loc = board->white_king_loc;
-    square black_king_loc = board->black_king_loc;
+    square white_king_loc = b.white_king_loc;
+    square black_king_loc = b.black_king_loc;
 
-    int middlegame_positional = board->positional_score + 
+    int middlegame_positional = b.positional_score + 
                                 piece_scores[WHITE_KINGS_INDEX][white_king_loc] +
                                 piece_scores[BLACK_KINGS_INDEX][black_king_loc];
 
-    int endgame_positional = board->positional_score + 
+    int endgame_positional = b.positional_score + 
                              piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc] +
                              piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
 
-    middlegame_eval = middlegame_positional + board->material_score;
-    endgame_eval = endgame_positional + board->material_score;
+    middlegame_eval = middlegame_positional + b.material_score;
+    endgame_eval = endgame_positional + b.material_score;
 
     /* mop up eval for winning side */
-    if(board->material_score != 0){
-        if(board->material_score > 0) endgame_eval += mop_up_eval(board, W);
-        else endgame_eval += mop_up_eval(board, B);
+    if(b.material_score != 0){
+        if(b.material_score > 0) endgame_eval += mop_up_eval(W);
+        else endgame_eval += mop_up_eval(B);
     }
     
-    int perspective = (board->t == W) ? 1 : -1;
+    int perspective = (b.t == W) ? 1 : -1;
     eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256) * perspective;
 
     /* save the evaluation we just made */
-    store_eval_entry(board->board_hash, eval);
-
+    /* here I just need to hash the board's pieces 
+    add this after I finish unmake move */
+    store_eval_entry(b.board_hash, eval);
     return eval;
 }

@@ -108,7 +108,7 @@ bitboard get_queen_attacks(square queen, bitboard all_pieces);
  * @param side side to get pieces attacks from
  * @return Bitboard containing attacked squares by side
  */
-bitboard generate_attack_map(board_t board, turn side);
+bitboard generate_attack_map(turn side);
 
 /**
  * @brief Given the location of a bishop and a king, gives back the ray 
@@ -159,7 +159,7 @@ bitboard get_ray_from_sq_to_sq(square start, square target);
  * @param blocking_pieces All the pieces on the board to be considered as blocking the attack
  * @return Whether or not the square is attacked
  */
-bool is_attacked(board_t *board, square sq, bitboard blocking_pieces);
+bool is_attacked(square sq, bitboard blocking_pieces);
 
 /**
  * @brief Given the board state and a square, it returns a bitboard containing
@@ -169,7 +169,7 @@ bool is_attacked(board_t *board, square sq, bitboard blocking_pieces);
  * @param sq Location of square
  * @return Bitboard of all the attackers of the square
  */
-bitboard attackers_from_square(board_t *board, square sq);
+bitboard attackers_from_square(square sq);
 
 /**
  * @brief Given the board state and a square, it returns a bitboard containing
@@ -179,6 +179,6 @@ bitboard attackers_from_square(board_t *board, square sq);
  * @param sq Location of square
  * @return Bitboard containing all the rays
  */
-bitboard opponent_slider_rays_to_square(board_t *board, square sq);
+bitboard opponent_slider_rays_to_square(square sq);
 
-bool is_attacked_by_pawn(board_t *board, square sq);
+bool is_attacked_by_pawn(square sq);

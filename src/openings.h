@@ -20,7 +20,7 @@
 
 unordered_map<hash_val, vector<move_t>> create_opening_book();
 
-move_t get_opening_move(board_t *board);
+move_t get_opening_move();
 
 extern unordered_map<hash_val, vector<move_t>> opening_book;
 

@@ -231,7 +231,7 @@ typedef struct eval_entry_struct {
  * @param board board to evaluate
  * @return score from the perspective of who's turn it is
  */
-int evaluate(board_t *board);
+int evaluate();
 
 void init_eval_table();
 

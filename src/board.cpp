@@ -1,6 +1,7 @@
 #include <string>
 #include <stdlib.h>
 #include <iostream>
+#include <stack>
 
 #include "board.h"
 #include "bitboard.h"
@@ -10,16 +11,18 @@
 #include "hashing.h"
 #include "tt.h"
 
-void update_boards(board_t *board) {
-    board->white_pieces = (board->piece_boards[WHITE_PAWNS_INDEX]   | board->piece_boards[WHITE_KNIGHTS_INDEX] | 
-                           board->piece_boards[WHITE_BISHOPS_INDEX] | board->piece_boards[WHITE_ROOKS_INDEX]   |
-                           board->piece_boards[WHITE_QUEENS_INDEX]  | board->piece_boards[WHITE_KINGS_INDEX]);
+board_t b;
 
-    board->black_pieces = (board->piece_boards[BLACK_PAWNS_INDEX]   | board->piece_boards[BLACK_KNIGHTS_INDEX] | 
-                           board->piece_boards[BLACK_BISHOPS_INDEX] | board->piece_boards[BLACK_ROOKS_INDEX]   |
-                           board->piece_boards[BLACK_QUEENS_INDEX]  | board->piece_boards[BLACK_KINGS_INDEX]);
+void update_boards() {
+    b.white_pieces = (b.piece_boards[WHITE_PAWNS_INDEX]   | b.piece_boards[WHITE_KNIGHTS_INDEX] | 
+                      b.piece_boards[WHITE_BISHOPS_INDEX] | b.piece_boards[WHITE_ROOKS_INDEX]   |
+                      b.piece_boards[WHITE_QUEENS_INDEX]  | b.piece_boards[WHITE_KINGS_INDEX]);
 
-    board->all_pieces = board->white_pieces | board->black_pieces;
+    b.black_pieces = (b.piece_boards[BLACK_PAWNS_INDEX]   | b.piece_boards[BLACK_KNIGHTS_INDEX] | 
+                      b.piece_boards[BLACK_BISHOPS_INDEX] | b.piece_boards[BLACK_ROOKS_INDEX]   |
+                      b.piece_boards[BLACK_QUEENS_INDEX]  | b.piece_boards[BLACK_KINGS_INDEX]);
+
+    b.all_pieces = b.white_pieces | b.black_pieces;
     return;
 }
 
@@ -39,13 +42,6 @@ board_t zero_board() {
     }
 
     board.t = W;
-    board.en_passant = NONE;
-    board.white_king_side = false; // default to false so I can change to true in decode_fen
-    board.white_queen_side = false;
-    board.black_king_side = false;
-    board.black_queen_side = false;
-
-    board.last_move = NO_MOVE;
 
     board.board_hash = 0;
 
@@ -56,6 +52,20 @@ board_t zero_board() {
         board.piece_counts[i] = 0;
     }
 
+    stack<irrev_t> irrev_history;
+
+    irrev_t irrev_aspects;
+    irrev_aspects.white_king_side = false;
+    irrev_aspects.white_queen_side = false;
+    irrev_aspects.black_king_side = false;
+    irrev_aspects.black_queen_side = false;
+
+    irrev_aspects.en_passant = NONE;
+    irrev_aspects.last_capture = EMPTY;
+    irrev_aspects.last_move = NO_MOVE;
+
+    irrev_history.push(irrev_aspects);
+    board.history = irrev_history;
     return board;
 }
 
@@ -130,10 +140,10 @@ board_t decode_fen(string fen) {
     i++;
     while(i < fen.size()) {
         c = fen[i];
-        if(c == 'K') board.white_king_side = true;
-        if(c == 'Q') board.white_queen_side = true;
-        if(c == 'k') board.black_king_side = true;
-        if(c == 'q') board.black_queen_side = true;
+        if(c == 'K') board.history.top().white_king_side = true;
+        if(c == 'Q') board.history.top().white_queen_side = true;
+        if(c == 'k') board.history.top().black_king_side = true;
+        if(c == 'q') board.history.top().black_queen_side = true;
         i++;
     }
     update_boards(&board);
@@ -148,45 +158,45 @@ board_t decode_fen(string fen) {
 }
 
 // incomplete
-string encode_fen(board_t *board) {
-    piece *sq_board = board->sq_board;
-    int consecutive_empty = 0;
-    piece pc;
-    string fen = "";
-    string pc_str;
-    piece color;
-    piece pc_type;
-    int sq;
-    for(int i = 7; i >= 0; i--) {
-        for(int j = 0; j < 8; j++) {
-            sq = i * 8 + j;
-            pc = sq_board[sq];
-            if(pc == EMPTY) {
-                consecutive_empty++;
-                continue;
-            }
-            else if(consecutive_empty != 0) {
-                fen += to_string(consecutive_empty);
-                consecutive_empty = 0;
-            }
+// string encode_fen(board_t *board) {
+//     piece *sq_board = board->sq_board;
+//     int consecutive_empty = 0;
+//     piece pc;
+//     string fen = "";
+//     string pc_str;
+//     piece color;
+//     piece pc_type;
+//     int sq;
+//     for(int i = 7; i >= 0; i--) {
+//         for(int j = 0; j < 8; j++) {
+//             sq = i * 8 + j;
+//             pc = sq_board[sq];
+//             if(pc == EMPTY) {
+//                 consecutive_empty++;
+//                 continue;
+//             }
+//             else if(consecutive_empty != 0) {
+//                 fen += to_string(consecutive_empty);
+//                 consecutive_empty = 0;
+//             }
 
-            pc_type = PIECE(pc);
-            if(pc_type == PAWN) pc_str = "p";
-            else if(pc_type == KNIGHT) pc_str = "n";
-            else if(pc_type == BISHOP) pc_str = "b";
-            else if(pc_type == ROOK) pc_str = "r";
-            else if(pc_type == QUEEN) pc_str = "q";
-            else pc_str = "k";
+//             pc_type = PIECE(pc);
+//             if(pc_type == PAWN) pc_str = "p";
+//             else if(pc_type == KNIGHT) pc_str = "n";
+//             else if(pc_type == BISHOP) pc_str = "b";
+//             else if(pc_type == ROOK) pc_str = "r";
+//             else if(pc_type == QUEEN) pc_str = "q";
+//             else pc_str = "k";
 
-            color = COLOR(pc);
-            // if(color == WHITE) 
-        }
-        if(i != 0) fen += "/";
-    }
-    return fen;
-}
+//             color = COLOR(pc);
+//             // if(color == WHITE) 
+//         }
+//         if(i != 0) fen += "/";
+//     }
+//     return fen;
+// }
 
-pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
+pin_t get_pinned_pieces(square friendly_king_loc) {
     pin_t pin;
     pin.pinned_pieces = 0;
     bitboard curr_pin;
@@ -195,20 +205,20 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
     bitboard opponent_bishops;
     bitboard opponent_queens;
     bitboard friendly_pieces;
-    if(board->t == W) {
-        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
-        friendly_pieces = board->white_pieces;
+    if(b.t == W) {
+        opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
+        friendly_pieces = b.white_pieces;
     }
     else {
-        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
-        friendly_pieces = board->black_pieces;
+        opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
+        friendly_pieces = b.black_pieces;
     }
-    bitboard king_rook_attacks = get_rook_attacks(friendly_king_loc, board->all_pieces);
-    bitboard king_bishop_attacks = get_bishop_attacks(friendly_king_loc, board->all_pieces);
+    bitboard king_rook_attacks = get_rook_attacks(friendly_king_loc, b.all_pieces);
+    bitboard king_bishop_attacks = get_bishop_attacks(friendly_king_loc, b.all_pieces);
     bitboard rook_attacks;
     bitboard bishop_attacks;
     bitboard queen_attacks;
@@ -229,7 +239,7 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
             REMOVE_FIRST(opponent_rooks);
             continue;
         }
-        rook_attacks = get_rook_attacks(pc_loc, board->all_pieces);
+        rook_attacks = get_rook_attacks(pc_loc, b.all_pieces);
         curr_pin = rook_attacks & king_rook_attacks & friendly_pieces;
         if(curr_pin){
             pin.pinned_pieces |= curr_pin;
@@ -248,7 +258,7 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
             REMOVE_FIRST(opponent_bishops);
             continue;
         }
-        bishop_attacks = get_bishop_attacks(pc_loc, board->all_pieces);
+        bishop_attacks = get_bishop_attacks(pc_loc, b.all_pieces);
         curr_pin = bishop_attacks & king_bishop_attacks & friendly_pieces;
         if(curr_pin){
             pin.pinned_pieces |= curr_pin;
@@ -264,7 +274,7 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
         pc_diag = pc_rank - pc_file;
         pc_antidiag = pc_rank + pc_file;
         if(pc_rank == king_rank || pc_file == king_file) {
-            queen_attacks = get_rook_attacks(pc_loc, board->all_pieces);
+            queen_attacks = get_rook_attacks(pc_loc, b.all_pieces);
             curr_pin = queen_attacks & king_rook_attacks & friendly_pieces;
             if(curr_pin){
                 pin.pinned_pieces |= curr_pin;
@@ -273,7 +283,7 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
             }
         }
         else if(pc_diag == king_diag || pc_antidiag == king_antidiag){
-            queen_attacks = get_bishop_attacks(pc_loc, board->all_pieces);
+            queen_attacks = get_bishop_attacks(pc_loc, b.all_pieces);
             curr_pin = queen_attacks & king_bishop_attacks & friendly_pieces;
             if(curr_pin){
                 pin.pinned_pieces |= curr_pin;
@@ -286,9 +296,9 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc) {
     return pin;
 }
 
-bitboard checking_pieces(board_t *board) {
-    square friendly_king = (board->t == W) ? board->white_king_loc : board->black_king_loc;
-    return attackers_from_square(board, friendly_king);
+bitboard checking_pieces() {
+    square friendly_king = (b.t == W) ? b.white_king_loc : b.black_king_loc;
+    return attackers_from_square(friendly_king);
 }
 
 int in_check(bitboard attackers) {

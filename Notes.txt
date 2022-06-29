@@ -3,3 +3,9 @@ Right now you can force a draw from the opening with the Amar opening (Nh3, Na3,
 I can play as the computer by using my unmake_move feature (right click)
 
 Need to remove a lot of troublesome lines in the opening book that just straight up hang a piece
+
+To Do:
+1. unmake move
+2. the evaluation hash table only needs to hash the piece locations and the turn, so maybe have a phash
+value in the board struct that we update along with the other hash value that just stores this info
+3. redo how pins work... its a huge waste of space... I only even need one pin struct since it changes

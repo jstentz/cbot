@@ -14,6 +14,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <string>
+#include <stack>
 
 #include "bitboard.h"
 #include "pieces.h"
@@ -51,6 +52,38 @@ typedef signed int move_t;
 
 #define NO_MOVE ((move_t)0x0)
 
+/* defines all operations on the board state number */
+#define WHITE_CASTLE(state)     (state & 0x000000000000000C)
+#define WHITE_KING_SIDE(state)  (state & 0x0000000000000008)
+#define WHITE_QUEEN_SIDE(state) (state & 0x0000000000000004)
+#define BLACK_CASTLE(state)     (state & 0x0000000000000003)
+#define BLACK_KING_SIDE(state)  (state & 0x0000000000000002)
+#define BLACK_QUEEN_SIDE(state) (state & 0x0000000000000001)
+
+#define SET_WHITE_KING_SIDE(state)  (state |= 0x0000000000000008)
+#define SET_WHITE_QUEEN_SIDE(state) (state |= 0x0000000000000004)
+#define SET_BLACK_KING_SIDE(state)  (state |= 0x0000000000000002)
+#define SET_BLACK_QUEEN_SIDE(state) (state |= 0x0000000000000001)
+
+#define REM_WHITE_KING_SIDE(state)  (state &= ~0x0000000000000008)
+#define REM_WHITE_QUEEN_SIDE(state) (state &= ~0x0000000000000004)
+#define REM_BLACK_KING_SIDE(state)  (state &= ~0x0000000000000002)
+#define REM_BLACK_QUEEN_SIDE(state) (state &= ~0x0000000000000001)
+
+#define EN_PASSANT_SQ(state)         ((state >> 4) & 0x000000000000003F)
+#define SET_EN_PASSANT_SQ(state, sq) (state |= (sq << 4))
+
+#define LAST_CAPTURE(state)         ((state >> 10) & 0x000000000000000F)
+#define SET_LAST_CAPTURE(state, pc) (state |= (pc << 10))
+
+#define FIFTY_MOVE(state)            ((state >> 14) & 0x000000000003FFFF)
+#define SET_FIFTY_MOVE(state, count) (state |= (count << 14))
+#define INC_FIFTY_MOVE(state)        (SET_FIFTY_MOVE(state, FIFTY_MOVE(state) + 1))
+#define CL_FIFTY_MOVE(state)         (state &= (~0x000000000003FFFF) << 14)
+
+#define LAST_MOVE(state)         ((state >> 32) & 0x00000000FFFFFFFF)
+#define SET_LAST_MOVE(state, mv) (state |= (mv << 32))
+
 
 // would like to get rid of these enums in any non-user interacting code
 enum square { A1, B1, C1, D1, E1, F1, G1, H1,
@@ -69,6 +102,16 @@ typedef unsigned long long int hash_val; // stolen from hashing.h
 // NOT THE FIX I LIKE
 
 /**
+ * State bit breakdown from LSB to MSB
+ * Bits 0 - 3: castling rights KQkq
+ * Bits 4 - 9: en passant square (64 here means no square)
+ * Bits 10 - 13: last captured piece (0000 means EMPTY)
+ * Bits 14 - 31: 50 move counter
+ * Bits 32 - 63: move played to reach this position (used for recapture move ordering)
+ */
+typedef unsigned long long int state_t;
+
+/**
  * @brief Struct containing all board state data
  * 
  */
@@ -83,26 +126,22 @@ typedef struct Board
     piece sq_board[64];
 
     turn t;
-    square en_passant;
-    bool white_king_side;
-    bool white_queen_side;
-    bool black_king_side;
-    bool black_queen_side;
 
     square white_king_loc;
     square black_king_loc;
 
     /* hashing items */
     hash_val board_hash;
-    
-    /* move ordering items */
-    move_t last_move;
 
     /* evaluation items */
     int material_score;
     int positional_score; // doesn't include kings
     int piece_counts[10];
+
+    stack<state_t> state_history;
 } board_t;
+
+extern board_t b;
 
 /**
  * @brief Struct containing the state of pins on the board
@@ -119,7 +158,7 @@ typedef struct pin_struct {
  * 
  * @param board Board to update
  */
-void update_boards(board_t *board);
+void update_boards();
 
 /**
  * @brief Given a valid FEN string, gives back a pointer to the board
@@ -137,7 +176,7 @@ board_t decode_fen(string fen);
  * @param board Board state
  * @return FEN string
  */
-string encode_fen(board_t *board);
+// string encode_fen(board_t *board);
 
 /**
  * @brief Given a board state and the location of the friendly king, it
@@ -147,7 +186,7 @@ string encode_fen(board_t *board);
  * @param friendly_king_loc 
  * @return pin_t 
  */
-pin_t get_pinned_pieces(board_t *board, square friendly_king_loc);
+pin_t get_pinned_pieces(square friendly_king_loc);
 
 /**
  * @brief Given a board state, it returns a bitboard with the location of the
@@ -156,7 +195,7 @@ pin_t get_pinned_pieces(board_t *board, square friendly_king_loc);
  * @param board Current board state
  * @return Bitboard containing location of pinned pieces 
  */
-bitboard checking_pieces(board_t *board);
+bitboard checking_pieces();
 
 /**
  * @brief Given attackers of the king, it returns the type of check we are in.
@@ -172,4 +211,4 @@ int in_check(bitboard attackers);
  * @param board
  * @return Bitboard with all the pieces attacking the king.
  */
-bitboard checking_pieces(board_t *board);
+bitboard checking_pieces();

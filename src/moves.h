@@ -62,7 +62,7 @@ typedef signed int move_t;
  * @param curr_moves Place to store the moves
  * @param captures_only Whether to generate only captures or all legal moves
  */
-void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_only = false);
+void generate_moves(vector<move_t> *curr_moves, bool captures_only = false);
 
 /**
  * @brief Given a list of moves, tries to order the moves from best to worse
@@ -70,7 +70,7 @@ void generate_moves(board_t *board, vector<move_t> *curr_moves, bool captures_on
  * 
  * @param moves Vector of moves to reorder
  */
-void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move);
+void order_moves(vector<move_t> *moves, move_t tt_best_move);
 
 /**
  * @brief Takes in a pointer to the current board state, along with a move
@@ -81,7 +81,7 @@ void order_moves(vector<move_t> *moves, board_t *board, move_t tt_best_move);
  * @param move 
  * @return board_t* 
  */
-void make_move(stack<board_t> *board_stack, move_t move);
+void make_move(move_t move);
 
 /**
  * @brief Given a pointer to a stack of boards, it will undo the most
@@ -89,7 +89,7 @@ void make_move(stack<board_t> *board_stack, move_t move);
  * 
  * @param boards 
  */
-void unmake_move(stack<board_t> *board_stack);
+void unmake_move(move_t move);
 
 /**
  * @brief Given a move, a list of all legal moves, and the board state,
@@ -101,7 +101,7 @@ void unmake_move(stack<board_t> *board_stack);
  * @param board Current board state
  * @return Standard chess notation for input move. 
  */
-string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board);
+string notation_from_move(move_t move);
 
 /**
  * @brief Given the notation for a move and the current position, returns the
@@ -111,6 +111,6 @@ string notation_from_move(move_t move, vector<move_t> all_moves, board_t *board)
  * @param board Current position
  * @return Move representing the notation
  */
-move_t move_from_notation(string notation, board_t *board);
+move_t move_from_notation(string notation);
 
 move_t construct_move(int from, int to, int flags);

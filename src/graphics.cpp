@@ -184,7 +184,7 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    board_t board = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    b = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // board_t board = decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
     /* there is some weird behavior happening above... the computer is losing this as black in ways that I wouldn't expect */
     // board_t board = decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
@@ -192,8 +192,7 @@ int main(int argc, char** argv){
     // board_t board = decode_fen("8/bbb5/5k2/8/8/8/8/4K3 w - - 0 1");
     // board_t board = decode_fen("6K1/5Q2/8/8/8/3p4/8/2k5 b - - 0 1");
     // board_t board = decode_fen("8/8/8/5k2/8/3K4/3P4/8 b - - 0 1");
-    stack<board_t> game; // add functionality for going back
-    game.push(board);
+    
     move_t move;
     vector<move_t> legal_moves;
     generate_moves(&board, &legal_moves);

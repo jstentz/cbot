@@ -13,7 +13,7 @@ using namespace std;
 
 void print_moves(vector<move_t> moves, board_t *board) {
     for(move_t move : moves) {
-        cout << notation_from_move(move, moves, board) << ": ";
+        cout << notation_from_move(move) << ": ";
         cout << SCORE(move) << endl;
     }
 }

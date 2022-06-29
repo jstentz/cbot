@@ -58,13 +58,13 @@ hash_val zobrist_hash() {
         }
     }
 
-    irrev_t irrev_aspects = b.history.top();
-    if(irrev_aspects.white_king_side) h ^= zobrist_table.white_king_side;
-    if(irrev_aspects.white_queen_side) h ^= zobrist_table.white_queen_side;
-    if(irrev_aspects.black_king_side) h ^= zobrist_table.black_king_side;
-    if(irrev_aspects.black_queen_side) h ^= zobrist_table.black_queen_side;
+    state_t state = b.state_history.top();
+    if(WHITE_KING_SIDE(state)) h ^= zobrist_table.white_king_side;
+    if(WHITE_QUEEN_SIDE(state)) h ^= zobrist_table.white_queen_side;
+    if(BLACK_KING_SIDE(state)) h ^= zobrist_table.black_king_side;
+    if(BLACK_QUEEN_SIDE(state)) h ^= zobrist_table.black_queen_side;
 
-    square en_passant = irrev_aspects.en_passant;
+    square en_passant = (square)EN_PASSANT_SQ(state);
     if(en_passant != NONE) {
         h ^= zobrist_table.en_passant_file[FILE(en_passant)];
     }

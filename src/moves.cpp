@@ -608,7 +608,7 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
 
 void make_move(move_t move) {
     /* make a copy of the irreversible aspects of the position to later */
-    irrev_t irrev_aspects = b.history.top();
+    state_t state = b.history.top();
 
     hash_val h = b.board_hash;
 

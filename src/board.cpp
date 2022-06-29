@@ -52,20 +52,20 @@ board_t zero_board() {
         board.piece_counts[i] = 0;
     }
 
-    stack<irrev_t> irrev_history;
+    stack<state_t> state_history;
 
-    irrev_t irrev_aspects;
-    irrev_aspects.white_king_side = false;
-    irrev_aspects.white_queen_side = false;
-    irrev_aspects.black_king_side = false;
-    irrev_aspects.black_queen_side = false;
+    state_t state = 0;
+    REM_WHITE_KING_SIDE(state);
+    REM_WHITE_QUEEN_SIDE(state);
+    REM_BLACK_KING_SIDE(state);
+    REM_BLACK_QUEEN_SIDE(state);
+    SET_EN_PASSANT_SQ(state, NONE);
+    SET_LAST_CAPTURE(state, EMPTY);
+    CL_FIFTY_MOVE(state);
+    SET_LAST_MOVE(state, NO_MOVE);
 
-    irrev_aspects.en_passant = NONE;
-    irrev_aspects.last_capture = EMPTY;
-    irrev_aspects.last_move = NO_MOVE;
-
-    irrev_history.push(irrev_aspects);
-    board.history = irrev_history;
+    state_history.push(state);
+    board.state_history = state_history;
     return board;
 }
 
@@ -140,14 +140,14 @@ board_t decode_fen(string fen) {
     i++;
     while(i < fen.size()) {
         c = fen[i];
-        if(c == 'K') board.history.top().white_king_side = true;
-        if(c == 'Q') board.history.top().white_queen_side = true;
-        if(c == 'k') board.history.top().black_king_side = true;
-        if(c == 'q') board.history.top().black_queen_side = true;
+        if(c == 'K') SET_WHITE_KING_SIDE(board.state_history.top());
+        if(c == 'Q') SET_WHITE_QUEEN_SIDE(board.state_history.top());
+        if(c == 'k') SET_BLACK_KING_SIDE(board.state_history.top());
+        if(c == 'q') SET_BLACK_QUEEN_SIDE(board.state_history.top());
         i++;
     }
-    update_boards(&board);
-    board.board_hash = zobrist_hash(&board); // hash the board initially
+    update_boards();
+    board.board_hash = zobrist_hash(); // hash the board initially
     game_history.insert(board.board_hash); // might not need this
 
     /* more eval stuff */

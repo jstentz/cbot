@@ -13,8 +13,6 @@
 #include <string>
 #include <algorithm>
 
-// considering just giving these functions the bitboards they need
-// do this after fixing move representation
 bitboard generate_knight_move_bitboard(square knight) {
     bitboard own_pieces;
     if(b.t == W) own_pieces = b.white_pieces;
@@ -305,7 +303,7 @@ void generate_king_moves(vector<move_t> *curr_moves, bool captures_only) {
 }
 
 void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
-    irrev_t irrev_aspects = b.history.top();
+    state_t state = b.state_history.top();
     int from;
     int to;
     int flags;
@@ -325,8 +323,8 @@ void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool p
     bitboard pawn_moves;
     bitboard pawn_bit;
     bitboard en_passant_bit = 0;
-    if(irrev_aspects.en_passant != NONE) {
-        en_passant_bit = BIT_FROM_SQ(irrev_aspects.en_passant);
+    if(EN_PASSANT_SQ(state) != NONE) {
+        en_passant_bit = BIT_FROM_SQ(EN_PASSANT_SQ(state));
         if(pawn_check) {
             check_mask |= en_passant_bit;
         }
@@ -524,7 +522,7 @@ void generate_moves(vector<move_t> *curr_moves, bool captures_only) {
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
 void order_moves(vector<move_t> *moves, move_t tt_best_move) {
-    irrev_t irrev_aspects = b.history.top();
+    state_t state = b.state_history.top();
     // how do I assign negative scores here
     // make moves signed?
     // DOESN'T TAKE INTO ACCOUNT KING ENDGAME
@@ -546,7 +544,7 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
     // bigger bonus for the higher value piece being captured
     // just have the board store the move that was made to get to that position
     // still need to add the least_valued_attacker logic, not exactly sure how to implement
-    move_t last_move = irrev_aspects.last_move;
+    move_t last_move = LAST_MOVE(state);
     int recapture_square = -1;
     if(last_move != NO_MOVE && IS_CAPTURE(last_move)) {
         recapture_square = TO(last_move);
@@ -608,11 +606,10 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
 
 void make_move(move_t move) {
     /* make a copy of the irreversible aspects of the position to later */
-    state_t state = b.history.top();
+    state_t prev_state = b.state_history.top();
+    state_t state = prev_state;
 
     hash_val h = b.board_hash;
-
-    square prev_en_passant = irrev_aspects.en_passant;
 
     int from = FROM(move);
     int to = TO(move);
@@ -637,29 +634,29 @@ void make_move(move_t move) {
     /* update the king locations and castling rights */
     if(moving_piece == (WHITE | KING)) {
         b.white_king_loc = (square)to;
-        irrev_aspects.white_king_side = false;
-        irrev_aspects.white_queen_side = false;
+        REM_WHITE_KING_SIDE(state);
+        REM_WHITE_QUEEN_SIDE(state);
     }
     else if(moving_piece == (BLACK | KING)) {
         b.black_king_loc = (square)to;
-        irrev_aspects.black_king_side = false;
-        irrev_aspects.black_queen_side = false;
+        REM_BLACK_KING_SIDE(state);
+        REM_BLACK_QUEEN_SIDE(state);
     }
     else if(moving_piece == (WHITE | ROOK) && from == H1) {
-        irrev_aspects.white_king_side = false;
+        REM_WHITE_KING_SIDE(state);
     }
     else if(moving_piece == (WHITE | ROOK) && from == A1) {
-        irrev_aspects.white_queen_side = false;
+        REM_WHITE_QUEEN_SIDE(state);
     }
     else if(moving_piece == (BLACK | ROOK) && from == H8) {
-        irrev_aspects.black_king_side = false;
+        REM_BLACK_KING_SIDE(state);
     }
     else if(moving_piece == (BLACK | ROOK) && from == A8) {
-        irrev_aspects.black_queen_side = false;
+        REM_BLACK_QUEEN_SIDE(state);
     }
 
     /* default there to be no en passant square and set it if double pawn push */
-    irrev_aspects.en_passant = NONE;
+    SET_EN_PASSANT_SQ(state, NONE);
 
     bitboard *rook_board;
     piece captured_piece = EMPTY;
@@ -681,7 +678,10 @@ void make_move(move_t move) {
                 if it's a double pawn push and we are starting on rank 2, its white pushing
                 otherwise it is black pushing the pawn
             */
-            irrev_aspects.en_passant = (RANK(from) == RANK_2) ? ((square)(from + 8)) : ((square)(from - 8));
+            if(RANK(from) == RANK_2)
+                SET_EN_PASSANT_SQ(state, (from + 8));
+            else
+                SET_EN_PASSANT_SQ(state, (from - 8));
             // hash value update for en passant square happens later
             break;
         case KING_SIDE_CASTLE:
@@ -743,10 +743,10 @@ void make_move(move_t move) {
 
             /* remove castling rights if rook is captured in corner */
             if(PIECE(captured_piece) == ROOK) {
-                if(to == H1) irrev_aspects.white_king_side = false;
-                else if(to == A1) irrev_aspects.white_queen_side = false;
-                else if(to == H8) irrev_aspects.black_king_side = false;
-                else if(to == A8) irrev_aspects.black_queen_side = false;
+                if(to == H1) REM_WHITE_KING_SIDE(state);
+                else if(to == A1) REM_WHITE_QUEEN_SIDE(state);
+                else if(to == H8) REM_BLACK_KING_SIDE(state);
+                else if(to == A8) REM_BLACK_QUEEN_SIDE(state);
             }
             break;
         case EN_PASSANT_CAPTURE:
@@ -824,36 +824,35 @@ void make_move(move_t move) {
 
     /* update hash value castling rights */
     if(b.t == W) { // castling rights have changed
-        if(irrev_aspects.white_king_side && !irrev_aspects.white_king_side)
+        if(WHITE_KING_SIDE(prev_state) && !WHITE_KING_SIDE(state))
             h ^= zobrist_table.white_king_side;
-        if(irrev_aspects.white_queen_side && !irrev_aspects.white_queen_side)
+        if(WHITE_QUEEN_SIDE(prev_state) && !WHITE_QUEEN_SIDE(state))
             h ^= zobrist_table.white_queen_side;
     }
     else { 
-        if(irrev_aspects.black_king_side && !irrev_aspects.black_king_side)
+        if(BLACK_KING_SIDE(prev_state) && !BLACK_KING_SIDE(state))
             h ^= zobrist_table.black_king_side;
-        if(irrev_aspects.black_queen_side && !irrev_aspects.black_queen_side)
+        if(BLACK_QUEEN_SIDE(prev_state) && !BLACK_QUEEN_SIDE(state))
             h ^= zobrist_table.black_queen_side;
     }
 
     /* update en passant file in hash value */
-    if(prev_en_passant != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(prev_en_passant)]; // remove the last board's en passant from hash value
+    square prev_en_passant_sq = (square)EN_PASSANT_SQ(prev_state);
+    square curr_en_passant_sq = (square)EN_PASSANT_SQ(state);
+    if(prev_en_passant_sq != NONE)
+        h ^= zobrist_table.en_passant_file[FILE(prev_en_passant_sq)]; // remove the last board's en passant from hash value
     
-    if(irrev_aspects.en_passant != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(irrev_aspects.en_passant)]; // place the current en passant file in hash value
-    
-
-    b.t = !b.t;
-
-    /* reverse the black_to_move hash */
-    h ^= zobrist_table.black_to_move;
+    if(curr_en_passant_sq != NONE)
+        h ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
 
     /* update evaluation items */
     if(captured_piece != EMPTY){
         b.material_score -= piece_values[INDEX_FROM_PIECE(captured_piece)];
         b.positional_score -= piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.piece_counts[INDEX_FROM_PIECE(captured_piece)]--;
+
+        /* add the last captured piece to the state */
+        SET_LAST_CAPTURE(state, captured_piece);
     }
 
     if(promo_piece != EMPTY) {
@@ -873,19 +872,23 @@ void make_move(move_t move) {
         b.positional_score += piece_scores[INDEX_FROM_PIECE(moving_piece)][to];
     }
     
+    b.t = !b.t;
+    /* reverse the black_to_move hash */
+    h ^= zobrist_table.black_to_move;
+
     update_boards();
-    irrev_aspects.last_move = move;
+    SET_LAST_MOVE(state, move);
     b.board_hash = h;
-    b.history.push(irrev_aspects);
+    b.state_history.push(state);
     return;
 }
 
 void unmake_move(move_t move) {
 
+    b.t = !b.t;
 
     update_boards();
-    b.history.pop(); // go back to previous board's irreversible state
-    b.t = !b.t;
+    b.state_history.pop(); // go back to previous board's irreversible state
     return;
 }
 

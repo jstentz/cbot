@@ -874,8 +874,11 @@ void make_move(move_t move) {
 
     /* update evaluation items */
     if(captured_piece != EMPTY){
+        if(flags == EN_PASSANT_CAPTURE)
+            b.positional_score -= piece_scores[INDEX_FROM_PIECE(captured_piece)][opponent_pawn_sq];
+        else
+            b.positional_score -= piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.material_score -= piece_values[INDEX_FROM_PIECE(captured_piece)];
-        b.positional_score -= piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.piece_counts[INDEX_FROM_PIECE(captured_piece)]--;
     }
 
@@ -1244,8 +1247,11 @@ void unmake_move(move_t move) {
 
     /* update evaluation items */
     if(captured_piece != EMPTY){
+        if(flags == EN_PASSANT_CAPTURE)
+            b.positional_score += piece_scores[INDEX_FROM_PIECE(captured_piece)][opponent_pawn_sq];
+        else
+            b.positional_score += piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.material_score += piece_values[INDEX_FROM_PIECE(captured_piece)];
-        b.positional_score += piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.piece_counts[INDEX_FROM_PIECE(captured_piece)]++;
     }
 
@@ -1253,10 +1259,12 @@ void unmake_move(move_t move) {
         if(COLOR(promo_piece) == WHITE) {
             b.material_score += piece_values[WHITE_PAWNS_INDEX];
             b.piece_counts[WHITE_PAWNS_INDEX]++;
+            b.positional_score += piece_scores[WHITE_PAWNS_INDEX][from];
         }
         else {
             b.material_score += piece_values[BLACK_PAWNS_INDEX];
             b.piece_counts[BLACK_PAWNS_INDEX]++;
+            b.positional_score += piece_scores[BLACK_PAWNS_INDEX][from];
         }
         b.material_score -= piece_values[INDEX_FROM_PIECE(promo_piece)];
         b.positional_score -= piece_scores[INDEX_FROM_PIECE(promo_piece)][to];

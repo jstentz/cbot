@@ -142,7 +142,7 @@ int search(int ply_from_root, int depth, int alpha, int beta) {
     }
     move_t best_tt_move = TT.best_move;
     generate_moves(&moves);
-    order_moves(&moves, NO_MOVE); // CHANGED THIS
+    order_moves(&moves, NO_MOVE); // DISABLED
     if(moves.size() == 0) {
         if(checking_pieces() != 0) {
             checkmates++;

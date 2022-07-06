@@ -191,7 +191,7 @@ int main(int argc, char** argv){
     // board_t board = decode_fen("8/nnn4/3k4/8/8/3K4/8/8 w - - 0 1");
     // board_t board = decode_fen("8/bbb5/5k2/8/8/8/8/4K3 w - - 0 1");
     // board_t board = decode_fen("6K1/5Q2/8/8/8/3p4/8/2k5 b - - 0 1");
-    // board_t board = decode_fen("8/8/8/5k2/8/3K4/3P4/8 b - - 0 1");
+    // decode_fen("8/8/8/5k2/8/3K4/3P4/8 b - - 0 1");
     
     move_t move;
     vector<move_t> legal_moves;

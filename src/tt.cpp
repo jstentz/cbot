@@ -28,7 +28,6 @@ void init_tt_table() {
 
 int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
     tt_probes++;
-    return FAILED_LOOKUP;
     tt_entry entry = TT.table[h % TABLE_SIZE];
     if(entry.key == h) {
         tt_hits++;

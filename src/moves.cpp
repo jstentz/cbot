@@ -1068,6 +1068,9 @@ void unmake_move(move_t move) {
             b.sq_board[from] = moving_piece;
             b.sq_board[to] = EMPTY;
 
+            h ^= zobrist_table.table[from][mv_index];
+            h ^= zobrist_table.table[to][mv_index];
+
             /* distinguish between white and black en passant */
             opponent_pawn_sq = (RANK(to) == RANK_6) ? (to - 8) : (to + 8);
 

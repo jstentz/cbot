@@ -142,7 +142,7 @@ int search(int ply_from_root, int depth, int alpha, int beta) {
     }
     move_t best_tt_move = TT.best_move;
     generate_moves(&moves);
-    order_moves(&moves, NO_MOVE); // DISABLED
+    order_moves(&moves, best_tt_move);
     if(moves.size() == 0) {
         if(checking_pieces() != 0) {
             checkmates++;
@@ -194,46 +194,38 @@ move_t find_best_move() {
     tt_hits = 0;
     tt_probes = 0;
 
-    /* always from white's perspective */
-    cout << "Material score: " << b.material_score << endl;
-    cout << "Positional score: " << b.positional_score << endl;
-
-    for(int i = 0; i < 10; i++) {
-        cout << b.piece_counts[i] << endl;
-    }
-
     hash_val h = b.board_hash;
     game_history.insert(h); // insert the board hash from the user's move
 
     /* check in opening book */
-    // move_t opening_move = get_opening_move();
-    // if(opening_move != NO_MOVE) {
-    //     cout << "Played from book!" << endl << endl;
+    move_t opening_move = get_opening_move();
+    if(opening_move != NO_MOVE) {
+        cout << "Played from book!" << endl << endl;
 
-    //     /* include the move that was made in the history */
-    //     make_move(opening_move);
-    //     game_history.insert(b.board_hash);
-    //     unmake_move(opening_move);
-    //     return opening_move;
-    // }
+        /* include the move that was made in the history */
+        make_move(opening_move);
+        game_history.insert(b.board_hash);
+        unmake_move(opening_move);
+        return opening_move;
+    }
 
-    // size_t depth = 0;
+    size_t depth = 0;
     int alpha = INT_MIN + 1;
     int beta = INT_MAX;
-    // clock_t tStart = clock();
-    // clock_t tStop = clock();
-    // while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
-    //     checkmates = 0;
-    //     depth++;
-    //     search(0, depth, alpha, beta);
-    //     tStop = clock();
-    //     if(search_result.score > 100000) { // mating score
-    //         break;
-    //     }
-    // }
-    // float time_elapsed = (tStop - tStart);
-    search(0, 6, alpha, beta);
-    // cout << "IDDFS Depth: " << depth << endl;
+    clock_t tStart = clock();
+    clock_t tStop = clock();
+    while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
+        checkmates = 0;
+        depth++;
+        search(0, depth, alpha, beta);
+        tStop = clock();
+        if(search_result.score > 100000) { // mating score
+            break;
+        }
+    }
+    float time_elapsed = (tStop - tStart);
+    search(0, 5, alpha, beta);
+    cout << "IDDFS Depth: " << depth << endl;
 
     move_t best_move = search_result.best_move;
 
@@ -241,7 +233,7 @@ move_t find_best_move() {
     cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
     cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
     cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
-    // cout << "Time elapsed: " << time_elapsed << endl << endl;
+    cout << "Time elapsed: " << time_elapsed << endl << endl;
 
     /* include the move that was made in the history */
     /* MOVE THIS SOMEWHERE OUTSIDE OF THIS FUNCTION */

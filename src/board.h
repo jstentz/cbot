@@ -70,19 +70,22 @@ typedef signed int move_t;
 #define REM_BLACK_KING_SIDE(state)  (state &= ~0x0000000000000002)
 #define REM_BLACK_QUEEN_SIDE(state) (state &= ~0x0000000000000001)
 
-#define EN_PASSANT_SQ(state)         ((state >> 4) & 0x000000000000003F)
-#define SET_EN_PASSANT_SQ(state, sq) (state |= (sq << 4))
+#define EN_PASSANT_SQ(state)         ((state >> 4) & 0x000000000000007F)
+#define CL_EN_PASSANT_SQ(state)      (state & 0xFFFFFFFFFFFFF80F)
+#define SET_EN_PASSANT_SQ(state, sq) (state = CL_EN_PASSANT_SQ(state) | (((state_t)sq) << 4))
 
-#define LAST_CAPTURE(state)         ((state >> 10) & 0x000000000000000F)
-#define SET_LAST_CAPTURE(state, pc) (state |= (pc << 10))
+#define LAST_CAPTURE(state)         (((piece)(state >> 11)) & 0x000F)
+#define CL_LAST_CAPTURE(state)      (state & 0xFFFFFFFFFFFF87FF)
+#define SET_LAST_CAPTURE(state, pc) (state = CL_LAST_CAPTURE(state) | (((state_t)pc) << 11))
 
-#define FIFTY_MOVE(state)            ((state >> 14) & 0x000000000003FFFF)
-#define SET_FIFTY_MOVE(state, count) (state |= (count << 14))
+#define FIFTY_MOVE(state)            ((state >> 15) & 0x000000000001FFFF)
+#define SET_FIFTY_MOVE(state, count) (state |= (((state_t)count) << 15))
 #define INC_FIFTY_MOVE(state)        (SET_FIFTY_MOVE(state, FIFTY_MOVE(state) + 1))
-#define CL_FIFTY_MOVE(state)         (state &= ~(0x000000000003FFFF << 14))
+#define CL_FIFTY_MOVE(state)         (state &= ~(0x000000000001FFFF << 15))
 
 #define LAST_MOVE(state)         ((state >> 32) & 0x00000000FFFFFFFF)
-#define SET_LAST_MOVE(state, mv) (state |= (((state_t)mv) << 32))
+#define CL_LAST_MOVE(state)      (state & 0x00000000FFFFFFFF)
+#define SET_LAST_MOVE(state, mv) (state = CL_LAST_MOVE(state) | (((state_t)mv) << 32))
 
 
 // would like to get rid of these enums in any non-user interacting code
@@ -104,9 +107,9 @@ typedef unsigned long long int hash_val; // stolen from hashing.h
 /**
  * State bit breakdown from LSB to MSB
  * Bits 0 - 3: castling rights KQkq
- * Bits 4 - 9: en passant square (64 here means no square)
- * Bits 10 - 13: last captured piece (0000 means EMPTY)
- * Bits 14 - 31: 50 move counter
+ * Bits 4 - 10: en passant square (64 here means no square)
+ * Bits 11 - 14: last captured piece (0000 means EMPTY)
+ * Bits 15 - 31: 50 move counter
  * Bits 32 - 63: move played to reach this position (used for recapture move ordering)
  */
 typedef unsigned long long int state_t;

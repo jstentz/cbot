@@ -33,14 +33,14 @@ uint64_t num_nodes_bulk(size_t depth) {
     uint64_t total_moves = 0;
     for(move_t move : moves) {
         make_move(move);
-        cout << "Move made: " << endl;
-        print_squarewise(b.sq_board);
-        cout << endl;
+        // cout << "Move made: " << endl;
+        // print_squarewise(b.sq_board);
+        // cout << endl;
         total_moves += num_nodes_bulk(depth - 1); 
         unmake_move(move);
-        cout << "Move unmade: " << endl;
-        print_squarewise(b.sq_board);
-        cout << endl;
+        // cout << "Move unmade: " << endl;
+        // print_squarewise(b.sq_board);
+        // cout << endl;
     }
     return total_moves;
 }
@@ -68,17 +68,18 @@ uint64_t perft(size_t depth) {
     uint64_t nodes_from_move = 0;
     for(move_t move : moves) {
         cout << notation_from_move(move) << ": ";
+        // cout << hex << move << dec << endl;
         make_move(move);
-        cout << "Move made: " << endl;
-        print_squarewise(b.sq_board);
-        cout << endl;
+        // cout << "Move made: " << endl;
+        // print_squarewise(b.sq_board);
+        // cout << endl;
         nodes_from_move = num_nodes_bulk(depth - 1);
         total_nodes += nodes_from_move;
         cout << nodes_from_move << endl;
         unmake_move(move);
-        cout << "Move unmade: " << endl;
-        print_squarewise(b.sq_board);
-        cout << endl;
+        // cout << "Move unmade: " << endl;
+        // print_squarewise(b.sq_board);
+        // cout << endl;
     }
     cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
@@ -279,30 +280,30 @@ int main() {
             perft(depth);
             cout << endl;
 
-            // decode_fen(test_pos_2);
-            // cout << "Test 2 at depth " << depth << endl;
-            // perft(depth);
-            // cout << endl;
+            decode_fen(test_pos_2);
+            cout << "Test 2 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
 
-            // decode_fen(test_pos_3);
-            // cout << "Test 3 at depth " << depth << endl;
-            // perft(depth);
-            // cout << endl;
+            decode_fen(test_pos_3);
+            cout << "Test 3 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
 
-            // decode_fen(test_pos_4);
-            // cout << "Test 4 at depth " << depth << endl;
-            // perft(depth);
-            // cout << endl;
+            decode_fen(test_pos_4);
+            cout << "Test 4 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
 
-            // decode_fen(test_pos_5);
-            // cout << "Test 5 at depth " << depth << endl;
-            // perft(depth);
-            // cout << endl;
+            decode_fen(test_pos_5);
+            cout << "Test 5 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
 
-            // decode_fen(test_pos_6);
-            // cout << "Test 6 at depth " << depth << endl;
-            // perft(depth);
-            // cout << endl;
+            decode_fen(test_pos_6);
+            cout << "Test 6 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
         }
         else if(answer == 's') {
             cout << endl << "Enter depth: ";
@@ -434,5 +435,8 @@ int main() {
     revisit move ordering and make sure its fixed with new game phase
 
     look at how the CPW-Engine does the sizing for the transposition table
-    
+
+    test 4 is wrong... probably a promotion problem
+
+    very very strange bug with promotion captures
 */

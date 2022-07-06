@@ -346,10 +346,19 @@ void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool p
             else                                flags = QUIET_MOVE;
             int to_rank = RANK(to);
             if(to_rank == RANK_8 || to_rank == RANK_1) {
-                (*curr_moves).push_back(construct_move(from, to, flags | KNIGHT_PROMO)); // or this on to flag because we check for captures prior to this
-                (*curr_moves).push_back(construct_move(from, to, flags | BISHOP_PROMO));
-                (*curr_moves).push_back(construct_move(from, to, flags | ROOK_PROMO));
-                (*curr_moves).push_back(construct_move(from, to, flags | QUEEN_PROMO));
+                if(FILE(to) != FILE(from)) {
+                    (*curr_moves).push_back(construct_move(from, to, KNIGHT_PROMO_CAPTURE)); // or this on to flag because we check for captures prior to this
+                    (*curr_moves).push_back(construct_move(from, to, BISHOP_PROMO_CAPTURE));
+                    (*curr_moves).push_back(construct_move(from, to, ROOK_PROMO_CAPTURE));
+                    (*curr_moves).push_back(construct_move(from, to, QUEEN_PROMO_CAPTURE));
+                }
+                else {
+                    (*curr_moves).push_back(construct_move(from, to, KNIGHT_PROMO));
+                    (*curr_moves).push_back(construct_move(from, to, BISHOP_PROMO));
+                    (*curr_moves).push_back(construct_move(from, to, ROOK_PROMO));
+                    (*curr_moves).push_back(construct_move(from, to, QUEEN_PROMO));
+                }
+                
             }
             else if (abs(from - to) == 16) { // double pawn push
                 (*curr_moves).push_back(construct_move(from, to, DOUBLE_PUSH));
@@ -615,10 +624,9 @@ void make_move(move_t move) {
     int to = TO(move);
     int flags = FLAGS(move);
 
-    // cout << "From: " << from << endl;
-    // cout << "To: " << to << endl;
-    // cout << "Flags: " << flags << endl;
-    // cout << "Moving piece: " << b.sq_board[from] << endl;
+    // cout << "Before making: " << endl;
+    // print_squarewise(b.sq_board);
+    // cout << endl;
 
     /* 
         always have to remove the piece from its square...
@@ -887,6 +895,12 @@ void make_move(move_t move) {
     SET_LAST_MOVE(state, move);
     b.board_hash = h;
     b.state_history.push(state);
+    // cout << "Last captured piece: " << LAST_CAPTURE(state) << endl;
+    // cout << "After making: " << endl;
+    // print_squarewise(b.sq_board);
+    // cout << endl;
+    // char x;
+    // cin >> x;
     return;
 }
 
@@ -899,6 +913,11 @@ void unmake_move(move_t move) {
     int from = FROM(move);
     int to = TO(move);
     int flags = FLAGS(move);
+
+    // cout << "Last captured piece: " << LAST_CAPTURE(state) << endl;
+    // cout << "Before unmaking: " << endl;
+    // print_squarewise(b.sq_board);
+    // cout << endl;
 
     piece moving_piece;
     bitboard *moving_piece_board;
@@ -1198,12 +1217,13 @@ void unmake_move(move_t move) {
             h ^= zobrist_table.black_queen_side;
     }
 
-    square curr_en_sq = (square)EN_PASSANT_SQ(state);
-    square prev_en_sq = (square)EN_PASSANT_SQ(prev_state);
-    if(curr_en_sq != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(curr_en_sq)];
-    if(prev_en_sq != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(prev_en_sq)];
+    /* update en passant file in hash value */
+    square prev_en_passant_sq = (square)EN_PASSANT_SQ(prev_state);
+    square curr_en_passant_sq = (square)EN_PASSANT_SQ(state);
+    if(prev_en_passant_sq != NONE)
+        h ^= zobrist_table.en_passant_file[FILE(prev_en_passant_sq)]; // remove the last board's en passant from hash value
+    if(curr_en_passant_sq != NONE)
+        h ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
 
     /**
      * Still need to do this: update material and positional and piece counts data
@@ -1237,6 +1257,11 @@ void unmake_move(move_t move) {
     b.t = !b.t;
     b.board_hash = h;
     update_boards();
+    // cout << "After unmaking: " << endl;
+    // print_squarewise(b.sq_board);
+    // cout << endl;
+    // int x;
+    // cin >> x;
     return;
 }
 
@@ -1254,7 +1279,8 @@ string notation_from_move(move_t move) {
     for (move_t single_move : all_moves) {
         if(TO(single_move) == TO(move) && 
            FROM(single_move) != FROM(move) && 
-           b.sq_board[FROM(single_move)] == b.sq_board[FROM(move)])
+           b.sq_board[FROM(single_move)] == b.sq_board[FROM(move)] &&
+           FLAGS(single_move) == FLAGS(move))
             conflicting_moves.push_back(single_move);
     }
     const string files = "abcdefgh";
@@ -1428,3 +1454,8 @@ move_t move_from_notation(string notation) {
     cin >> x;
     exit(-1); // should match to a move
 }
+
+// string not_from_move(move_t move) {
+//     string str_move;
+
+// }

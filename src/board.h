@@ -79,10 +79,10 @@ typedef signed int move_t;
 #define FIFTY_MOVE(state)            ((state >> 14) & 0x000000000003FFFF)
 #define SET_FIFTY_MOVE(state, count) (state |= (count << 14))
 #define INC_FIFTY_MOVE(state)        (SET_FIFTY_MOVE(state, FIFTY_MOVE(state) + 1))
-#define CL_FIFTY_MOVE(state)         (state &= (~0x000000000003FFFF) << 14)
+#define CL_FIFTY_MOVE(state)         (state &= ~(0x000000000003FFFF << 14))
 
 #define LAST_MOVE(state)         ((state >> 32) & 0x00000000FFFFFFFF)
-#define SET_LAST_MOVE(state, mv) (state |= (mv << 32))
+#define SET_LAST_MOVE(state, mv) (state |= (((state_t)mv) << 32))
 
 
 // would like to get rid of these enums in any non-user interacting code
@@ -167,7 +167,7 @@ void update_boards();
  * @param fen FEN-style string
  * @return Board represented by FEN string
  */
-board_t decode_fen(string fen);
+void decode_fen(string fen);
 
 /**
  * @brief Given a board state, gives back a FEN string representing

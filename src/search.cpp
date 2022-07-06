@@ -20,9 +20,9 @@ using namespace std;
 
 size_t positions_searched = 0; // speed test purposes
 
-uint64_t num_nodes_bulk(stack<board_t> *board_stack, size_t depth) {
+uint64_t num_nodes_bulk(size_t depth) {
     vector<move_t> moves;
-    generate_moves(&(*board_stack).top(), &moves);
+    generate_moves(&moves);
     if(depth == 1) {
         return moves.size();
     }
@@ -32,42 +32,53 @@ uint64_t num_nodes_bulk(stack<board_t> *board_stack, size_t depth) {
 
     uint64_t total_moves = 0;
     for(move_t move : moves) {
-        make_move(board_stack, move);
-        total_moves += num_nodes_bulk(board_stack, depth - 1); 
-        unmake_move(board_stack);
+        make_move(move);
+        cout << "Move made: " << endl;
+        print_squarewise(b.sq_board);
+        cout << endl;
+        total_moves += num_nodes_bulk(depth - 1); 
+        unmake_move(move);
+        cout << "Move unmade: " << endl;
+        print_squarewise(b.sq_board);
+        cout << endl;
     }
     return total_moves;
 }
 
-uint64_t num_nodes(stack<board_t> *board_stack, size_t depth) {
-    vector<move_t> moves;
+uint64_t num_nodes(size_t depth) {
     if(depth == 0) {
         return 1;
     }
 
     uint64_t total_moves = 0;
-    generate_moves(&(*board_stack).top(), &moves);
+    vector<move_t> moves;
+    generate_moves(&moves);
     for(move_t move : moves) {
-        make_move(board_stack, move);
-        total_moves += num_nodes(board_stack, depth - 1); 
-        unmake_move(board_stack);
+        make_move(move);
+        total_moves += num_nodes(depth - 1); 
+        unmake_move(move);
     }
     return total_moves;
 }
 
-uint64_t perft(stack<board_t> *board_stack, size_t depth) {
+uint64_t perft(size_t depth) {
     vector<move_t> moves;
-    board_t *curr_board = &(*board_stack).top();
-    generate_moves(curr_board, &moves);
+    generate_moves(&moves);
     uint64_t total_nodes = 0; // this can overflow, should change
     uint64_t nodes_from_move = 0;
     for(move_t move : moves) {
-        make_move(board_stack, move);
-        cout << notation_from_move(move, moves, curr_board) << ": ";
-        nodes_from_move = num_nodes_bulk(board_stack, depth - 1);
+        cout << notation_from_move(move) << ": ";
+        make_move(move);
+        cout << "Move made: " << endl;
+        print_squarewise(b.sq_board);
+        cout << endl;
+        nodes_from_move = num_nodes_bulk(depth - 1);
         total_nodes += nodes_from_move;
         cout << nodes_from_move << endl;
-        unmake_move(board_stack);
+        unmake_move(move);
+        cout << "Move unmade: " << endl;
+        print_squarewise(b.sq_board);
+        cout << endl;
     }
     cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
@@ -76,28 +87,21 @@ uint64_t perft(stack<board_t> *board_stack, size_t depth) {
 search_t search_result;
 
 // never really checked this for bugs
-int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
+int qsearch(int alpha, int beta) {
     vector<move_t> captures;
-    board_t *curr_board = &(*board_stack).top();
-    hash_val h = curr_board->board_hash;
-    /* I don't think I need to do this, since all capture moves could not
-       possibly create a position that has already happened */
-    // if(game_history.find(h) != game_history.end()) {
-    //     return 0;
-    // }
-    // game_history.insert(h);
+    hash_val h = b.board_hash;
 
-    int stand_pat = evaluate(curr_board); // fall back evaluation
+    int stand_pat = evaluate(); // fall back evaluation
     if(stand_pat >= beta) {positions_searched++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
-    generate_moves(curr_board, &captures, true); // true flag generates only captures
-    order_moves(&captures, curr_board, NO_MOVE);
+    generate_moves(&captures, true); // true flag generates only captures
+    order_moves(&captures, NO_MOVE);
     for (move_t capture : captures) {
         // cout << notation_from_move(capture, captures, curr_board) << endl;
-        make_move(board_stack, capture);
-        int evaluation = -qsearch(board_stack, -beta, -alpha);
-        unmake_move(board_stack);
+        make_move(capture);
+        int evaluation = -qsearch(-beta, -alpha);
+        unmake_move(capture);
 
         if(evaluation >= beta) {positions_searched++; return beta;}
         if(evaluation > alpha) alpha = evaluation;
@@ -107,10 +111,9 @@ int qsearch(stack<board_t> *board_stack, int alpha, int beta) {
 }
 
 /* DO IT LIKE THAT ONE WEBSITE */
-int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha, int beta) {
+int search(int ply_from_root, int depth, int alpha, int beta) {
     vector<move_t> moves;
-    board_t *curr_board = &(*board_stack).top();
-    hash_val h = curr_board->board_hash;
+    hash_val h = b.board_hash;
 
     int flags = ALPHA;
 
@@ -130,17 +133,17 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
     // cout << "here!" << endl;
 
     if(depth == 0) {
-        return qsearch(board_stack, alpha, beta);
+        return qsearch(alpha, beta);
         // positions_searched++; 
         // // here I probably want to add boards of depth 0 at some point
         // int static_eval = evaluate(curr_board);
         // return static_eval;
     }
     move_t best_tt_move = TT.best_move;
-    generate_moves(curr_board, &moves);
-    order_moves(&moves, curr_board, best_tt_move);
+    generate_moves(&moves);
+    order_moves(&moves, best_tt_move);
     if(moves.size() == 0) {
-        if(checking_pieces(curr_board) != 0) {
+        if(checking_pieces() != 0) {
             checkmates++;
             return INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
         }
@@ -152,9 +155,9 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
     
     move_t best_move = NO_MOVE;
     for(move_t move : moves) {
-        make_move(board_stack, move);
-        int evaluation = -search(board_stack, ply_from_root + 1, depth - 1, -beta, -alpha);
-        unmake_move(board_stack);
+        make_move(move);
+        int evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha);
+        unmake_move(move);
         
         if(evaluation >= beta) {
             store_entry(h, depth, BETA, beta, move);
@@ -180,7 +183,7 @@ int search(stack<board_t> *board_stack, int ply_from_root, int depth, int alpha,
     return alpha;
 }
 
-move_t find_best_move(board_t board) {
+move_t find_best_move() {
     /* clear the eval table */
     clear_eval_table();
     eval_hits = 0;
@@ -190,22 +193,18 @@ move_t find_best_move(board_t board) {
     tt_hits = 0;
     tt_probes = 0;
 
-    hash_val h = board.board_hash;
+    hash_val h = b.board_hash;
     game_history.insert(h); // insert the board hash from the user's move
 
-    board_t *next_board;
-    stack<board_t> board_stack;
-    board_stack.push(board);
-
     /* check in opening book */
-    move_t opening_move = get_opening_move(&board);
+    move_t opening_move = get_opening_move();
     if(opening_move != NO_MOVE) {
         cout << "Played from book!" << endl << endl;
 
         /* include the move that was made in the history */
-        make_move(&board_stack, opening_move);
-        game_history.insert(board_stack.top().board_hash);
-        unmake_move(&board_stack);
+        make_move(opening_move);
+        game_history.insert(b.board_hash);
+        unmake_move(opening_move);
         return opening_move;
     }
 
@@ -217,7 +216,7 @@ move_t find_best_move(board_t board) {
     while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
         checkmates = 0;
         depth++;
-        search(&board_stack, 0, depth, alpha, beta);
+        search(0, depth, alpha, beta);
         tStop = clock();
         if(search_result.score > 100000) { // mating score
             break;
@@ -229,7 +228,7 @@ move_t find_best_move(board_t board) {
 
     move_t best_move = search_result.best_move;
 
-    int perspective = (board.t == W) ? 1 : -1;
+    int perspective = (b.t == W) ? 1 : -1;
     cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
     cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
     cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
@@ -237,121 +236,114 @@ move_t find_best_move(board_t board) {
 
     /* include the move that was made in the history */
     /* MOVE THIS SOMEWHERE OUTSIDE OF THIS FUNCTION */
-    make_move(&board_stack, best_move);
-    game_history.insert(board_stack.top().board_hash);
-    unmake_move(&board_stack);
+    make_move(best_move);
+    game_history.insert(b.board_hash);
+    unmake_move(best_move);
 
     return best_move;
 }
 
-// int main() {
-//     luts = init_LUT(); // must do this first
-//     zobrist_table = init_zobrist();
-//     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
-//     // generate_num_data(); // uncomment if you need to update opening_book
-//     opening_book = populate_opening_book();
-//     init_tt_table();
-//     init_eval_table();
-//     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
-//     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
-//     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-//     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-//     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+int main() {
+    luts = init_LUT(); // must do this first
+    zobrist_table = init_zobrist();
+    // opening_book = create_opening_book(); // uncomment if you need to update opening_book
+    // generate_num_data(); // uncomment if you need to update opening_book
+    // opening_book = populate_opening_book();
+    init_tt_table();
+    init_eval_table();
+    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
+    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
+    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-//     board_t board_1 = decode_fen(test_pos_1);
-//     board_t board_2 = decode_fen(test_pos_2);
-//     board_t board_3 = decode_fen(test_pos_3);
-//     board_t board_4 = decode_fen(test_pos_4);
-//     board_t board_5 = decode_fen(test_pos_5);
-//     board_t board_6 = decode_fen(test_pos_6);
+    size_t depth;
+    size_t total_nodes;
+    clock_t tStart;
+    clock_t tStop;
+    double time_elapsed;
 
-//     size_t depth;
-//     size_t total_nodes;
-//     clock_t tStart;
-//     clock_t tStop;
-//     double time_elapsed;
+    char answer;
+    string fen;
+    while(true) {
+        cout << "Perft test or speed test or move test? (p/s/m)" << endl;
+        cin >> answer;
+        if(answer == 'p') {
+            cout << endl << "Enter depth: ";
+            cin >> depth;
 
-//     stack<board_t> board_1_stack;
-//     stack<board_t> board_2_stack;
-//     stack<board_t> board_3_stack;
-//     stack<board_t> board_4_stack;
-//     stack<board_t> board_5_stack;
-//     stack<board_t> board_6_stack;
-//     board_1_stack.push(board_1);
-//     board_2_stack.push(board_2);
-//     board_3_stack.push(board_3);
-//     board_4_stack.push(board_4);
-//     board_5_stack.push(board_5);
-//     board_6_stack.push(board_6);
-//     char answer;
-//     string fen;
-//     while(true) {
-//         cout << "Perft test or speed test or move test? (p/s/m)" << endl;
-//         cin >> answer;
-//         if(answer == 'p') {
-//             cout << endl << "Enter depth: ";
-//             cin >> depth;
+            decode_fen(test_pos_1);
+            cout << "Test 1 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
 
-//             cout << "Test 1 at depth " << depth << endl;
-//             perft(&board_1_stack, depth);
-//             cout << endl;
+            // decode_fen(test_pos_2);
+            // cout << "Test 2 at depth " << depth << endl;
+            // perft(depth);
+            // cout << endl;
 
-//             cout << "Test 2 at depth " << depth << endl;
-//             perft(&board_2_stack, depth);
-//             cout << endl;
+            // decode_fen(test_pos_3);
+            // cout << "Test 3 at depth " << depth << endl;
+            // perft(depth);
+            // cout << endl;
 
-//             cout << "Test 3 at depth " << depth << endl;
-//             perft(&board_3_stack, depth);
-//             cout << endl;
+            // decode_fen(test_pos_4);
+            // cout << "Test 4 at depth " << depth << endl;
+            // perft(depth);
+            // cout << endl;
 
-//             cout << "Test 4 at depth " << depth << endl;
-//             perft(&board_4_stack, depth);
-//             cout << endl;
+            // decode_fen(test_pos_5);
+            // cout << "Test 5 at depth " << depth << endl;
+            // perft(depth);
+            // cout << endl;
 
-//             cout << "Test 5 at depth " << depth << endl;
-//             perft(&board_5_stack, depth);
-//             cout << endl;
-
-//             cout << "Test 6 at depth " << depth << endl;
-//             perft(&board_6_stack, depth);
-//             cout << endl;
-//         }
-//         else if(answer == 's') {
-//             cout << endl << "Enter depth: ";
-//             cin >> depth;
-//             total_nodes = 0;
-//             tStart = clock();
-//             total_nodes += num_nodes_bulk(&board_1_stack, depth);
-//             total_nodes += num_nodes_bulk(&board_2_stack, depth);
-//             total_nodes += num_nodes_bulk(&board_3_stack, depth);
-//             total_nodes += num_nodes_bulk(&board_4_stack, depth);
-//             total_nodes += num_nodes_bulk(&board_5_stack, depth);
-//             total_nodes += num_nodes_bulk(&board_6_stack, depth);
-//             tStop = clock();
-//             time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-//             cout << "Total nodes: " << total_nodes << endl;
-//             cout << "Time elapsed: " << time_elapsed << endl;
-//             cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
-//         }
-//         else if(answer == 'm') {
-//             fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
-//             board_t test_board = decode_fen(fen);
-//             cout << endl;
-//             print_squarewise(test_board.sq_board);
-//             cout << endl;
-//             vector<move_t> moves;
-//             generate_moves(&test_board, &moves);
-//             move_t move = find_best_move(test_board);
-//             cout << endl << "Best move: ";
-//             cout << notation_from_move(move, moves, &test_board) << endl;
-//         }
-//     }
-//     free_tt_table();
-//     free_eval_table();
-//     return 0;
-// }
+            // decode_fen(test_pos_6);
+            // cout << "Test 6 at depth " << depth << endl;
+            // perft(depth);
+            // cout << endl;
+        }
+        else if(answer == 's') {
+            cout << endl << "Enter depth: ";
+            cin >> depth;
+            total_nodes = 0;
+            tStart = clock();
+            /* having to decode the fen in between will slow it down */
+            /* rework this for that reason */
+            decode_fen(test_pos_1);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_2);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_3);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_4);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_5);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_6);
+            total_nodes += num_nodes_bulk(depth);
+            tStop = clock();
+            time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+            cout << "Total nodes: " << total_nodes << endl;
+            cout << "Time elapsed: " << time_elapsed << endl;
+            cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+        }
+        else if(answer == 'm') {
+            fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+            decode_fen(fen);
+            cout << endl;
+            print_squarewise(b.sq_board);
+            cout << endl;
+            move_t move = find_best_move();
+            cout << endl << "Best move: ";
+            cout << notation_from_move(move) << endl;
+        }
+    }
+    free_tt_table();
+    free_eval_table();
+    return 0;
+}
 
 /*
     Current speed: ~ 47.5 million nps

@@ -69,8 +69,8 @@ board_t zero_board() {
     return board;
 }
 
-board_t decode_fen(string fen) {
-    board_t board = zero_board();
+void decode_fen(string fen) {
+    b = zero_board();
     bitboard *place_board;
     piece pc;
     int col = 0;
@@ -113,19 +113,19 @@ board_t decode_fen(string fen) {
             }
             else {
                 pc = pc | KING;
-                if(pc == (WHITE | KING)) board.white_king_loc = (square)loc;
-                else                     board.black_king_loc = (square)loc;
+                if(pc == (WHITE | KING)) b.white_king_loc = (square)loc;
+                else                     b.black_king_loc = (square)loc;
             }
 
             /* place the piece in its boards */
-            board.sq_board[loc] = pc;
-            place_board = &board.piece_boards[INDEX_FROM_PIECE(pc)];
+            b.sq_board[loc] = pc;
+            place_board = &b.piece_boards[INDEX_FROM_PIECE(pc)];
             PLACE_PIECE(*place_board, (square)loc);
 
             /* eval stuff */
             if(PIECE(pc) != KING && PIECE(pc) != EMPTY) {
-                board.material_score += piece_values[INDEX_FROM_PIECE(pc)];
-                board.positional_score += piece_scores[INDEX_FROM_PIECE(pc)][loc];
+                b.material_score += piece_values[INDEX_FROM_PIECE(pc)];
+                b.positional_score += piece_scores[INDEX_FROM_PIECE(pc)][loc];
             }
             
             
@@ -134,27 +134,33 @@ board_t decode_fen(string fen) {
         i++;
         c = fen[i];
     }
+
+    state_t state = 0;
     i++;
-    if(fen[i] == 'w') board.t = W;
-    else              board.t = B;
+    if(fen[i] == 'w') b.t = W;
+    else              b.t = B;
     i++;
     while(i < fen.size()) {
         c = fen[i];
-        if(c == 'K') SET_WHITE_KING_SIDE(board.state_history.top());
-        if(c == 'Q') SET_WHITE_QUEEN_SIDE(board.state_history.top());
-        if(c == 'k') SET_BLACK_KING_SIDE(board.state_history.top());
-        if(c == 'q') SET_BLACK_QUEEN_SIDE(board.state_history.top());
+        if(c == 'K') SET_WHITE_KING_SIDE(state);
+        if(c == 'Q') SET_WHITE_QUEEN_SIDE(state);
+        if(c == 'k') SET_BLACK_KING_SIDE(state);
+        if(c == 'q') SET_BLACK_QUEEN_SIDE(state);
         i++;
     }
+    SET_EN_PASSANT_SQ(state, NONE);
+    SET_LAST_CAPTURE(state, EMPTY);
+    CL_FIFTY_MOVE(state);
+    b.state_history.push(state);
     update_boards();
-    board.board_hash = zobrist_hash(); // hash the board initially
-    game_history.insert(board.board_hash); // might not need this
+    b.board_hash = zobrist_hash(); // hash the board initially
+    game_history.insert(b.board_hash); // might not need this
 
     /* more eval stuff */
     for(int i = 0; i < 10; i++) {
-        board.piece_counts[i] = pop_count(board.piece_boards[i]);
+        b.piece_counts[i] = pop_count(b.piece_boards[i]);
     }
-    return board;
+    return;
 }
 
 // incomplete

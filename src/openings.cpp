@@ -35,7 +35,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 unordered_map<hash_val, vector<move_t>> create_opening_book() {
     srand(clock());
     string starting_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    b = decode_fen(starting_FEN);
+    decode_fen(starting_FEN);
 
     // board_t board;
 
@@ -69,7 +69,7 @@ unordered_map<hash_val, vector<move_t>> create_opening_book() {
             }
             make_move(move);
         }
-        b = decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 
     openings_file.close();

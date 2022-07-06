@@ -196,7 +196,7 @@ int main(int argc, char** argv){
     move_t move;
     vector<move_t> legal_moves;
     generate_moves(&legal_moves);
-
+ 
     LoadDisplayBoardFromGameState(b.sq_board);
     
     mv_piece_t selectedPiece;

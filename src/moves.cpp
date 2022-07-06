@@ -613,6 +613,7 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
     return;
 }
 
+/* need to fix the eval items for this and unmake move */ 
 void make_move(move_t move) {
     /* make a copy of the irreversible aspects of the position */
     state_t prev_state = b.state_history.top();
@@ -709,6 +710,8 @@ void make_move(move_t move) {
                 b.sq_board[F1] = WHITE | ROOK;
                 h ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
                 h ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // place white rook on F1
+                b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][H1];
+                b.positional_score += piece_scores[WHITE_ROOKS_INDEX][F1];
             }
             else { // black king side
                 rook_board = &b.piece_boards[BLACK_ROOKS_INDEX];
@@ -718,6 +721,8 @@ void make_move(move_t move) {
                 b.sq_board[F8] = BLACK | ROOK;
                 h ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
                 h ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // place black rook on F8
+                b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][H8];
+                b.positional_score += piece_scores[BLACK_ROOKS_INDEX][F8];
             }
             break;
         case QUEEN_SIDE_CASTLE:
@@ -732,6 +737,8 @@ void make_move(move_t move) {
                 b.sq_board[D1] = WHITE | ROOK;
                 h ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
                 h ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // place white rook on D1
+                b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][A1];
+                b.positional_score += piece_scores[WHITE_ROOKS_INDEX][D1];
             }
             else { // black queen side
                 rook_board = &b.piece_boards[BLACK_ROOKS_INDEX];
@@ -741,6 +748,8 @@ void make_move(move_t move) {
                 b.sq_board[D8] = BLACK | ROOK;
                 h ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
                 h ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // place black rook on D8
+                b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][A8];
+                b.positional_score += piece_scores[BLACK_ROOKS_INDEX][D8];
             }
             break;
         case NORMAL_CAPTURE:
@@ -977,6 +986,8 @@ void unmake_move(move_t move) {
                 b.sq_board[H1] = WHITE | ROOK;
                 h ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
                 h ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // place white rook on H1
+                b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][F1];
+                b.positional_score += piece_scores[WHITE_ROOKS_INDEX][H1];
             }
             else { // black king side
                 rook_board = &b.piece_boards[BLACK_ROOKS_INDEX];
@@ -986,6 +997,8 @@ void unmake_move(move_t move) {
                 b.sq_board[H8] = BLACK | ROOK;
                 h ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
                 h ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // place black rook on H8
+                b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][F8];
+                b.positional_score += piece_scores[BLACK_ROOKS_INDEX][H8];
             }
             break;
         case QUEEN_SIDE_CASTLE:
@@ -1008,6 +1021,8 @@ void unmake_move(move_t move) {
                 b.sq_board[A1] = WHITE | ROOK;
                 h ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
                 h ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // place white rook on A1
+                b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][D1];
+                b.positional_score += piece_scores[WHITE_ROOKS_INDEX][A1];
             }
             else { // black queen side
                 rook_board = &b.piece_boards[BLACK_ROOKS_INDEX];
@@ -1017,6 +1032,8 @@ void unmake_move(move_t move) {
                 b.sq_board[A8] = BLACK | ROOK;
                 h ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
                 h ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // place black rook on A8
+                b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][D8];
+                b.positional_score += piece_scores[BLACK_ROOKS_INDEX][A8];
             }
             break;
         case NORMAL_CAPTURE:
@@ -1225,10 +1242,6 @@ void unmake_move(move_t move) {
     if(curr_en_passant_sq != NONE)
         h ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
 
-    /**
-     * Still need to do this: update material and positional and piece counts data
-     */
-
     /* update evaluation items */
     if(captured_piece != EMPTY){
         b.material_score += piece_values[INDEX_FROM_PIECE(captured_piece)];
@@ -1257,11 +1270,6 @@ void unmake_move(move_t move) {
     b.t = !b.t;
     b.board_hash = h;
     update_boards();
-    // cout << "After unmaking: " << endl;
-    // print_squarewise(b.sq_board);
-    // cout << endl;
-    // int x;
-    // cin >> x;
     return;
 }
 

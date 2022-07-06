@@ -25,6 +25,7 @@ void clear_eval_table() {
 
 int probe_eval_table(hash_val key) {
     eval_probes++;
+    return FAILED_LOOKUP;
     eval_entry entry = eval_table[key % EVAL_SIZE];
     if(entry.key == key) {
         eval_hits++;

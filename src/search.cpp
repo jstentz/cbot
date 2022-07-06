@@ -244,114 +244,114 @@ move_t find_best_move(board_t board) {
     return best_move;
 }
 
-int main() {
-    luts = init_LUT(); // must do this first
-    zobrist_table = init_zobrist();
-    // opening_book = create_opening_book(); // uncomment if you need to update opening_book
-    // generate_num_data(); // uncomment if you need to update opening_book
-    opening_book = populate_opening_book();
-    init_tt_table();
-    init_eval_table();
-    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
-    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
-    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+// int main() {
+//     luts = init_LUT(); // must do this first
+//     zobrist_table = init_zobrist();
+//     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
+//     // generate_num_data(); // uncomment if you need to update opening_book
+//     opening_book = populate_opening_book();
+//     init_tt_table();
+//     init_eval_table();
+//     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
+//     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
+//     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+//     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+//     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-    board_t board_1 = decode_fen(test_pos_1);
-    board_t board_2 = decode_fen(test_pos_2);
-    board_t board_3 = decode_fen(test_pos_3);
-    board_t board_4 = decode_fen(test_pos_4);
-    board_t board_5 = decode_fen(test_pos_5);
-    board_t board_6 = decode_fen(test_pos_6);
+//     board_t board_1 = decode_fen(test_pos_1);
+//     board_t board_2 = decode_fen(test_pos_2);
+//     board_t board_3 = decode_fen(test_pos_3);
+//     board_t board_4 = decode_fen(test_pos_4);
+//     board_t board_5 = decode_fen(test_pos_5);
+//     board_t board_6 = decode_fen(test_pos_6);
 
-    size_t depth;
-    size_t total_nodes;
-    clock_t tStart;
-    clock_t tStop;
-    double time_elapsed;
+//     size_t depth;
+//     size_t total_nodes;
+//     clock_t tStart;
+//     clock_t tStop;
+//     double time_elapsed;
 
-    stack<board_t> board_1_stack;
-    stack<board_t> board_2_stack;
-    stack<board_t> board_3_stack;
-    stack<board_t> board_4_stack;
-    stack<board_t> board_5_stack;
-    stack<board_t> board_6_stack;
-    board_1_stack.push(board_1);
-    board_2_stack.push(board_2);
-    board_3_stack.push(board_3);
-    board_4_stack.push(board_4);
-    board_5_stack.push(board_5);
-    board_6_stack.push(board_6);
-    char answer;
-    string fen;
-    while(true) {
-        cout << "Perft test or speed test or move test? (p/s/m)" << endl;
-        cin >> answer;
-        if(answer == 'p') {
-            cout << endl << "Enter depth: ";
-            cin >> depth;
+//     stack<board_t> board_1_stack;
+//     stack<board_t> board_2_stack;
+//     stack<board_t> board_3_stack;
+//     stack<board_t> board_4_stack;
+//     stack<board_t> board_5_stack;
+//     stack<board_t> board_6_stack;
+//     board_1_stack.push(board_1);
+//     board_2_stack.push(board_2);
+//     board_3_stack.push(board_3);
+//     board_4_stack.push(board_4);
+//     board_5_stack.push(board_5);
+//     board_6_stack.push(board_6);
+//     char answer;
+//     string fen;
+//     while(true) {
+//         cout << "Perft test or speed test or move test? (p/s/m)" << endl;
+//         cin >> answer;
+//         if(answer == 'p') {
+//             cout << endl << "Enter depth: ";
+//             cin >> depth;
 
-            cout << "Test 1 at depth " << depth << endl;
-            perft(&board_1_stack, depth);
-            cout << endl;
+//             cout << "Test 1 at depth " << depth << endl;
+//             perft(&board_1_stack, depth);
+//             cout << endl;
 
-            cout << "Test 2 at depth " << depth << endl;
-            perft(&board_2_stack, depth);
-            cout << endl;
+//             cout << "Test 2 at depth " << depth << endl;
+//             perft(&board_2_stack, depth);
+//             cout << endl;
 
-            cout << "Test 3 at depth " << depth << endl;
-            perft(&board_3_stack, depth);
-            cout << endl;
+//             cout << "Test 3 at depth " << depth << endl;
+//             perft(&board_3_stack, depth);
+//             cout << endl;
 
-            cout << "Test 4 at depth " << depth << endl;
-            perft(&board_4_stack, depth);
-            cout << endl;
+//             cout << "Test 4 at depth " << depth << endl;
+//             perft(&board_4_stack, depth);
+//             cout << endl;
 
-            cout << "Test 5 at depth " << depth << endl;
-            perft(&board_5_stack, depth);
-            cout << endl;
+//             cout << "Test 5 at depth " << depth << endl;
+//             perft(&board_5_stack, depth);
+//             cout << endl;
 
-            cout << "Test 6 at depth " << depth << endl;
-            perft(&board_6_stack, depth);
-            cout << endl;
-        }
-        else if(answer == 's') {
-            cout << endl << "Enter depth: ";
-            cin >> depth;
-            total_nodes = 0;
-            tStart = clock();
-            total_nodes += num_nodes_bulk(&board_1_stack, depth);
-            total_nodes += num_nodes_bulk(&board_2_stack, depth);
-            total_nodes += num_nodes_bulk(&board_3_stack, depth);
-            total_nodes += num_nodes_bulk(&board_4_stack, depth);
-            total_nodes += num_nodes_bulk(&board_5_stack, depth);
-            total_nodes += num_nodes_bulk(&board_6_stack, depth);
-            tStop = clock();
-            time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-            cout << "Total nodes: " << total_nodes << endl;
-            cout << "Time elapsed: " << time_elapsed << endl;
-            cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
-        }
-        else if(answer == 'm') {
-            fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
-            board_t test_board = decode_fen(fen);
-            cout << endl;
-            print_squarewise(test_board.sq_board);
-            cout << endl;
-            vector<move_t> moves;
-            generate_moves(&test_board, &moves);
-            move_t move = find_best_move(test_board);
-            cout << endl << "Best move: ";
-            cout << notation_from_move(move, moves, &test_board) << endl;
-        }
-    }
-    free_tt_table();
-    free_eval_table();
-    return 0;
-}
+//             cout << "Test 6 at depth " << depth << endl;
+//             perft(&board_6_stack, depth);
+//             cout << endl;
+//         }
+//         else if(answer == 's') {
+//             cout << endl << "Enter depth: ";
+//             cin >> depth;
+//             total_nodes = 0;
+//             tStart = clock();
+//             total_nodes += num_nodes_bulk(&board_1_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_2_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_3_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_4_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_5_stack, depth);
+//             total_nodes += num_nodes_bulk(&board_6_stack, depth);
+//             tStop = clock();
+//             time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+//             cout << "Total nodes: " << total_nodes << endl;
+//             cout << "Time elapsed: " << time_elapsed << endl;
+//             cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+//         }
+//         else if(answer == 'm') {
+//             fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+//             board_t test_board = decode_fen(fen);
+//             cout << endl;
+//             print_squarewise(test_board.sq_board);
+//             cout << endl;
+//             vector<move_t> moves;
+//             generate_moves(&test_board, &moves);
+//             move_t move = find_best_move(test_board);
+//             cout << endl << "Best move: ";
+//             cout << notation_from_move(move, moves, &test_board) << endl;
+//         }
+//     }
+//     free_tt_table();
+//     free_eval_table();
+//     return 0;
+// }
 
 /*
     Current speed: ~ 47.5 million nps

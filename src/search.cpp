@@ -9,13 +9,13 @@
 #include "attacks.h"
 #include "tt.h"
 
-#include <thread>
 #include <stddef.h>
 #include <stack>
 #include <vector>
 #include <time.h>
 #include <unordered_set>
 #include <algorithm>
+#include <thread>
 
 using namespace std;
 
@@ -170,8 +170,10 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     move_t best_move = NO_MOVE;
     for(move_t move : moves) {
         make_move(move);
-        int evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha);
+        int evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
         unmake_move(move);
+        if(abort_search)
+            return 0;
         
         if(evaluation >= beta) {
             store_entry(h, depth, BETA, beta, move);
@@ -234,23 +236,29 @@ move_t find_best_move() {
     search_complete = true;
     search_result.score = 0;
     search_result.best_move = NO_MOVE;
+    thread t;
     while(true) {
+        // cout << search_complete << endl;
         tStop = clock();
         if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > 1.5){
             abort_search = true;
             break;
         }
         if(search_complete) {
+            if(t.joinable())
+                t.join();
             search_complete = false;
             depth++;
-            thread ids_search(search_moves, 0, depth, alpha, beta);
+            t = std::thread{search_moves, 0, depth, alpha, beta};
         }
         
         if(search_result.score > 100000) { // mating score
             break;
         }
     }
-    // ids_search.join(); /* once we abort wait for it to finish /*
+    if(t.joinable())
+        t.join();
+    // t.join(); /* once we abort wait for it to finish */
     float time_elapsed = (tStop - tStart);
     cout << "IDDFS Depth: " << depth << endl;
 

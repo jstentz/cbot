@@ -76,7 +76,7 @@ int qsearch(int alpha, int beta);
  * @param beta Beta cutoff
  * @return Best score
  */
-int search(size_t depth, int alpha, int beta);
+int search_moves(int ply_from_root, int depth, int alpha, int beta);
 
 /**
  * @brief Given a board state, returns the best move.

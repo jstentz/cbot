@@ -385,81 +385,81 @@ bitboard get_ray_from_sq_to_sq(square start, square target) {
 }
 
 // this function does include the king
-piece least_valued_attacker(board_t *board, square sq) {
+piece least_valued_attacker(square sq) {
     bitboard opponent_knights;
     bitboard opponent_kings;
     bitboard opponent_pawns;
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board->t == W) {
-        opponent_knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
-        opponent_kings = board->piece_boards[BLACK_KINGS_INDEX];
-        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
-        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+    if(b.t == W) {
+        opponent_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = b.piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = b.piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
-        opponent_kings = board->piece_boards[WHITE_KINGS_INDEX];
-        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
-        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+        opponent_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = b.piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = b.piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
     }
-    if(get_pawn_attacks(sq, board->t) & opponent_pawns) return PAWN;
+    if(get_pawn_attacks(sq, b.t) & opponent_pawns) return PAWN;
     if(get_knight_attacks(sq) & opponent_knights) return KNIGHT;
-    if(get_bishop_attacks(sq, board->all_pieces) & opponent_bishops) return BISHOP;
-    if(get_rook_attacks(sq, board->all_pieces) & opponent_rooks) return ROOK;
-    if(get_queen_attacks(sq, board->all_pieces) & opponent_queens) return QUEEN;
+    if(get_bishop_attacks(sq, b.all_pieces) & opponent_bishops) return BISHOP;
+    if(get_rook_attacks(sq, b.all_pieces) & opponent_rooks) return ROOK;
+    if(get_queen_attacks(sq, b.all_pieces) & opponent_queens) return QUEEN;
     if(get_king_attacks(sq) & opponent_kings) return QUEEN;
     return EMPTY;
 }
 
-bool is_attacked_by_pawn(board_t *board, square sq) {
+bool is_attacked_by_pawn(square sq) {
     bitboard opponent_pawns;
-    if(board->t == W)
-        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
+    if(b.t == W)
+        opponent_pawns = b.piece_boards[BLACK_PAWNS_INDEX];
     else
-        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
-    if(get_pawn_attacks(sq, board->t) & opponent_pawns) return true;
+        opponent_pawns = b.piece_boards[WHITE_PAWNS_INDEX];
+    if(get_pawn_attacks(sq, b.t) & opponent_pawns) return true;
     return false;
 }
 
-bool is_attacked(board_t *board, square sq, bitboard blocking_pieces) {
+bool is_attacked(square sq, bitboard blocking_pieces) {
     bitboard opponent_knights;
     bitboard opponent_kings;
     bitboard opponent_pawns;
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board->t == W) {
-        opponent_knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
-        opponent_kings = board->piece_boards[BLACK_KINGS_INDEX];
-        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
-        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+    if(b.t == W) {
+        opponent_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = b.piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = b.piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
-        opponent_kings = board->piece_boards[WHITE_KINGS_INDEX];
-        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
-        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+        opponent_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = b.piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = b.piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
     }
     if(get_bishop_attacks(sq, blocking_pieces) & opponent_bishops) return true;
     if(get_rook_attacks(sq, blocking_pieces) & opponent_rooks) return true;
     if(get_knight_attacks(sq) & opponent_knights) return true;
-    if(get_pawn_attacks(sq, board->t) & opponent_pawns) return true;
+    if(get_pawn_attacks(sq, b.t) & opponent_pawns) return true;
     if(get_queen_attacks(sq, blocking_pieces) & opponent_queens) return true;
     if(get_king_attacks(sq) & opponent_kings) return true;
     return false;
 }
 
-bitboard attackers_from_square(board_t *board, square sq) {
+bitboard attackers_from_square(square sq) {
     bitboard attackers = 0;
     bitboard opponent_knights;
     bitboard opponent_kings;
@@ -467,60 +467,60 @@ bitboard attackers_from_square(board_t *board, square sq) {
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board->t == W) {
-        opponent_knights = board->piece_boards[BLACK_KNIGHTS_INDEX];
-        opponent_kings = board->piece_boards[BLACK_KINGS_INDEX];
-        opponent_pawns = board->piece_boards[BLACK_PAWNS_INDEX];
-        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+    if(b.t == W) {
+        opponent_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
+        opponent_kings = b.piece_boards[BLACK_KINGS_INDEX];
+        opponent_pawns = b.piece_boards[BLACK_PAWNS_INDEX];
+        opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_knights = board->piece_boards[WHITE_KNIGHTS_INDEX];
-        opponent_kings = board->piece_boards[WHITE_KINGS_INDEX];
-        opponent_pawns = board->piece_boards[WHITE_PAWNS_INDEX];
-        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+        opponent_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
+        opponent_kings = b.piece_boards[WHITE_KINGS_INDEX];
+        opponent_pawns = b.piece_boards[WHITE_PAWNS_INDEX];
+        opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
     }
     attackers |= get_knight_attacks(sq) & opponent_knights;
     attackers |= get_king_attacks(sq) & opponent_kings;
-    attackers |= get_pawn_attacks(sq, board->t) & opponent_pawns;
-    attackers |= get_rook_attacks(sq, board->all_pieces) & opponent_rooks;
-    attackers |= get_bishop_attacks(sq, board->all_pieces) & opponent_bishops;
-    attackers |= get_queen_attacks(sq, board->all_pieces) & opponent_queens;
+    attackers |= get_pawn_attacks(sq, b.t) & opponent_pawns;
+    attackers |= get_rook_attacks(sq, b.all_pieces) & opponent_rooks;
+    attackers |= get_bishop_attacks(sq, b.all_pieces) & opponent_bishops;
+    attackers |= get_queen_attacks(sq, b.all_pieces) & opponent_queens;
     return attackers;
 }
 
-bitboard opponent_slider_rays_to_square(board_t *board, square sq) {
+bitboard opponent_slider_rays_to_square(square sq) {
     bitboard res = 0;
     square attacker_loc;
     bitboard attackers;
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(board->t == W) {
-        opponent_rooks = board->piece_boards[BLACK_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[BLACK_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[BLACK_QUEENS_INDEX];
+    if(b.t == W) {
+        opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
     }
     else {
-        opponent_rooks = board->piece_boards[WHITE_ROOKS_INDEX];
-        opponent_bishops = board->piece_boards[WHITE_BISHOPS_INDEX];
-        opponent_queens = board->piece_boards[WHITE_QUEENS_INDEX];
+        opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
     }
-    bitboard rook_attacks_from_sq = get_rook_attacks(sq, board->all_pieces);
+    bitboard rook_attacks_from_sq = get_rook_attacks(sq, b.all_pieces);
     attackers = rook_attacks_from_sq & (opponent_rooks | opponent_queens);
     while(attackers) {
         attacker_loc = (square)first_set_bit(attackers);
-        res |= get_rook_attacks(attacker_loc, board->all_pieces) & rook_attacks_from_sq;
+        res |= get_rook_attacks(attacker_loc, b.all_pieces) & rook_attacks_from_sq;
         REMOVE_FIRST(attackers);    
     }
-    bitboard bishop_attacks_from_sq = get_bishop_attacks(sq, board->all_pieces);
+    bitboard bishop_attacks_from_sq = get_bishop_attacks(sq, b.all_pieces);
     attackers = bishop_attacks_from_sq & (opponent_bishops | opponent_queens);
     while(attackers) {
         attacker_loc = (square)first_set_bit(attackers);
-        res |= get_bishop_attacks(attacker_loc, board->all_pieces) & bishop_attacks_from_sq;
+        res |= get_bishop_attacks(attacker_loc, b.all_pieces) & bishop_attacks_from_sq;
         REMOVE_FIRST(attackers);
     }
     return res;

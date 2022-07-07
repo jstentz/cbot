@@ -23,7 +23,9 @@
         "probe.h": "c",
         "board.h": "c",
         "cstdlib": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "fstream": "cpp",
+        "random": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

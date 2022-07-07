@@ -35,9 +35,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 unordered_map<hash_val, vector<move_t>> create_opening_book() {
     srand(clock());
     string starting_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    board_t starting_pos = decode_fen(starting_FEN);
-    stack<board_t> game;
-    game.push(starting_pos);
+    decode_fen(starting_FEN);
 
     // board_t board;
 
@@ -56,8 +54,8 @@ unordered_map<hash_val, vector<move_t>> create_opening_book() {
         for (int i = 0; i < split_line.size(); i++) {
             notation = split_line[i];
             if(notation == "") continue;
-            h = zobrist_hash(&game.top());
-            move = move_from_notation(notation, &game.top());
+            h = zobrist_hash();
+            move = move_from_notation(notation);
             got_board = opening_book_local.find(h);
             if(got_board == opening_book_local.end()) { // board is not in the map
                 vector<move_t> empty;
@@ -69,11 +67,9 @@ unordered_map<hash_val, vector<move_t>> create_opening_book() {
             if(i == (split_line.size() - 1)) { // don't need to make the final move
                 break;
             }
-            make_move(&game, move);
+            make_move(move);
         }
-        while(game.size() != 1) { // go back to starting position
-            unmake_move(&game);
-        }
+        decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 
     openings_file.close();
@@ -123,8 +119,8 @@ unordered_map<hash_val, vector<move_t>> populate_opening_book() {
 }
 
 
-move_t get_opening_move(board_t *board) {
-    hash_val h = board->board_hash;
+move_t get_opening_move() {
+    hash_val h = b.board_hash;
     unordered_map<hash_val, vector<move_t>>::iterator got_board = opening_book.find(h);
     if(got_board == opening_book.end()) {
         return NO_MOVE; // position not found

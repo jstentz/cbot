@@ -47,22 +47,24 @@ zobrist_table_t init_zobrist() {
 
 zobrist_table_t zobrist_table;
 
-hash_val zobrist_hash(board_t *board) {
+hash_val zobrist_hash() {
     hash_val h = 0;
-    if(board->t == B) h ^= zobrist_table.black_to_move;
+    if(b.t == B) h ^= zobrist_table.black_to_move;
     for(int i = 0; i < 64; i++) {
-        piece pc = board->sq_board[i];
+        piece pc = b.sq_board[i];
         if(pc != EMPTY) {
             size_t j = INDEX_FROM_PIECE(pc);
             h ^= zobrist_table.table[i][j];
         }
     }
-    if(board->white_king_side) h ^= zobrist_table.white_king_side;
-    if(board->white_queen_side) h ^= zobrist_table.white_queen_side;
-    if(board->black_king_side) h ^= zobrist_table.black_king_side;
-    if(board->black_queen_side) h ^= zobrist_table.black_queen_side;
 
-    square en_passant = board->en_passant;
+    state_t state = b.state_history.top();
+    if(WHITE_KING_SIDE(state)) h ^= zobrist_table.white_king_side;
+    if(WHITE_QUEEN_SIDE(state)) h ^= zobrist_table.white_queen_side;
+    if(BLACK_KING_SIDE(state)) h ^= zobrist_table.black_king_side;
+    if(BLACK_QUEEN_SIDE(state)) h ^= zobrist_table.black_queen_side;
+
+    square en_passant = (square)EN_PASSANT_SQ(state);
     if(en_passant != NONE) {
         h ^= zobrist_table.en_passant_file[FILE(en_passant)];
     }

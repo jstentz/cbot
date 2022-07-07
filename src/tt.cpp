@@ -41,7 +41,10 @@ int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
         }
         TT.best_move = entry.best_move;
     }
-    // TT.best_move = NO_MOVE;
+    else {
+        TT.best_move = NO_MOVE;
+    }
+    
     return FAILED_LOOKUP;
 }
 

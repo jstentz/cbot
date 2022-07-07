@@ -30,6 +30,6 @@ extern zobrist_table_t zobrist_table;
 
 zobrist_table_t init_zobrist();
 
-hash_val zobrist_hash(board_t *board);
+hash_val zobrist_hash();
 
 hash_val rand64();

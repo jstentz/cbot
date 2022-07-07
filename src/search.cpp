@@ -9,6 +9,7 @@
 #include "attacks.h"
 #include "tt.h"
 
+#include <thread>
 #include <stddef.h>
 #include <stack>
 #include <vector>
@@ -19,6 +20,9 @@
 using namespace std;
 
 size_t positions_searched = 0; // speed test purposes
+
+bool search_complete = false;
+bool abort_search = false;
 
 uint64_t num_nodes_bulk(size_t depth) {
     vector<move_t> moves;
@@ -111,8 +115,10 @@ int qsearch(int alpha, int beta) {
     return alpha;
 }
 
-/* DO IT LIKE THAT ONE WEBSITE */
-int search(int ply_from_root, int depth, int alpha, int beta) {
+int search_moves(int ply_from_root, int depth, int alpha, int beta) {
+    if(abort_search)
+        return 0;
+    
     vector<move_t> moves;
     hash_val h = b.board_hash;
 
@@ -129,8 +135,15 @@ int search(int ply_from_root, int depth, int alpha, int beta) {
     /* look up the hash value in the transposition table 
        this will set the tt best move global variable */
     int tt_score = probe_tt_table(h, depth, alpha, beta);
-    if(tt_score != FAILED_LOOKUP)
+    if(tt_score != FAILED_LOOKUP) {
+        /* if we are looking at the root position, this is the best move */
+        if(ply_from_root == 0) {
+            search_result.best_move = TT.best_move;
+            search_result.score = tt_score;
+            search_complete = true;
+        }
         return tt_score;
+    }
     // cout << "here!" << endl;
 
     if(depth == 0) {
@@ -164,22 +177,24 @@ int search(int ply_from_root, int depth, int alpha, int beta) {
             store_entry(h, depth, BETA, beta, move);
             return beta;
         }
+        /* found a new best move here! */
         if(evaluation > alpha) {
             flags = EXACT;
             alpha = evaluation;
             best_move = move;
+            /* if we are at the root node, replace the best move we've seen so far */
+            if(ply_from_root == 0) {
+                search_result.best_move = best_move;
+                search_result.score = alpha;
+            }
         }
     }
-
-    /* remove this position from the current path for repetition draws */
-    // game_history.erase(h);
 
     /* store this in the transposition table */
     store_entry(h, depth, flags, alpha, best_move);
 
     if(ply_from_root == 0) {
-        search_result.best_move = best_move;
-        search_result.score = alpha;
+        search_complete = true;
     }
     return alpha;
 }
@@ -214,17 +229,29 @@ move_t find_best_move() {
     int beta = INT_MAX;
     clock_t tStart = clock();
     clock_t tStop = clock();
-    while((((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0) {
-        checkmates = 0;
-        depth++;
-        search(0, depth, alpha, beta);
+    // (((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0
+    abort_search = false;
+    search_complete = true;
+    search_result.score = 0;
+    search_result.best_move = NO_MOVE;
+    while(true) {
         tStop = clock();
+        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > 1.5){
+            abort_search = true;
+            break;
+        }
+        if(search_complete) {
+            search_complete = false;
+            depth++;
+            thread ids_search(search_moves, 0, depth, alpha, beta);
+        }
+        
         if(search_result.score > 100000) { // mating score
             break;
         }
     }
+    // ids_search.join(); /* once we abort wait for it to finish /*
     float time_elapsed = (tStop - tStart);
-    search(0, 5, alpha, beta);
     cout << "IDDFS Depth: " << depth << endl;
 
     move_t best_move = search_result.best_move;

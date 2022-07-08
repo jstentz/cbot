@@ -334,31 +334,32 @@ int main(int argc, char** argv){
             madeMove = false;
         }
 
-        // LoadDisplayBoardFromGameState(b.sq_board);
-        // SDL_RenderClear(renderer);
-        // DrawChessBoard();
-        // DrawPieces();
-        // DrawSelectedPiece(selectedPiece);
-        // SDL_RenderPresent(renderer);
+        /* code to play itself */
+        LoadDisplayBoardFromGameState(b.sq_board);
+        SDL_RenderClear(renderer);
+        DrawChessBoard();
+        DrawPieces();
+        DrawSelectedPiece(selectedPiece);
+        SDL_RenderPresent(renderer);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
-        // if(legal_moves.size() == 0) {
-        //     if(checking_pieces()) {
-        //         cout << "Checkmate!" << endl;
-        //         break;
-        //     }
-        //     cout << "Stalemate!" << endl;
-        //     break;
-        // }
+        legal_moves.clear();
+        generate_moves(&legal_moves);
+        if(legal_moves.size() == 0) {
+            if(checking_pieces()) {
+                cout << "Checkmate!" << endl;
+                break;
+            }
+            cout << "Stalemate!" << endl;
+            break;
+        }
 
-        // move = find_best_move();
-        // make_move(move); // leaking memory here
-        // LoadDisplayBoardFromGameState(b.sq_board);
+        move = find_best_move();
+        make_move(move); // leaking memory here
+        LoadDisplayBoardFromGameState(b.sq_board);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
-
+        legal_moves.clear();
+        generate_moves(&legal_moves);
+        /* code to play itself */
 
         SDL_RenderClear(renderer);
         DrawChessBoard();

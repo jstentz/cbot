@@ -531,6 +531,7 @@ void generate_moves(vector<move_t> *curr_moves, bool captures_only) {
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
 void order_moves(vector<move_t> *moves, move_t tt_best_move) {
+    // cout << tt_best_move << endl;
     state_t state = b.state_history.top();
     // how do I assign negative scores here
     // make moves signed?

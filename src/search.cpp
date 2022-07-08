@@ -118,7 +118,7 @@ int qsearch(int alpha, int beta) {
 int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     if(abort_search)
         return 0;
-    
+
     vector<move_t> moves;
     hash_val h = b.board_hash;
 
@@ -136,26 +136,29 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
        this will set the tt best move global variable */
     int tt_score = probe_tt_table(h, depth, alpha, beta);
     if(tt_score != FAILED_LOOKUP) {
-        /* if we are looking at the root position, this is the best move */
-        if(ply_from_root == 0) {
-            search_result.best_move = TT.best_move;
-            search_result.score = tt_score;
-            search_complete = true;
-        }
         return tt_score;
     }
+
+    // if(ply_from_root == 0) {
+    //     if(TT.best_move == NO_MOVE){
+    //         cout << "Root position not found!" << endl;
+    //     }
+    //     else{
+    //         cout << notation_from_move(TT.best_move) << endl;
+    //     }
+    // }
     // cout << "here!" << endl;
 
     if(depth == 0) {
         return qsearch(alpha, beta);
-        // positions_searched++; 
-        // // here I probably want to add boards of depth 0 at some point
-        // int static_eval = evaluate(curr_board);
-        // return static_eval;
     }
     move_t best_tt_move = TT.best_move;
+    // cout << TT.best_move << endl;
     generate_moves(&moves);
-    order_moves(&moves, best_tt_move);
+    order_moves(&moves, NO_SCORE(best_tt_move));
+    // if(ply_from_root == 0) {
+    //     print_moves(moves);
+    // }
     if(moves.size() == 0) {
         if(checking_pieces() != 0) {
             checkmates++;
@@ -172,6 +175,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
         make_move(move);
         int evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
         unmake_move(move);
+
         if(abort_search)
             return 0;
         
@@ -185,9 +189,10 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
             alpha = evaluation;
             best_move = move;
             /* if we are at the root node, replace the best move we've seen so far */
-            if(ply_from_root == 0) {
+            if(ply_from_root == 0 && !abort_search) {
                 search_result.best_move = best_move;
                 search_result.score = alpha;
+                // cout << "Best move is now: " << notation_from_move(best_move) << endl;
             }
         }
     }
@@ -196,6 +201,8 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     store_entry(h, depth, flags, alpha, best_move);
 
     if(ply_from_root == 0) {
+        // search_result.best_move = best_move;
+        // search_result.score = alpha;
         search_complete = true;
     }
     return alpha;
@@ -242,22 +249,27 @@ move_t find_best_move() {
         tStop = clock();
         if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > 1.5){
             abort_search = true;
+            // cout << "aborted!" << endl;
             break;
         }
         if(search_complete) {
+            // cout << "search completed!" << endl;
             if(t.joinable())
                 t.join();
             search_complete = false;
             depth++;
             t = std::thread{search_moves, 0, depth, alpha, beta};
+            // cout << notation_from_move(search_result.best_move) << endl;
         }
         
-        if(search_result.score > 100000) { // mating score
-            break;
-        }
+        // if(search_result.score > 100000) { // mating score
+        //     abort_search = true;
+        //     break;
+        // }
     }
     if(t.joinable())
         t.join();
+    // cout << "After waiting for thread to close: " << notation_from_move(search_result.best_move) << endl;
     // t.join(); /* once we abort wait for it to finish */
     float time_elapsed = (tStop - tStart);
     cout << "IDDFS Depth: " << depth << endl;

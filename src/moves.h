@@ -43,6 +43,8 @@
 #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
 #define SCORE(move) (move >> 16)
 
+#define NO_SCORE(move) (move & 0x0000FFFF)
+
 #define NO_MOVE ((move_t)0x0)
 
 // get rid of the square enum its kinda dumb

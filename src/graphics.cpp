@@ -184,8 +184,8 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
+    // decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); // I think implementing draws could fix this
     /* there is some weird behavior happening above... the computer is losing this as black in ways that I wouldn't expect */
     // board_t board = decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
     // decode_fen("8/3p4/3k4/8/8/3K4/8/8 w - - 0 1");
@@ -336,30 +336,30 @@ int main(int argc, char** argv){
         }
 
         /* code to play itself */
-        // LoadDisplayBoardFromGameState(b.sq_board);
-        // SDL_RenderClear(renderer);
-        // DrawChessBoard();
-        // DrawPieces();
-        // DrawSelectedPiece(selectedPiece);
-        // SDL_RenderPresent(renderer);
+        LoadDisplayBoardFromGameState(b.sq_board);
+        SDL_RenderClear(renderer);
+        DrawChessBoard();
+        DrawPieces();
+        DrawSelectedPiece(selectedPiece);
+        SDL_RenderPresent(renderer);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
-        // if(legal_moves.size() == 0) {
-        //     if(checking_pieces()) {
-        //         cout << "Checkmate!" << endl;
-        //         break;
-        //     }
-        //     cout << "Stalemate!" << endl;
-        //     break;
-        // }
+        legal_moves.clear();
+        generate_moves(&legal_moves);
+        if(legal_moves.size() == 0) {
+            if(checking_pieces()) {
+                cout << "Checkmate!" << endl;
+                break;
+            }
+            cout << "Stalemate!" << endl;
+            break;
+        }
 
-        // move = find_best_move();
-        // make_move(move); // leaking memory here
-        // LoadDisplayBoardFromGameState(b.sq_board);
+        move = find_best_move();
+        make_move(move); // leaking memory here
+        LoadDisplayBoardFromGameState(b.sq_board);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
+        legal_moves.clear();
+        generate_moves(&legal_moves);
         /* code to play itself */
 
         SDL_RenderClear(renderer);

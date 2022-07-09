@@ -24,6 +24,8 @@
 
 #define TABLE_SIZE 64000
 
+typedef unsigned short int uint16_t; 
+
 // I need to learn more about the difference between alpha and beta cuttoffs
 // what is a good size for a transposition table
 

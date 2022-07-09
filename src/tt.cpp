@@ -34,9 +34,9 @@ int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
         if(entry.depth >= depth) {
             if(entry.flags == EXACT)
                 return entry.score;
-            if(entry.flags == ALPHA && entry.flags <= alpha)
+            if(entry.flags == ALPHA && entry.score <= alpha)
                 return alpha;
-            if(entry.flags == BETA && entry.flags >= beta)
+            if(entry.flags == BETA && entry.score >= beta)
                 return beta;
         }
         TT.best_move = entry.best_move;

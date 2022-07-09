@@ -236,7 +236,7 @@ move_t find_best_move() {
     while(true) {
         // cout << search_complete << endl;
         tStop = clock();
-        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > 1.5){
+        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > 1.25){
             abort_search = true;
             // cout << "aborted!" << endl;
             break;
@@ -270,7 +270,7 @@ move_t find_best_move() {
     std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
     std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
     std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
-    std::cout << "Beta cutoffs: " << beta_cutoffs << endl;
+    std::cout << "Beta cutoffs: " << beta_cutoffs << endl << endl;
 
     /* include the move that was made in the history */
     /* MOVE THIS SOMEWHERE OUTSIDE OF THIS FUNCTION */

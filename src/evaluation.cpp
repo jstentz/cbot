@@ -188,6 +188,9 @@ int evaluate() {
 
     eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
 
+    if(b.piece_counts[WHITE_BISHOPS_INDEX] >= 2) eval += 30; /* bishop pair bonus for white */
+    if(b.piece_counts[BLACK_BISHOPS_INDEX] >= 2) eval -= 30; /* bishop pair bonus for black */
+
     int perspective = (b.t == W) ? 1 : -1;
     eval *= perspective;
 

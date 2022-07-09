@@ -44,7 +44,6 @@ int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
     else {
         TT.best_move = NO_MOVE;
     }
-    
     return FAILED_LOOKUP;
 }
 

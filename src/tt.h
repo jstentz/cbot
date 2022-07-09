@@ -34,8 +34,8 @@ typedef unsigned short int uint16_t;
 typedef struct tt {
     // bool valid;
     hash_val key;
-    int depth;
-    int flags;
+    uint16_t depth;
+    char flags;
     int score;
     move_t best_move;
 } tt_entry;

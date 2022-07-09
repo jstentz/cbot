@@ -606,8 +606,10 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
         }
 
         /* check recapturing moves */
-        if(to == recapture_square) 
+        if(to == recapture_square) {
             score += 5 * abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // arbitrary multiplication
+        }
+            
         (*moves)[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
     }
     std::sort(moves->begin(), moves->end(), greater<move_t>());

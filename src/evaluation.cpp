@@ -143,6 +143,7 @@ int mop_up_eval(turn winning_side) {
     return eval * perspective;
 }
 
+/* everything in here is scored in white's perspective until the end */
 int evaluate() {
     /* probe the eval table */
     int table_score = probe_eval_table(b.board_hash);
@@ -181,8 +182,14 @@ int evaluate() {
         else endgame_eval += mop_up_eval(B);
     }
     
+    /* add a tempo bonus to middle game */
+    if(b.t == W) middlegame_eval += 10;
+    else         middlegame_eval -= 10;
+
+    eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
+
     int perspective = (b.t == W) ? 1 : -1;
-    eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256) * perspective;
+    eval *= perspective;
 
     /* save the evaluation we just made */
     /* here I just need to hash the board's pieces 

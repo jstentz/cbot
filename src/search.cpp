@@ -19,7 +19,8 @@
 
 using namespace std;
 
-size_t positions_searched = 0; // speed test purposes
+size_t nodes_reached = 0; // speed test purposes
+size_t beta_cutoffs = 0;
 
 bool search_complete = false;
 bool abort_search = false;
@@ -71,7 +72,7 @@ uint64_t perft(size_t depth) {
     uint64_t total_nodes = 0; // this can overflow, should change
     uint64_t nodes_from_move = 0;
     for(move_t move : moves) {
-        cout << notation_from_move(move) << ": ";
+        std::cout << notation_from_move(move) << ": ";
         // cout << hex << move << dec << endl;
         make_move(move);
         // cout << "Move made: " << endl;
@@ -79,13 +80,13 @@ uint64_t perft(size_t depth) {
         // cout << endl;
         nodes_from_move = num_nodes_bulk(depth - 1);
         total_nodes += nodes_from_move;
-        cout << nodes_from_move << endl;
+        std::cout << nodes_from_move << endl;
         unmake_move(move);
         // cout << "Move unmade: " << endl;
         // print_squarewise(b.sq_board);
         // cout << endl;
     }
-    cout << "Nodes searched: " << total_nodes << endl;
+    std::cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
 }
 
@@ -97,21 +98,21 @@ int qsearch(int alpha, int beta) {
     hash_val h = b.board_hash;
 
     int stand_pat = evaluate(); // fall back evaluation
-    if(stand_pat >= beta) {positions_searched++; return beta;}
+    if(stand_pat >= beta) {nodes_reached++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
     generate_moves(&captures, true); // true flag generates only captures
-    order_moves(&captures, NO_MOVE);
+    order_moves(&captures, NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
     for (move_t capture : captures) {
         // cout << notation_from_move(capture, captures, curr_board) << endl;
         make_move(capture);
         int evaluation = -qsearch(-beta, -alpha);
         unmake_move(capture);
 
-        if(evaluation >= beta) {positions_searched++; return beta;}
+        if(evaluation >= beta) {nodes_reached++; beta_cutoffs++; return beta;}
         if(evaluation > alpha) alpha = evaluation;
     }
-    positions_searched++;
+    nodes_reached++;
     return alpha;
 }
 
@@ -125,50 +126,35 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     int flags = ALPHA;
 
     if(ply_from_root > 0) {
-        if(probe_game_history(h)) {
-            // print_squarewise(curr_board->sq_board);
-            // cout << endl;
+        /* check for repetition draw */
+        if(probe_game_history(h))
             return 0;
-        }
     }
 
     /* look up the hash value in the transposition table 
        this will set the tt best move global variable */
     int tt_score = probe_tt_table(h, depth, alpha, beta);
     if(tt_score != FAILED_LOOKUP) {
+        nodes_reached++;
         return tt_score;
     }
 
-    // if(ply_from_root == 0) {
-    //     if(TT.best_move == NO_MOVE){
-    //         cout << "Root position not found!" << endl;
-    //     }
-    //     else{
-    //         cout << notation_from_move(TT.best_move) << endl;
-    //     }
-    // }
-    // cout << "here!" << endl;
-
-    if(depth == 0) {
+    if(depth == 0)
         return qsearch(alpha, beta);
-    }
+
     move_t best_tt_move = TT.best_move;
-    // cout << TT.best_move << endl;
     generate_moves(&moves);
     order_moves(&moves, NO_SCORE(best_tt_move));
-    // if(ply_from_root == 0) {
-    //     print_moves(moves);
-    // }
+
     if(moves.size() == 0) {
-        if(checking_pieces() != 0) {
+        nodes_reached++;
+        if(checking_pieces() != 0) { /* checkmate */
             checkmates++;
             return INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
         }
-        // cout << "stalemate!" << endl;
+        /* stalemate! */
         return 0;
     }
-
-    // game_history.insert(h);
     
     move_t best_move = NO_MOVE;
     for(move_t move : moves) {
@@ -181,6 +167,8 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
         
         if(evaluation >= beta) {
             store_entry(h, depth, BETA, beta, move);
+            nodes_reached++;
+            beta_cutoffs++;
             return beta;
         }
         /* found a new best move here! */
@@ -192,19 +180,17 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
             if(ply_from_root == 0 && !abort_search) {
                 search_result.best_move = best_move;
                 search_result.score = alpha;
-                // cout << "Best move is now: " << notation_from_move(best_move) << endl;
             }
         }
     }
 
+    nodes_reached++;
+
     /* store this in the transposition table */
     store_entry(h, depth, flags, alpha, best_move);
 
-    if(ply_from_root == 0) {
-        // search_result.best_move = best_move;
-        // search_result.score = alpha;
+    if(ply_from_root == 0)
         search_complete = true;
-    }
     return alpha;
 }
 
@@ -218,13 +204,16 @@ move_t find_best_move() {
     tt_hits = 0;
     tt_probes = 0;
 
+    nodes_reached = 0;
+    beta_cutoffs = 0;
+
     hash_val h = b.board_hash;
     game_history.insert(h); // insert the board hash from the user's move
 
     /* check in opening book */
     move_t opening_move = get_opening_move();
     if(opening_move != NO_MOVE) {
-        cout << "Played from book!" << endl << endl;
+        std::cout << "Played from book!" << endl << endl;
 
         /* include the move that was made in the history */
         make_move(opening_move);
@@ -272,15 +261,16 @@ move_t find_best_move() {
     // cout << "After waiting for thread to close: " << notation_from_move(search_result.best_move) << endl;
     // t.join(); /* once we abort wait for it to finish */
     float time_elapsed = (tStop - tStart);
-    cout << "IDDFS Depth: " << depth << endl;
+    std::cout << "IDDFS Depth: " << depth << endl;
 
     move_t best_move = search_result.best_move;
 
     int perspective = (b.t == W) ? 1 : -1;
-    cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
-    cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
-    cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
-    cout << "Time elapsed: " << time_elapsed << endl << endl;
+    std::cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
+    std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
+    std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
+    std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
+    std::cout << "Beta cutoffs: " << beta_cutoffs << endl;
 
     /* include the move that was made in the history */
     /* MOVE THIS SOMEWHERE OUTSIDE OF THIS FUNCTION */

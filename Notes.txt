@@ -9,3 +9,6 @@ To Do:
 2. the evaluation hash table only needs to hash the piece locations and the turn, so maybe have a phash
 value in the board struct that we update along with the other hash value that just stores this info
 3. redo how pins work... its a huge waste of space... I only even need one pin struct since it changes
+
+it might be worth it to see how many total nodes are being evaluated on a given search
+to see if move generation speeds are even making a difference there

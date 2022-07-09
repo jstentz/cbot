@@ -51,21 +51,6 @@ board_t zero_board() {
     for(int i = 0; i < 10; i++) {
         board.piece_counts[i] = 0;
     }
-
-    stack<state_t> state_history;
-
-    state_t state = 0;
-    REM_WHITE_KING_SIDE(state);
-    REM_WHITE_QUEEN_SIDE(state);
-    REM_BLACK_KING_SIDE(state);
-    REM_BLACK_QUEEN_SIDE(state);
-    SET_EN_PASSANT_SQ(state, NONE);
-    SET_LAST_CAPTURE(state, EMPTY);
-    CL_FIFTY_MOVE(state);
-    SET_LAST_MOVE(state, NO_MOVE);
-
-    state_history.push(state);
-    board.state_history = state_history;
     return board;
 }
 

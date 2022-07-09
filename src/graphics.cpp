@@ -304,6 +304,7 @@ int main(int argc, char** argv){
                     break;
             }
         }
+        // cout << b.state_history.size() << endl;
 
         if(madeMove) {
             LoadDisplayBoardFromGameState(b.sq_board);

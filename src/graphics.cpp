@@ -14,8 +14,6 @@
 #include "tt.h"
 #include "evaluation.h"
 
-using namespace std;
-
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
 
@@ -184,9 +182,16 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    // decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn endgame */
-    decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* endgame winning for white */
+    decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
+    // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
+    // decode_fen("k7/8/8/8/8/8/8/4BNK w - - 1 2"); /* bishop and knight checkmate */
+    // decode_fen("8/4k3/8/8/8/5P2/5K2/8 w - - 0 1"); /* drawn pawn endgame except mine doesn't draw it */
+    // decode_fen("8/4k3/8/8/5K2/5P2/8/8 w - - 0 1"); /* winning pawn endgame */
+    // decode_fen("7k/5P2/5K2/7P/1p6/1P6/8/8 b - - 0 1"); /* rook promotion */
+    // decode_fen("8/2q1P1k1/8/5K2/8/8/5B2/8 w - - 0 1"); /* knight promotion + bishop knight mate */
+    // decode_fen("8/7p/8/7k/8/2NN4/2K5/8 w - - 0 1"); /* checkmate with 2 knights */
+    // decode_fen("k2K4/8/8/8/8/8/8/8 w - - 0 1"); /* lone kings */
 
     // board_t board = decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
     // decode_fen("8/3p4/3k4/8/8/3K4/8/8 w - - 0 1");

@@ -2,6 +2,7 @@
 #include "board.h"
 #include "bitboard.h"
 #include "pieces.h"
+#include "attacks.h"
 
 #include <cstdlib>
 
@@ -41,13 +42,18 @@ void store_eval_entry(hash_val key, int score) {
 
 float game_phase;
 
-/* this is not done */
+/* The general rule here is that if there is no pawns for one side, they must have 
+   more than +4 pawns worth of material to be able to win */
 bool sufficient_checkmating_material() {
-    /* check for bare kings */
-    if(pop_count(b.all_pieces) == 2) {
-        return false;
+    if(b.piece_counts[WHITE_PAWNS_INDEX] != 0 ||
+       b.piece_counts[BLACK_PAWNS_INDEX] != 0)
+        return true;
+    
+    if(b.material_score >= 400 ||
+       b.material_score <= -400) {
+        return true;
     }
-    return true;
+    return false;
 }
 
 /* 
@@ -143,6 +149,12 @@ int mop_up_eval(turn winning_side) {
     return eval * perspective;
 }
 
+/* value returned will be from white's perspective 
+   this means that a negative score is good for black */
+int evaluate_pawn_structure() {
+    return 0;
+}
+
 /* everything in here is scored in white's perspective until the end */
 int evaluate() {
     /* probe the eval table */
@@ -185,6 +197,15 @@ int evaluate() {
     /* add a tempo bonus to middle game */
     if(b.t == W) middlegame_eval += 10;
     else         middlegame_eval -= 10;
+
+    int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
+    int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
+
+    middlegame_eval -= queen_moves_from_white_king * 5;
+    middlegame_eval += queen_moves_from_black_king * 5;
+    
+    // cout << "white king safety: " << queen_moves_from_white_king << endl;
+    // cout << "black king safety: " << queen_moves_from_black_king << endl;
 
     eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
 

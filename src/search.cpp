@@ -473,7 +473,4 @@ move_t find_best_move() {
 
     look at how the CPW-Engine does the sizing for the transposition table
 
-    test 4 is wrong... probably a promotion problem
-
-    very very strange bug with promotion captures
 */

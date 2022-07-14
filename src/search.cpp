@@ -195,6 +195,8 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
 }
 
 move_t find_best_move() {
+    evaluate_mobility();
+
     /* clear the eval table */
     clear_eval_table();
     eval_hits = 0;

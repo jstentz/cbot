@@ -155,6 +155,132 @@ int evaluate_pawn_structure() {
     return 0;
 }
 
+/* I'm probably going to have to split this up into 6 functions to evaluate each of the pieces seperately */
+int evaluate_mobility() {
+    int white_mobility = 0;
+    int black_mobility = 0;
+
+    bitboard white_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
+    bitboard white_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+    bitboard white_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+    bitboard white_queens = b.piece_boards[WHITE_QUEENS_INDEX];
+
+    bitboard black_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
+    bitboard black_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+    bitboard black_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+    bitboard black_queens = b.piece_boards[BLACK_QUEENS_INDEX];
+
+    while(white_knights) {
+        white_mobility += pop_count(get_knight_attacks((square)first_set_bit(white_knights)));
+        REMOVE_FIRST(white_knights);
+    }
+
+    while(white_bishops) {
+        white_mobility += pop_count(get_bishop_attacks((square)first_set_bit(white_bishops), b.all_pieces));
+        REMOVE_FIRST(white_bishops);
+    }
+
+    while(white_rooks) {
+        white_mobility += pop_count(get_rook_attacks((square)first_set_bit(white_rooks), b.all_pieces));
+        REMOVE_FIRST(white_rooks);
+    }
+
+    while(white_queens) {
+        white_mobility += pop_count(get_queen_attacks((square)first_set_bit(white_queens), b.all_pieces));
+        REMOVE_FIRST(white_queens);
+    }
+
+    while(black_knights) {
+        black_mobility += pop_count(get_knight_attacks((square)first_set_bit(black_knights)));
+        REMOVE_FIRST(black_knights);
+    }
+
+    while(black_bishops) {
+        black_mobility += pop_count(get_bishop_attacks((square)first_set_bit(black_bishops), b.all_pieces));
+        REMOVE_FIRST(black_bishops);
+    }
+
+    while(white_rooks) {
+        black_mobility += pop_count(get_rook_attacks((square)first_set_bit(black_rooks), b.all_pieces));
+        REMOVE_FIRST(black_rooks);
+    }
+
+    while(black_queens) {
+        black_mobility += pop_count(get_queen_attacks((square)first_set_bit(black_queens), b.all_pieces));
+        REMOVE_FIRST(black_queens);
+    }
+
+    return (white_mobility - black_mobility) * 10;
+}
+
+int evaluate_knights_mobility() {
+    int mobility = 0;
+    bitboard white_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
+    bitboard black_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
+
+    while(white_knights) {
+        mobility += pop_count(get_knight_attacks((square)first_set_bit(white_knights)));
+        REMOVE_FIRST(white_knights);
+    }
+
+    while(black_knights) {
+        mobility -= pop_count(get_knight_attacks((square)first_set_bit(black_knights)));
+        REMOVE_FIRST(black_knights);
+    }
+    return mobility;
+}
+
+int evaluate_bishops_mobility() {
+    int mobility = 0;
+    bitboard white_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+    bitboard black_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+
+    while(white_bishops) {
+        mobility += pop_count(get_bishop_attacks((square)first_set_bit(white_bishops), b.all_pieces));
+        REMOVE_FIRST(white_bishops);
+    }
+
+    while(black_bishops) {
+        mobility -= pop_count(get_bishop_attacks((square)first_set_bit(black_bishops), b.all_pieces));
+        REMOVE_FIRST(black_bishops);
+    }
+    return mobility;
+}
+
+int evaluate_rooks_mobility() {
+    int mobility = 0;
+    bitboard white_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+    bitboard black_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+
+    while(white_rooks) {
+        mobility += pop_count(get_rook_attacks((square)first_set_bit(white_rooks), b.all_pieces));
+        REMOVE_FIRST(white_rooks);
+    }
+
+    while(black_rooks) {
+        mobility -= pop_count(get_rook_attacks((square)first_set_bit(black_rooks), b.all_pieces));
+        REMOVE_FIRST(black_rooks);
+    }
+    return mobility;
+}
+
+int evaluate_queens_mobility() {
+    int mobility = 0;
+    bitboard white_queens = b.piece_boards[WHITE_QUEENS_INDEX];
+    bitboard black_queens = b.piece_boards[BLACK_QUEENS_INDEX];
+
+    while(white_queens) {
+        mobility += pop_count(get_queen_attacks((square)first_set_bit(white_queens), b.all_pieces));
+        REMOVE_FIRST(white_queens);
+    }
+
+    while(black_queens) {
+        mobility -= pop_count(get_queen_attacks((square)first_set_bit(black_queens), b.all_pieces));
+        REMOVE_FIRST(black_queens);
+    }
+    return mobility;
+}
+
 /* everything in here is scored in white's perspective until the end */
 int evaluate() {
     /* probe the eval table */
@@ -204,13 +330,19 @@ int evaluate() {
     middlegame_eval -= queen_moves_from_white_king * 5;
     middlegame_eval += queen_moves_from_black_king * 5;
     
-    // cout << "white king safety: " << queen_moves_from_white_king << endl;
-    // cout << "black king safety: " << queen_moves_from_black_king << endl;
+    int knight_mobility = evaluate_knights_mobility();
+    int bishop_mobility = evaluate_bishops_mobility();
+    int rook_mobility = evaluate_rooks_mobility();
+    int queen_mobility = evaluate_queens_mobility();
+
+    middlegame_eval += (knight_mobility + bishop_mobility) * 5;
+    endgame_eval += (knight_mobility + bishop_mobility + rook_mobility + queen_mobility) * 5;
 
     eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
 
     if(b.piece_counts[WHITE_BISHOPS_INDEX] >= 2) eval += 30; /* bishop pair bonus for white */
     if(b.piece_counts[BLACK_BISHOPS_INDEX] >= 2) eval -= 30; /* bishop pair bonus for black */
+
 
     int perspective = (b.t == W) ? 1 : -1;
     eval *= perspective;

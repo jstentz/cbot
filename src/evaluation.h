@@ -242,3 +242,5 @@ void clear_eval_table();
 extern int eval_hits;
 
 extern int eval_probes;
+
+int evaluate_mobility();

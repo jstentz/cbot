@@ -13,6 +13,7 @@
 #include "hashing.h"
 #include "tt.h"
 #include "evaluation.h"
+#include "debugging.h"
 
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
@@ -182,7 +183,7 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */
@@ -193,6 +194,8 @@ int main(int argc, char** argv){
     // decode_fen("8/2q1P1k1/8/5K2/8/8/5B2/8 w - - 0 1"); /* knight promotion + bishop knight mate */
     // decode_fen("8/7p/8/7k/8/2NN4/2K5/8 w - - 0 1"); /* checkmate with 2 knights */
     // decode_fen("k2K4/8/8/8/8/8/8/8 w - - 0 1"); /* lone kings */
+
+    decode_fen("7k/6q1/8/8/3p4/8/4P3/1K6 b - - 0 1"); /* testing new check detection */
 
     // decode_fen("5b1k/2p3pp/1p6/4QpN1/3P1P2/6K1/2nq2PP/8 w - - 0 1"); /* screwed this up against comm (play Qe6) */
 
@@ -428,4 +431,22 @@ int main(int argc, char** argv){
 
       consider doing what I do in evaluate() incrementally in make_move
       then just access the evaluation of the board when evaluating
+
+      now I would like to make a better in_check function. This will consider
+      the opponent's last move, and see if the piece they moved is attacking
+      the king. Also I need to make a ray between where the piece came from,
+      and see if that intersects with an opponent sliding piece
+
+      outline for function
+      1. check to see if the last move was no move
+            if so, get the number of attackers in the traditional way
+      2. look at their last move and see the piece that they just moved.
+      Get the attacks of that piece from that square and see if it attacks
+      our king. Then use the ray functions to get the ray from the square 
+      that their piece came from and see if they are in check
+
+      test this function a lot for all types of checks
+
+      I can use this function in place of the move generation and for when 
+      im searching
 */

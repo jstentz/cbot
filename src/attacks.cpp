@@ -427,6 +427,7 @@ bool is_attacked_by_pawn(square sq) {
     return false;
 }
 
+/* this function is for pieces only */
 bool is_attacked(square sq, bitboard blocking_pieces) {
     bitboard opponent_knights;
     bitboard opponent_kings;

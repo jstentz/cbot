@@ -287,14 +287,136 @@ pin_t get_pinned_pieces(square friendly_king_loc) {
     return pin;
 }
 
+// bitboard checking_pieces() {
+//     square friendly_king = (b.t == W) ? b.white_king_loc : b.black_king_loc;
+//     return attackers_from_square(friendly_king);
+// }
+
+// int check_type(bitboard attackers) {
+//     if(attackers == 0) return NO_CHECK;
+//     REMOVE_FIRST(attackers);
+//     if(attackers == 0) return SINGLE_CHECK;
+//     return DOUBLE_CHECK;
+// }
+
 bitboard checking_pieces() {
     square friendly_king = (b.t == W) ? b.white_king_loc : b.black_king_loc;
-    return attackers_from_square(friendly_king);
+    state_t state = b.state_history.top();
+    move_t last_move = LAST_MOVE(state);
+    if(last_move == NO_MOVE) {
+        // cout << "No previous move!" << endl;
+        return attackers_from_square(friendly_king);
+    }
+    bool discovered_check = false;
+
+    int to = TO(last_move);
+
+    bitboard checkers = 0;
+
+    piece moved_piece = b.sq_board[to];
+    bitboard piece_bit = BIT_FROM_SQ(to);
+    switch (PIECE(moved_piece)) {
+        case PAWN:
+            checkers = get_pawn_attacks(friendly_king, b.t) & piece_bit;
+            break;
+        case KNIGHT:
+            checkers = get_knight_attacks(friendly_king) & piece_bit;
+            break;
+        case BISHOP:
+            checkers = get_bishop_attacks(friendly_king, b.all_pieces) & piece_bit;
+            break;
+        case ROOK:
+            checkers = get_rook_attacks(friendly_king, b.all_pieces) & piece_bit;
+            break;
+        case QUEEN:
+            checkers = get_queen_attacks(friendly_king, b.all_pieces) & piece_bit;
+            break;
+        case KING:
+            break; /* the king can never move to check the other king */
+    }
+
+    bitboard opponent_bishops;
+    bitboard opponent_rooks;
+    bitboard opponent_queens;
+
+    if(b.t == W) {
+        opponent_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+        opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
+        opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
+    }
+    else {
+        opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+        opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
+        opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
+    }
+    bitboard diagonal_sliders = opponent_bishops | opponent_queens;
+    bitboard cardinal_sliders = opponent_rooks | opponent_queens;
+
+    /* remove the piece that was moved to not double check it */
+    diagonal_sliders &= ~BIT_FROM_SQ(to);
+    cardinal_sliders &= ~BIT_FROM_SQ(to);
+
+    bitboard bishop_from_king = get_bishop_attacks(friendly_king, b.all_pieces);
+    bitboard attacking_diagonal = bishop_from_king & diagonal_sliders;
+    checkers |= attacking_diagonal;
+    if(attacking_diagonal)
+        discovered_check = true;
+
+    if(!discovered_check){
+        bitboard rook_from_king = get_rook_attacks(friendly_king, b.all_pieces);
+        checkers |= rook_from_king & cardinal_sliders;
+    }
+
+    // int king_rank = RANK(friendly_king);
+    // int piece_rank = RANK(from);
+    // bitboard rank_ray_from_king;
+    // if(king_rank == piece_rank) {
+    //     rank_ray_from_king = get_rook_attacks(friendly_king, b.all_pieces) & luts.mask_rank[king_rank];
+    //     if(rank_ray_from_king & (opponent_rooks | opponent_queens))
+    //         discovered_check = true;
+    // }
+
+    // int king_file = FILE(friendly_king);
+    // int piece_file = FILE(from);
+    // bitboard file_ray_from_king;
+    // if(king_file == piece_file) {
+    //     file_ray_from_king = get_rook_attacks(friendly_king, b.all_pieces) & luts.mask_file[king_file];
+    //     if(file_ray_from_king & (opponent_rooks | opponent_queens))
+    //         discovered_check = true;
+    // }
+
+    // /* make a function for finding the diagonal */
+    // int king_diag;
+    // if(king_file >= king_rank) king_diag = king_file - king_rank;
+    // else                       king_diag = 15 - (king_rank - king_file);
+
+    // int piece_diag;
+    // if(piece_file >= piece_rank) piece_diag = piece_file - piece_rank;
+    // else                         piece_diag = 15 - (piece_rank - piece_file);
+    // bitboard diag_ray_from_king;
+    // if(king_diag == piece_diag) {
+    //     diag_ray_from_king = get_bishop_attacks(friendly_king, b.all_pieces) & luts.mask_diagonal[king_diag];
+    //     if(diag_ray_from_king & (opponent_bishops | opponent_queens));
+    // }
+    
+    // size_t bishop_diag;
+    // if(bishop_file >= bishop_rank) bishop_diag = bishop_file - bishop_rank;
+    // else                           bishop_diag = 15 - (bishop_rank - bishop_file);
+    // // do same for antidiag
+    // size_t bishop_antidiag;
+    // if(bishop_file > (7 - bishop_rank)) bishop_antidiag = 15 - (bishop_file - (7 - bishop_rank));
+    // else                                bishop_antidiag = (7 - bishop_rank) - bishop_file;
+
+    return checkers;
 }
 
-int in_check(bitboard attackers) {
-    if(attackers == 0) return NO_CHECK;
-    REMOVE_FIRST(attackers);
-    if(attackers == 0) return SINGLE_CHECK;
+int check_type(bitboard checkers) {
+    if(!checkers) return NO_CHECK;
+    REMOVE_FIRST(checkers);
+    if(!checkers) return SINGLE_CHECK;
     return DOUBLE_CHECK;
+}
+
+bool in_check() {
+    return check_type(checking_pieces()) != NO_CHECK;
 }

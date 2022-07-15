@@ -501,7 +501,7 @@ void generate_moves(vector<move_t> *curr_moves, bool captures_only) {
     bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
     bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
     square friendly_king_loc = (b.t == W) ? b.white_king_loc : b.black_king_loc;
-    int check = in_check(check_pieces);
+    int check = check_type(check_pieces);
     if(check == DOUBLE_CHECK) {
         generate_king_moves(curr_moves, captures_only);
         return;

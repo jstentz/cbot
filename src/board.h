@@ -206,12 +206,6 @@ bitboard checking_pieces();
  * @param attackers Pieces attacking the king
  * @return Double check, single check, or no check 
  */
-int in_check(bitboard attackers);
+int check_type(bitboard attackers);
 
-/**
- * @brief Gives back the location of all pieces checking the friendly king.
- * Use in graphics to display the red check light on king.
- * @param board
- * @return Bitboard with all the pieces attacking the king.
- */
-bitboard checking_pieces();
+bool in_check();

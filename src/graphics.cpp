@@ -185,6 +185,7 @@ int main(int argc, char** argv){
     decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
+    // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */
     // decode_fen("k7/8/8/8/8/8/8/4BNK w - - 1 2"); /* bishop and knight checkmate */
     // decode_fen("8/4k3/8/8/8/5P2/5K2/8 w - - 0 1"); /* drawn pawn endgame except mine doesn't draw it */
     // decode_fen("8/4k3/8/8/5K2/5P2/8/8 w - - 0 1"); /* winning pawn endgame */
@@ -193,12 +194,8 @@ int main(int argc, char** argv){
     // decode_fen("8/7p/8/7k/8/2NN4/2K5/8 w - - 0 1"); /* checkmate with 2 knights */
     // decode_fen("k2K4/8/8/8/8/8/8/8 w - - 0 1"); /* lone kings */
 
-    // board_t board = decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-    // decode_fen("8/3p4/3k4/8/8/3K4/8/8 w - - 0 1");
-    // board_t board = decode_fen("8/bbb5/5k2/8/8/8/8/4K3 w - - 0 1");
-    // board_t board = decode_fen("6K1/5Q2/8/8/8/3p4/8/2k5 b - - 0 1");
-    // decode_fen("8/8/4p3/5k2/8/3K4/3P4/8 b - - 0 1");
-    
+    // decode_fen("5b1k/2p3pp/1p6/4QpN1/3P1P2/6K1/2nq2PP/8 w - - 0 1"); /* screwed this up against comm (play Qe6) */
+
     move_t move;
     vector<move_t> legal_moves;
     generate_moves(&legal_moves);
@@ -332,7 +329,7 @@ int main(int argc, char** argv){
             }
 
             move = find_best_move();
-            make_move(move); // leaking memory here
+            make_move(move);
             LoadDisplayBoardFromGameState(b.sq_board);
 
             legal_moves.clear();
@@ -342,30 +339,30 @@ int main(int argc, char** argv){
         }
 
         /* code to play itself */
-        LoadDisplayBoardFromGameState(b.sq_board);
-        SDL_RenderClear(renderer);
-        DrawChessBoard();
-        DrawPieces();
-        DrawSelectedPiece(selectedPiece);
-        SDL_RenderPresent(renderer);
+        // LoadDisplayBoardFromGameState(b.sq_board);
+        // SDL_RenderClear(renderer);
+        // DrawChessBoard();
+        // DrawPieces();
+        // DrawSelectedPiece(selectedPiece);
+        // SDL_RenderPresent(renderer);
 
-        legal_moves.clear();
-        generate_moves(&legal_moves);
-        if(legal_moves.size() == 0) {
-            if(checking_pieces()) {
-                cout << "Checkmate!" << endl;
-                break;
-            }
-            cout << "Stalemate!" << endl;
-            break;
-        }
+        // legal_moves.clear();
+        // generate_moves(&legal_moves);
+        // if(legal_moves.size() == 0) {
+        //     if(checking_pieces()) {
+        //         cout << "Checkmate!" << endl;
+        //         break;
+        //     }
+        //     cout << "Stalemate!" << endl;
+        //     break;
+        // }
 
-        move = find_best_move();
-        make_move(move); // leaking memory here
-        LoadDisplayBoardFromGameState(b.sq_board);
+        // move = find_best_move();
+        // make_move(move); // leaking memory here
+        // LoadDisplayBoardFromGameState(b.sq_board);
 
-        legal_moves.clear();
-        generate_moves(&legal_moves);
+        // legal_moves.clear();
+        // generate_moves(&legal_moves);
         /* code to play itself */
 
         SDL_RenderClear(renderer);

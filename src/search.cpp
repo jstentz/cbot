@@ -38,14 +38,8 @@ uint64_t num_nodes_bulk(size_t depth) {
     uint64_t total_moves = 0;
     for(move_t move : moves) {
         make_move(move);
-        // cout << "Move made: " << endl;
-        // print_squarewise(b.sq_board);
-        // cout << endl;
         total_moves += num_nodes_bulk(depth - 1); 
         unmake_move(move);
-        // cout << "Move unmade: " << endl;
-        // print_squarewise(b.sq_board);
-        // cout << endl;
     }
     return total_moves;
 }
@@ -69,22 +63,15 @@ uint64_t num_nodes(size_t depth) {
 uint64_t perft(size_t depth) {
     vector<move_t> moves;
     generate_moves(&moves);
-    uint64_t total_nodes = 0; // this can overflow, should change
+    uint64_t total_nodes = 0;
     uint64_t nodes_from_move = 0;
     for(move_t move : moves) {
         std::cout << notation_from_move(move) << ": ";
-        // cout << hex << move << dec << endl;
         make_move(move);
-        // cout << "Move made: " << endl;
-        // print_squarewise(b.sq_board);
-        // cout << endl;
         nodes_from_move = num_nodes_bulk(depth - 1);
         total_nodes += nodes_from_move;
         std::cout << nodes_from_move << endl;
         unmake_move(move);
-        // cout << "Move unmade: " << endl;
-        // print_squarewise(b.sq_board);
-        // cout << endl;
     }
     std::cout << "Nodes searched: " << total_nodes << endl;
     return total_nodes;
@@ -92,11 +79,16 @@ uint64_t perft(size_t depth) {
 
 search_t search_result;
 
-// never really checked this for bugs
 int qsearch(int alpha, int beta) {
     vector<move_t> captures;
     hash_val h = b.board_hash;
 
+    /**
+     * Since none of these captures are forced, meaning a player doesn't
+     * have to make that capture, we can use this evaluation to represent
+     * them not taking the piece. We will see if it is better or worse for
+     * them to make that capture.
+     */
     int stand_pat = evaluate(); // fall back evaluation
     if(stand_pat >= beta) {nodes_reached++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
@@ -104,7 +96,6 @@ int qsearch(int alpha, int beta) {
     generate_moves(&captures, true); // true flag generates only captures
     order_moves(&captures, NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
     for (move_t capture : captures) {
-        // cout << notation_from_move(capture, captures, curr_board) << endl;
         make_move(capture);
         int evaluation = -qsearch(-beta, -alpha);
         unmake_move(capture);
@@ -137,6 +128,16 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     if(tt_score != FAILED_LOOKUP) {
         nodes_reached++;
         return tt_score;
+    }
+
+    /* check extension */
+    if(b.t == W) {
+        if(is_attacked(b.white_king_loc, b.all_pieces))
+            depth++;
+    }
+    else {
+        if(is_attacked(b.black_king_loc, b.all_pieces))
+            depth++;
     }
 
     if(depth == 0)

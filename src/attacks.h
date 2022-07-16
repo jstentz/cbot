@@ -182,3 +182,7 @@ bitboard attackers_from_square(square sq);
 bitboard opponent_slider_rays_to_square(square sq);
 
 bool is_attacked_by_pawn(square sq);
+
+piece least_valued_attacker(square sq);
+
+square least_valued_attacker_sq(square sq);

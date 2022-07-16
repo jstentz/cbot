@@ -183,7 +183,7 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    // decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */
@@ -195,7 +195,7 @@ int main(int argc, char** argv){
     // decode_fen("8/7p/8/7k/8/2NN4/2K5/8 w - - 0 1"); /* checkmate with 2 knights */
     // decode_fen("k2K4/8/8/8/8/8/8/8 w - - 0 1"); /* lone kings */
 
-    decode_fen("7k/6q1/8/8/3p4/8/4P3/1K6 b - - 0 1"); /* testing new check detection */
+    // decode_fen("7k/6q1/8/8/3p4/8/4P3/1K6 b - - 0 1"); /* testing new check detection */
 
     // decode_fen("5b1k/2p3pp/1p6/4QpN1/3P1P2/6K1/2nq2PP/8 w - - 0 1"); /* screwed this up against comm (play Qe6) */
 

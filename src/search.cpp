@@ -21,6 +21,8 @@ using namespace std;
 
 size_t nodes_reached = 0; // speed test purposes
 size_t beta_cutoffs = 0;
+size_t q_nodes = 0;
+int max_ply = 0;
 
 bool search_complete = false;
 bool abort_search = false;
@@ -96,6 +98,8 @@ int qsearch(int alpha, int beta) {
     generate_moves(&captures, true); // true flag generates only captures
     order_moves(&captures, NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
     for (move_t capture : captures) {
+        if(see_capture(capture) <= -50) /* don't consider captures that we consider bad */
+            continue;
         make_move(capture);
         int evaluation = -qsearch(-beta, -alpha);
         unmake_move(capture);
@@ -134,8 +138,12 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
         return tt_score;
     }
 
-    if(depth == 0)
+    if(depth == 0) {
         return qsearch(alpha, beta);
+        // nodes_reached++;
+        // return evaluate();
+    }
+
 
     move_t best_tt_move = TT.best_move;
     generate_moves(&moves);
@@ -190,8 +198,6 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
 }
 
 move_t find_best_move() {
-
-    cout << "Check type: " << in_check() << endl;
     /* clear the eval table */
     clear_eval_table();
     eval_hits = 0;
@@ -278,107 +284,107 @@ move_t find_best_move() {
     return best_move;
 }
 
-int main() {
-    luts = init_LUT(); // must do this first
-    zobrist_table = init_zobrist();
-    // opening_book = create_opening_book(); // uncomment if you need to update opening_book
-    // generate_num_data(); // uncomment if you need to update opening_book
-    opening_book = populate_opening_book();
-    init_tt_table();
-    init_eval_table();
-    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
-    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
-    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+// int main() {
+//     luts = init_LUT(); // must do this first
+//     zobrist_table = init_zobrist();
+//     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
+//     // generate_num_data(); // uncomment if you need to update opening_book
+//     opening_book = populate_opening_book();
+//     init_tt_table();
+//     init_eval_table();
+//     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
+//     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
+//     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+//     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+//     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-    size_t depth;
-    size_t total_nodes;
-    clock_t tStart;
-    clock_t tStop;
-    double time_elapsed;
+//     size_t depth;
+//     size_t total_nodes;
+//     clock_t tStart;
+//     clock_t tStop;
+//     double time_elapsed;
 
-    char answer;
-    string fen;
-    while(true) {
-        cout << "Perft test or speed test or move test? (p/s/m)" << endl;
-        cin >> answer;
-        if(answer == 'p') {
-            cout << endl << "Enter depth: ";
-            cin >> depth;
+//     char answer;
+//     string fen;
+//     while(true) {
+//         cout << "Perft test or speed test or move test? (p/s/m)" << endl;
+//         cin >> answer;
+//         if(answer == 'p') {
+//             cout << endl << "Enter depth: ";
+//             cin >> depth;
 
-            decode_fen(test_pos_1);
-            cout << "Test 1 at depth " << depth << endl;
-            perft(depth);
-            cout << endl;
+//             decode_fen(test_pos_1);
+//             cout << "Test 1 at depth " << depth << endl;
+//             perft(depth);
+//             cout << endl;
 
-            decode_fen(test_pos_2);
-            cout << "Test 2 at depth " << depth << endl;
-            perft(depth);
-            cout << endl;
+//             decode_fen(test_pos_2);
+//             cout << "Test 2 at depth " << depth << endl;
+//             perft(depth);
+//             cout << endl;
 
-            decode_fen(test_pos_3);
-            cout << "Test 3 at depth " << depth << endl;
-            perft(depth);
-            cout << endl;
+//             decode_fen(test_pos_3);
+//             cout << "Test 3 at depth " << depth << endl;
+//             perft(depth);
+//             cout << endl;
 
-            decode_fen(test_pos_4);
-            cout << "Test 4 at depth " << depth << endl;
-            perft(depth);
-            cout << endl;
+//             decode_fen(test_pos_4);
+//             cout << "Test 4 at depth " << depth << endl;
+//             perft(depth);
+//             cout << endl;
 
-            decode_fen(test_pos_5);
-            cout << "Test 5 at depth " << depth << endl;
-            perft(depth);
-            cout << endl;
+//             decode_fen(test_pos_5);
+//             cout << "Test 5 at depth " << depth << endl;
+//             perft(depth);
+//             cout << endl;
 
-            decode_fen(test_pos_6);
-            cout << "Test 6 at depth " << depth << endl;
-            perft(depth);
-            cout << endl;
-        }
-        else if(answer == 's') {
-            cout << endl << "Enter depth: ";
-            cin >> depth;
-            total_nodes = 0;
-            tStart = clock();
-            /* having to decode the fen in between will slow it down */
-            /* rework this for that reason */
-            decode_fen(test_pos_1);
-            total_nodes += num_nodes_bulk(depth);
-            decode_fen(test_pos_2);
-            total_nodes += num_nodes_bulk(depth);
-            decode_fen(test_pos_3);
-            total_nodes += num_nodes_bulk(depth);
-            decode_fen(test_pos_4);
-            total_nodes += num_nodes_bulk(depth);
-            decode_fen(test_pos_5);
-            total_nodes += num_nodes_bulk(depth);
-            decode_fen(test_pos_6);
-            total_nodes += num_nodes_bulk(depth);
-            tStop = clock();
-            time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-            cout << "Total nodes: " << total_nodes << endl;
-            cout << "Time elapsed: " << time_elapsed << endl;
-            cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
-        }
-        else if(answer == 'm') {
-            fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
-            decode_fen(fen);
-            cout << endl;
-            print_squarewise(b.sq_board);
-            cout << endl;
-            move_t move = find_best_move();
-            cout << endl << "Best move: ";
-            cout << notation_from_move(move) << endl;
-        }
-    }
-    free_tt_table();
-    free_eval_table();
-    return 0;
-}
+//             decode_fen(test_pos_6);
+//             cout << "Test 6 at depth " << depth << endl;
+//             perft(depth);
+//             cout << endl;
+//         }
+//         else if(answer == 's') {
+//             cout << endl << "Enter depth: ";
+//             cin >> depth;
+//             total_nodes = 0;
+//             tStart = clock();
+//             /* having to decode the fen in between will slow it down */
+//             /* rework this for that reason */
+//             decode_fen(test_pos_1);
+//             total_nodes += num_nodes_bulk(depth);
+//             decode_fen(test_pos_2);
+//             total_nodes += num_nodes_bulk(depth);
+//             decode_fen(test_pos_3);
+//             total_nodes += num_nodes_bulk(depth);
+//             decode_fen(test_pos_4);
+//             total_nodes += num_nodes_bulk(depth);
+//             decode_fen(test_pos_5);
+//             total_nodes += num_nodes_bulk(depth);
+//             decode_fen(test_pos_6);
+//             total_nodes += num_nodes_bulk(depth);
+//             tStop = clock();
+//             time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+//             cout << "Total nodes: " << total_nodes << endl;
+//             cout << "Time elapsed: " << time_elapsed << endl;
+//             cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+//         }
+//         else if(answer == 'm') {
+//             fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+//             decode_fen(fen);
+//             cout << endl;
+//             print_squarewise(b.sq_board);
+//             cout << endl;
+//             move_t move = find_best_move();
+//             cout << endl << "Best move: ";
+//             cout << notation_from_move(move) << endl;
+//         }
+//     }
+//     free_tt_table();
+//     free_eval_table();
+//     return 0;
+// }
 
 /*
     Current speed: ~ 47.5 million nps

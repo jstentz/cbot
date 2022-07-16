@@ -116,3 +116,5 @@ string notation_from_move(move_t move);
 move_t move_from_notation(string notation);
 
 move_t construct_move(int from, int to, int flags);
+
+int see_capture(move_t capture);

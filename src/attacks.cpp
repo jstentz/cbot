@@ -418,15 +418,15 @@ piece least_valued_attacker(square sq) {
     // if(get_king_attacks(sq) & opponent_kings) return KING; /* not sure what to do here */
     return EMPTY;
 }
-
-square least_valued_attacker_sq(square sq) {
+/* here the side is the person being attacked */
+square least_valued_attacker_sq(square sq, turn side) {
     bitboard opponent_knights;
     // bitboard opponent_kings;
     bitboard opponent_pawns;
     bitboard opponent_rooks;
     bitboard opponent_bishops;
     bitboard opponent_queens;
-    if(b.t == W) {
+    if(side == W) {
         opponent_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
         // opponent_kings = b.piece_boards[BLACK_KINGS_INDEX];
         opponent_pawns = b.piece_boards[BLACK_PAWNS_INDEX];
@@ -442,7 +442,7 @@ square least_valued_attacker_sq(square sq) {
         opponent_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
         opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
     }
-    bitboard pawns = get_pawn_attacks(sq, b.t) & opponent_pawns;
+    bitboard pawns = get_pawn_attacks(sq, side) & opponent_pawns;
     if(pawns) return (square)first_set_bit(pawns);
 
     bitboard knights = get_knight_attacks(sq) & opponent_knights;

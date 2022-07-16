@@ -530,7 +530,8 @@ void generate_moves(vector<move_t> *curr_moves, bool captures_only) {
 
 int see(int sq) {
     int value = 0;
-    square attacker_sq = least_valued_attacker_sq((square)sq);
+    square attacker_sq = least_valued_attacker_sq((square)sq, !b.t);
+    // cout << "attacker sq: " << attacker_sq << endl;
     if(attacker_sq != NONE) {
         // move_t capture;
         // int cap_rank = RANK(sq);
@@ -556,7 +557,6 @@ int see_capture(move_t capture) {
     int value = 0;
     int to = TO(capture);
     piece cap_piece = b.sq_board[to];
-    // cout << cap_piece << endl;
     make_move(capture);
     value = abs(piece_values[INDEX_FROM_PIECE(cap_piece)]) - see(to);
     unmake_move(capture);

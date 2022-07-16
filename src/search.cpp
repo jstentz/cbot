@@ -98,6 +98,9 @@ int qsearch(int alpha, int beta) {
     generate_moves(&captures, true); // true flag generates only captures
     order_moves(&captures, NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
     for (move_t capture : captures) {
+        /* delta pruning helps to stop searching helpless nodes */
+        // piece captured_piece = b.sq_board[TO(capture)];
+
         if(see_capture(capture) <= -50) /* don't consider captures that we consider bad */
             continue;
         make_move(capture);

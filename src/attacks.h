@@ -185,4 +185,4 @@ bool is_attacked_by_pawn(square sq);
 
 piece least_valued_attacker(square sq);
 
-square least_valued_attacker_sq(square sq);
+square least_valued_attacker_sq(square sq, turn side);

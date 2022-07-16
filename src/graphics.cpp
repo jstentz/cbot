@@ -14,6 +14,7 @@
 #include "tt.h"
 #include "evaluation.h"
 #include "debugging.h"
+#include "moves.h"
 
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720

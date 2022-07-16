@@ -199,7 +199,8 @@ int main(int argc, char** argv){
     // decode_fen("7k/6q1/8/8/3p4/8/4P3/1K6 b - - 0 1"); /* testing new check detection */
 
     // decode_fen("5b1k/2p3pp/1p6/4QpN1/3P1P2/6K1/2nq2PP/8 w - - 0 1"); /* screwed this up against comm (play Qe6) */
-
+    // decode_fen("6k1/5p1p/p1rpb1p1/6r1/1R4P1/2B5/PP4P1/4R2K b - - 0 1"); /* mate in 3 after black takes the pawn with the rook */
+    // decode_fen("4rr1k/1pp1qp2/p1n1p2p/4P3/3P1Q2/2P3R1/PP4PP/R5K1 b - - 0 1"); /* mate in 5 after Kh7 */
     move_t move;
     vector<move_t> legal_moves;
     generate_moves(&legal_moves);

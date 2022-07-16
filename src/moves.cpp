@@ -576,15 +576,7 @@ int see_capture(move_t capture) {
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
 void order_moves(vector<move_t> *moves, move_t tt_best_move) {
-    // cout << tt_best_move << endl;
     state_t state = b.state_history.top();
-    // how do I assign negative scores here
-    // make moves signed?
-    // DOESN'T TAKE INTO ACCOUNT KING ENDGAME
-    // wait the end bits might fuck this up I need to think about this
-    // all move scores are assigned positive values for sorting at the end (regardless of white or black to move)
-    // if a move is a capture and its moving to an unattacked square, that's probably a good move
-    if((*moves).size() == 0) return;
     signed short int score;
     vector<move_t> mvs = *moves;
     piece mv_piece;
@@ -672,10 +664,6 @@ void make_move(move_t move) {
     int from = FROM(move);
     int to = TO(move);
     int flags = FLAGS(move);
-
-    // cout << "Before making: " << endl;
-    // print_squarewise(b.sq_board);
-    // cout << endl;
 
     /* 
         always have to remove the piece from its square...
@@ -955,12 +943,6 @@ void make_move(move_t move) {
     SET_LAST_MOVE(state, move);
     b.board_hash = h;
     b.state_history.push(state);
-    // cout << "Last captured piece: " << LAST_CAPTURE(state) << endl;
-    // cout << "After making: " << endl;
-    // print_squarewise(b.sq_board);
-    // cout << endl;
-    // char x;
-    // cin >> x;
     return;
 }
 
@@ -974,11 +956,6 @@ void unmake_move(move_t move) {
     int to = TO(move);
     int flags = FLAGS(move);
 
-    // cout << "Last captured piece: " << LAST_CAPTURE(state) << endl;
-    // cout << "Before unmaking: " << endl;
-    // print_squarewise(b.sq_board);
-    // cout << endl;
-
     piece moving_piece;
     bitboard *moving_piece_board;
     bitboard *rook_board;
@@ -989,8 +966,6 @@ void unmake_move(move_t move) {
     int opponent_pawn_sq;
     int mv_index;
     int cap_index;
-    /* consider combining the cases that have the exact same code */
-    /* maybe I can do case (QUIET_MOVE || DOUBLE_PUSH) etc */
     switch (flags) {
         case QUIET_MOVE:
             /* the moving piece will always be the same piece unless we are dealing with a promotion */
@@ -1330,6 +1305,10 @@ void unmake_move(move_t move) {
     b.board_hash = h;
     update_boards();
     return;
+}
+
+void make_nullmove() {
+    
 }
 
 /*

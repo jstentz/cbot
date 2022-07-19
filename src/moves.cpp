@@ -13,27 +13,22 @@
 #include <string>
 #include <algorithm>
 
-bitboard generate_knight_move_bitboard(square knight) {
-    bitboard own_pieces;
-    if(b.t == W) own_pieces = b.white_pieces;
-    else        own_pieces = b.black_pieces;
-    
+bitboard generate_knight_move_bitboard(square knight, bool captures_only) {
     bitboard knight_attacks = luts.knight_attacks[knight];
-
+    if(captures_only) {
+        bitboard opponent_pieces = (b.t == W) ? b.black_pieces : b.white_pieces;
+        return knight_attacks & opponent_pieces;
+    }
+    bitboard own_pieces = (b.t == W) ? b.white_pieces : b.black_pieces;
     return knight_attacks & ~own_pieces;
 }
 
-bitboard generate_king_move_bitboard(square king) {
-    bitboard own_pieces;
-    if(b.t == W)  {
-        own_pieces = b.white_pieces; 
-    }
-    else {
-        own_pieces = b.black_pieces;
-    }
+bitboard generate_king_move_bitboard(square king, bool captures_only) {
+    bitboard own_pieces = (b.t == W) ? b.white_pieces : b.black_pieces;
+    bitboard opponent_pieces = (b.t == W) ? b.black_pieces : b.white_pieces;
     
     bitboard king_attacks = luts.king_attacks[king];
-    bitboard king_pseudomoves = king_attacks & ~own_pieces;
+    bitboard king_pseudomoves = (captures_only) ? (king_attacks & opponent_pieces) : (king_attacks & ~own_pieces);
 
     if(!king_pseudomoves) return 0; // if the king has no pseudolegal moves, it cannot castle
 
@@ -45,6 +40,8 @@ bitboard generate_king_move_bitboard(square king) {
         if(!is_attacked(loc, blocking_pieces)) king_legal_moves |= BIT_FROM_SQ(loc);
         REMOVE_FIRST(king_pseudomoves);
     }
+
+    if(captures_only) return king_legal_moves; // you can't castle and capture something
 
     // generate castling moves
     // maybe move these to defined constants
@@ -111,7 +108,7 @@ bitboard generate_king_move_bitboard(square king) {
     return king_legal_moves | king_castle;           
 }
 
-bitboard generate_pawn_move_bitboard(square pawn) {
+bitboard generate_pawn_move_bitboard(square pawn, bool captures_only) {
     state_t state = b.state_history.top();
     bitboard enemy_pieces;
     bitboard all_pieces = b.all_pieces;
@@ -139,15 +136,9 @@ bitboard generate_pawn_move_bitboard(square pawn) {
         enemy_pieces = b.black_pieces;
         white_pawn_attacks = luts.white_pawn_attacks[pawn];
         captures = white_pawn_attacks & enemy_pieces;
-        forward_one = luts.white_pawn_pushes[pawn] & ~all_pieces;
-        forward_two = 0;
-        if(rank == RANK_2 && forward_one) {
-            forward_two = luts.white_pawn_pushes[pawn + 8] & ~all_pieces;
-        }
-        forward_moves = forward_one | forward_two;
 
         en_passant_capture = white_pawn_attacks & en_passant_bit;
-        if(en_passant_capture){
+        if(en_passant_capture && rank == RANK(b.white_king_loc)){
             opponent_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
             opponent_queens = b.piece_boards[BLACK_QUEENS_INDEX];
             board_without_pawns = b.all_pieces & ~(BIT_FROM_SQ(pawn)) & ~(en_passant_bit >> 8);
@@ -157,20 +148,23 @@ bitboard generate_pawn_move_bitboard(square pawn) {
                 en_passant_capture = 0;
             }
         }
+
+        if(captures_only) return captures | en_passant_capture;
+
+        forward_one = luts.white_pawn_pushes[pawn] & ~all_pieces;
+        forward_two = 0;
+        if(rank == RANK_2 && forward_one) {
+            forward_two = luts.white_pawn_pushes[pawn + 8] & ~all_pieces;
+        }
+        forward_moves = forward_one | forward_two;
     }
     else {
         enemy_pieces = b.white_pieces;
         black_pawn_attacks = luts.black_pawn_attacks[pawn];
         captures = black_pawn_attacks & enemy_pieces;
-        forward_one = luts.black_pawn_pushes[pawn] & ~all_pieces;
-        forward_two = 0;
-        if(rank == RANK_7 && forward_one) {
-            forward_two = luts.black_pawn_pushes[pawn - 8] & ~all_pieces;
-        }
-        forward_moves = forward_one | forward_two;
 
         en_passant_capture = black_pawn_attacks & en_passant_bit;
-        if(en_passant_capture){
+        if(en_passant_capture && rank == RANK(b.black_king_loc)){
             opponent_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
             opponent_queens = b.piece_boards[WHITE_QUEENS_INDEX];
             board_without_pawns = b.all_pieces & ~(BIT_FROM_SQ(pawn)) & ~(en_passant_bit << 8);
@@ -180,36 +174,43 @@ bitboard generate_pawn_move_bitboard(square pawn) {
                 en_passant_capture = 0;
             }
         }
+
+        if(captures_only) return captures | en_passant_capture;
+
+        forward_one = luts.black_pawn_pushes[pawn] & ~all_pieces;
+        forward_two = 0;
+        if(rank == RANK_7 && forward_one) {
+            forward_two = luts.black_pawn_pushes[pawn - 8] & ~all_pieces;
+        }
+        forward_moves = forward_one | forward_two;
     }
 
     return captures | forward_moves | en_passant_capture;
 }
 
-bitboard generate_rook_move_bitboard(square rook) {
-    bitboard all_pieces = b.all_pieces;
-    bitboard own_pieces;
-    if(b.t == W)  own_pieces = b.white_pieces;
-    else          own_pieces = b.black_pieces;
-
-    bitboard rook_attacks = get_rook_attacks(rook, all_pieces);
+bitboard generate_rook_move_bitboard(square rook, bool captures_only) {
+    bitboard rook_attacks = get_rook_attacks(rook, b.all_pieces);
+    if(captures_only) {
+        bitboard opponent_pieces = (b.t == W) ? b.black_pieces : b.white_pieces;
+        return rook_attacks & opponent_pieces;
+    }
+    bitboard own_pieces = (b.t == W) ? b.white_pieces : b.black_pieces;
     return rook_attacks & ~own_pieces;
 }
 
-bitboard generate_bishop_move_bitboard(square bishop) {
-    bitboard all_pieces = b.all_pieces;
-    bitboard own_pieces;
-
-    if(b.t == W)  own_pieces = b.white_pieces;
-    else          own_pieces = b.black_pieces;
-
-    bitboard bishop_attacks = get_bishop_attacks(bishop, all_pieces);
-    
-    return  bishop_attacks & ~own_pieces;
+bitboard generate_bishop_move_bitboard(square bishop, bool captures_only) {
+    bitboard bishop_attacks = get_bishop_attacks(bishop, b.all_pieces);
+    if(captures_only) {
+        bitboard opponent_pieces = (b.t == W) ? b.black_pieces : b.white_pieces;
+        return bishop_attacks & opponent_pieces;
+    }
+    bitboard own_pieces = (b.t == W) ? b.white_pieces : b.black_pieces;
+    return bishop_attacks & ~own_pieces;
 }
 
-bitboard generate_queen_move_bitboard(square queen) {
-    return   generate_rook_move_bitboard(queen)
-           | generate_bishop_move_bitboard(queen);
+bitboard generate_queen_move_bitboard(square queen, bool captures_only) {
+    return   generate_rook_move_bitboard(queen, captures_only)
+           | generate_bishop_move_bitboard(queen, captures_only);
 }
 
 move_t construct_move(int from, int to, int flags) {
@@ -240,10 +241,7 @@ void generate_knight_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_
             REMOVE_FIRST(knights);
             continue;
         } // pinned knights cannot move at all
-        knight_moves = generate_knight_move_bitboard((square)from) & check_mask;
-        if(captures_only) { // filter out non-captures
-            knight_moves &= opponent_pieces;
-        }
+        knight_moves = generate_knight_move_bitboard((square)from, captures_only) & check_mask;
         
         while(knight_moves) {
             to = first_set_bit(knight_moves);
@@ -276,10 +274,7 @@ void generate_king_moves(vector<move_t> *curr_moves, bool captures_only) {
     bitboard king_moves;
     while(kings) {
         from = first_set_bit(kings);
-        king_moves = generate_king_move_bitboard((square)from);
-        if(captures_only) { // filter out non-captures
-            king_moves &= opponent_pieces;
-        }
+        king_moves = generate_king_move_bitboard((square)from, captures_only);
         while(king_moves) {
             to = first_set_bit(king_moves);
             to_bit = BIT_FROM_SQ(to);
@@ -334,10 +329,8 @@ void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool p
         pawn_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(pawn_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-        pawn_moves = generate_pawn_move_bitboard((square)from) & check_mask & pin_mask;
-        if(captures_only) { // only keep captures if captures_only is set
-            pawn_moves &= (opponent_pieces | en_passant_bit);
-        }
+        pawn_moves = generate_pawn_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+        
         while(pawn_moves) {
             to = first_set_bit(pawn_moves);
             to_bit = BIT_FROM_SQ(to);
@@ -397,10 +390,8 @@ void generate_rook_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t 
         rook_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(rook_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-        rook_moves = generate_rook_move_bitboard((square)from) & check_mask & pin_mask;
-        if(captures_only) { // filter out for captures only
-            rook_moves &= opponent_pieces;
-        }
+        rook_moves = generate_rook_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+
         while(rook_moves) {
             to = first_set_bit(rook_moves);
             to_bit = BIT_FROM_SQ(to);
@@ -438,10 +429,8 @@ void generate_bishop_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_
         bishop_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(bishop_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-        bishop_moves = generate_bishop_move_bitboard((square)from) & check_mask & pin_mask;
-        if(captures_only){ // filter out the non captures
-            bishop_moves &= opponent_pieces;
-        }
+        bishop_moves = generate_bishop_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+        
         while(bishop_moves) {
             to = first_set_bit(bishop_moves);
             to_bit = BIT_FROM_SQ(to);
@@ -479,10 +468,8 @@ void generate_queen_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t
         queen_bit = BIT_FROM_SQ(from);
         pin_mask = 0xFFFFFFFFFFFFFFFF;
         if(queen_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-        queen_moves = generate_queen_move_bitboard((square)from) & check_mask & pin_mask;
-        if(captures_only) { // filter out non captures
-            queen_moves &= opponent_pieces;
-        }
+        queen_moves = generate_queen_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+        
         while(queen_moves) {
             to = first_set_bit(queen_moves);
             to_bit = BIT_FROM_SQ(to);

@@ -11,6 +11,7 @@ value in the board struct that we update along with the other hash value that ju
 3. I would like to implement an incrementally updated attack map. This would be generated in the decode_fen function.
 Not sure the exact format of this, but I would probably have one for black and white and maybe have a list of pieces 
 or something that are attacking that square. https://www.chessprogramming.org/Attack_and_Defend_Maps.
+4. Add own pieces and opponent pieces bitboard to board state and then update them in update_boards function with other stuff.
 
 it might be worth it to see how many total nodes are being evaluated on a given search
 to see if move generation speeds are even making a difference there

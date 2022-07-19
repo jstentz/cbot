@@ -1501,7 +1501,28 @@ move_t move_from_notation(string notation) {
     exit(-1); // should match to a move
 }
 
-// string not_from_move(move_t move) {
-//     string str_move;
+string algebraic_notation(move_t move) {
+    string result = "";
+    string files = "abcdefgh";
+    string ranks = "12345678";
+    
+    int from_file = FILE(FROM(move));
+    int from_rank = RANK(FROM(move));
+    
+    int to_file = FILE(TO(move));
+    int to_rank = RANK(TO(move));
 
-// }
+    result.push_back(files[from_file]);
+    result.push_back(ranks[from_rank]);
+    result.push_back(files[to_file]);
+    result.push_back(ranks[to_rank]);
+    return result;
+}
+
+void sort_by_algebraic_notation(vector<move_t> *moves) {
+    sort(moves->begin(), moves->end(), 
+            [](move_t a, move_t b) {
+                return algebraic_notation(a) < algebraic_notation(b);
+            } 
+    );
+}

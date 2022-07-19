@@ -5,10 +5,12 @@ I can play as the computer by using my unmake_move feature (right click)
 Need to remove a lot of troublesome lines in the opening book that just straight up hang a piece
 
 To Do:
-1. unmake move
-2. the evaluation hash table only needs to hash the piece locations and the turn, so maybe have a phash
+1. the evaluation hash table only needs to hash the piece locations and the turn, so maybe have a phash
 value in the board struct that we update along with the other hash value that just stores this info
-3. redo how pins work... its a huge waste of space... I only even need one pin struct since it changes
+2. redo how pins work... its a huge waste of space... I only even need one pin struct since it changes
+3. I would like to implement an incrementally updated attack map. This would be generated in the decode_fen function.
+Not sure the exact format of this, but I would probably have one for black and white and maybe have a list of pieces 
+or something that are attacking that square. https://www.chessprogramming.org/Attack_and_Defend_Maps.
 
 it might be worth it to see how many total nodes are being evaluated on a given search
 to see if move generation speeds are even making a difference there

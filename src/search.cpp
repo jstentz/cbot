@@ -67,8 +67,9 @@ uint64_t perft(size_t depth) {
     generate_moves(&moves);
     uint64_t total_nodes = 0;
     uint64_t nodes_from_move = 0;
+    sort_by_algebraic_notation(&moves);
     for(move_t move : moves) {
-        std::cout << notation_from_move(move) << ": ";
+        std::cout << algebraic_notation(move) << ": ";
         make_move(move);
         nodes_from_move = num_nodes_bulk(depth - 1);
         total_nodes += nodes_from_move;
@@ -390,93 +391,13 @@ move_t find_best_move() {
 // }
 
 /*
-    Current speed: ~ 47.5 million nps
-    After moving luts to global variable, ~ 48 million nps
-    After changing the place and rem functions, ~ 48.3 million nps
-    After making move a pointer, ~ 48.4 million nps
-    on a bigger sample size (depth 5) its ~ 52.5 million nps
-
-    pretty much can no longer test this since there we will slow it down with
-    incremental evaluation of the board
-
-    currently 2.5 million nodes evaluated per second
-
-    maybe have the opening book be like a hashtable that has the position and 
-    the move to be played in that position
-
-    currently en passant is not in the tar_piece in the move... maybe change that
-    but it will affect other things like make_move
-
-    don't like how I check for captures only (just use if statement)
-    make is_attacked return the piece that is attacking that square (DONT DO THAT)
-    make least_valued_attacker return the least valued piece attacking a square
-    ^ used for move ordering purposes
-
-    most programs consider a single repetition to be a draw
-
-    need to add draw for insufficient material
-    tomorrow need to do better eval and better move ordering
-    have make_move function update hash value
-
-    maybe the find best move function will just perform the search and then look
-    up the hash value in the TT that was created from the search
-    still just need to reason through this more
-
-    for speed consider using smaller types for numbers that aren't big
-
-    use an unordered_set and see about replacement strategies
-    maybe rename hashing.cpp to transpose.cpp
-
-    use selection sort to order moves after scoring them
-
-    consider code profiling -> wine and valgrind
-
-    woah intel c++ compiler could be huge
-    Intel C++ compiler
-
-    check out AMD_code profiler thingy
-
-    not sure if I can get SDL with the intel compiler, also don't know why I 
-    wouldn't be able to
-
-    might have to get visual studio in order to get the intel compiler
-
-    no clue how to use visual studio 2019
-
-    next up:
-        1. store the results of the openings stuff in the form of the position's hash val and
-        the 32 bit number moves
-        this way we don't have to generate the moves from the notation every time
-        or make the moves
-        2. make sure that it doesn't crash
-        3. move ordering
-
-    maybe add like a piece least_valuable_attacker(square sq, board_t board)
-    which checks pawns, then knights, then bishops, etc...
-
-    ^^^ THIS WOULD BE VERY HELPFUL FOR CHECKING HANGING PIECES 
-
-    CHECK TO SEE IF THE SQUARE THEY ARE COMING FROM IS ATTACKED AND SCORE IT 
-    BASED ON THAT AS WELL
-
-    A better evaluation function likely speeds up the program, since you will
-    have fewer positions that end up with the same evaluation, meaning there
-    should be better alpha beta pruning
-
-    consider adding the position to the set of positions in make_move
-    and removing it in unmake_move
-
-    maybe just make it so search returns a pair of eval and move instead of
-    the find best move function
-
-    need to have a penalty for pinned pieces in terms of mobility maybe
-    calculate middlegame mobility scores weighted higher for bishops and knights
-    calculate endgame mobility scores weighted higher for rooks and queens
-
-    threading so I can kill the thread
 
     revisit move ordering and make sure its fixed with new game phase
 
     look at how the CPW-Engine does the sizing for the transposition table
+
+    try the "open" flag in the transposition table
+
+    do attack maps
 
 */

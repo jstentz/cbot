@@ -141,6 +141,8 @@ typedef struct Board
     int positional_score; // doesn't include kings
     int piece_counts[10];
 
+    int total_material;
+
     stack<state_t> state_history;
 } board_t;
 

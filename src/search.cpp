@@ -130,8 +130,10 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
             return 0;
     }
 
+    int check_flag = in_check();
+
     /* check extension */
-    if(in_check())
+    if(check_flag)
         depth++;
 
     /* look up the hash value in the transposition table 
@@ -152,16 +154,6 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     move_t best_tt_move = TT.best_move;
     generate_moves(&moves);
     order_moves(&moves, NO_SCORE(best_tt_move));
-
-    if(moves.size() == 0) {
-        nodes_reached++;
-        if(checking_pieces() != 0) { /* checkmate */
-            checkmates++;
-            return INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
-        }
-        /* stalemate! */
-        return 0;
-    }
     
     move_t best_move = NO_MOVE;
     for(move_t move : moves) {
@@ -189,6 +181,19 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
                 search_result.score = alpha;
             }
         }
+    }
+
+    if(moves.size() == 0) {
+        nodes_reached++;
+        if(check_flag) { /* checkmate */
+            checkmates++;
+            alpha = INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
+        }
+        else {
+            /* stalemate! */
+            alpha = 0;
+        }
+        flags = EXACT; /* we know the exact score of checkmated or stalemated positions */
     }
 
     nodes_reached++;

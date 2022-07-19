@@ -47,6 +47,7 @@ board_t zero_board() {
 
     board.material_score = 0;
     board.positional_score = 0;
+    board.total_material = 0;
     
     for(int i = 0; i < 10; i++) {
         board.piece_counts[i] = 0;
@@ -111,6 +112,7 @@ void decode_fen(string fen) {
             if(PIECE(pc) != KING && PIECE(pc) != EMPTY) {
                 b.material_score += piece_values[INDEX_FROM_PIECE(pc)];
                 b.positional_score += piece_scores[INDEX_FROM_PIECE(pc)][loc];
+                b.total_material += abs(piece_values[INDEX_FROM_PIECE(pc)]);
             }
             
             
@@ -286,18 +288,6 @@ pin_t get_pinned_pieces(square friendly_king_loc) {
     }
     return pin;
 }
-
-// bitboard checking_pieces() {
-//     square friendly_king = (b.t == W) ? b.white_king_loc : b.black_king_loc;
-//     return attackers_from_square(friendly_king);
-// }
-
-// int check_type(bitboard attackers) {
-//     if(attackers == 0) return NO_CHECK;
-//     REMOVE_FIRST(attackers);
-//     if(attackers == 0) return SINGLE_CHECK;
-//     return DOUBLE_CHECK;
-// }
 
 bitboard checking_pieces() {
     square friendly_king = (b.t == W) ? b.white_king_loc : b.black_king_loc;

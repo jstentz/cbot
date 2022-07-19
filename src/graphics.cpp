@@ -77,10 +77,10 @@ void DrawChessBoard() {
     for(int row = 0; row < 8; row++) {
         for(int col = 0; col < 8; col++) {
             if((row + col) % 2 == 0) {
-                SDL_SetRenderDrawColor(renderer, 238, 238, 210, 0xFF);
+                SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255);
             }
             else {
-                SDL_SetRenderDrawColor(renderer, 118, 150, 86, 0xFF);
+                SDL_SetRenderDrawColor(renderer, 181, 136, 99, 255);
             }
             sq.y = row * sq_width;
             sq.x = col * sq_width;

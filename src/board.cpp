@@ -300,6 +300,8 @@ bitboard checking_pieces() {
     bool discovered_check = false;
 
     int to = TO(last_move);
+    int from = FROM(last_move);
+    int flags = FLAGS(last_move);
 
     bitboard checkers = 0;
 
@@ -324,6 +326,14 @@ bitboard checking_pieces() {
         case KING:
             break; /* the king can never move to check the other king */
     }
+
+    /* there is no possibility for a discovered check here */
+    if(flags == QUIET_MOVE || flags == DOUBLE_PUSH || flags == NORMAL_CAPTURE) {
+        if(RANK(from) != RANK(friendly_king) && FILE(from) != FILE(friendly_king) &&
+           DIAG(from) != DIAG(friendly_king) && ANTI_DIAG(from) != ANTI_DIAG(friendly_king))
+           return checkers;
+    }
+
 
     bitboard opponent_bishops;
     bitboard opponent_rooks;

@@ -325,7 +325,7 @@ int main(int argc, char** argv){
             legal_moves.clear();
             generate_moves(&legal_moves);
             if(legal_moves.size() == 0) {
-                if(checking_pieces()) {
+                if(in_check()) {
                     cout << "Checkmate!" << endl;
                     break;
                 }
@@ -377,7 +377,7 @@ int main(int argc, char** argv){
         SDL_RenderPresent(renderer);
 
         if(legal_moves.size() == 0) {
-            if(checking_pieces()) {
+            if(in_check()) {
                 cout << "Checkmate!" << endl;
                 break;
             }

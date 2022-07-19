@@ -43,6 +43,9 @@ typedef signed int move_t;
 #define FILE(sq) (sq & 7)
 #define RANK(sq) (sq >> 3)
 
+#define DIAG(sq)        (7 + RANK(sq) - FILE(sq))
+#define ANTI_DIAG(sq)   (RANK(sq) + FILE(sq))
+
 #define NO_CHECK 0x0
 #define SINGLE_CHECK 0x1
 #define DOUBLE_CHECK 0x2

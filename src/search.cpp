@@ -156,9 +156,25 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
     order_moves(&moves, NO_SCORE(best_tt_move));
     
     move_t best_move = NO_MOVE;
-    for(move_t move : moves) {
+    int num_moves = moves.size();
+    move_t move;
+    int evaluation;
+    bool pv_search = true;
+    for(int i = 0; i < num_moves; i++) {
+        move = moves[i];
         make_move(move);
-        int evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
+        if(pv_search) {
+            evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
+        }
+        else {
+            evaluation = -search_moves(ply_from_root + 1, depth - 1, -alpha - 1, -alpha);
+            if(evaluation > alpha) {
+                evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
+            }
+        }
+
+        // evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
+            
         unmake_move(move);
 
         if(abort_search)
@@ -175,6 +191,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
             flags = EXACT;
             alpha = evaluation;
             best_move = move;
+            pv_search = false;
             /* if we are at the root node, replace the best move we've seen so far */
             if(ply_from_root == 0 && !abort_search) {
                 search_result.best_move = best_move;
@@ -183,7 +200,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
         }
     }
 
-    if(moves.size() == 0) {
+    if(num_moves == 0) {
         nodes_reached++;
         if(check_flag) { /* checkmate */
             checkmates++;

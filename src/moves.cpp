@@ -608,7 +608,12 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
                 score += piece_values[WHITE_QUEENS_INDEX];
             }
         }
-        if(IS_CAPTURE(mv)) {
+        /* check recapturing moves */
+        if(to == recapture_square) {
+            score += 5 * abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // arbitrary multiplication
+        }
+        else if(IS_CAPTURE(mv)) {
+            // score += see_capture(mv); /* this function isn't fast enough I need incrementally updated attack tables */
             tar_piece = b.sq_board[to];
             if(!is_attacked((square)to, b.all_pieces)) {
                 score += 5 * abs(piece_values[INDEX_FROM_PIECE(tar_piece)]);
@@ -618,22 +623,17 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
             }
         }
         /* score moves to squares attacked by pawns */
-        if(is_attacked_by_pawn((square)to)) 
+        else if(PIECE(mv_piece) != PAWN && is_attacked_by_pawn((square)to)) 
             score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
         
         // done for better endgame move ordering of king moves
         if(PIECE(mv_piece) == KING && b.piece_boards[WHITE_QUEENS_INDEX] == 0 && b.piece_boards[BLACK_QUEENS_INDEX] == 0){
             score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][to] - piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][from]);
         }
-        else{
+        else {
             score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
         }
-
-        /* check recapturing moves */
-        if(to == recapture_square) {
-            score += 5 * abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // arbitrary multiplication
-        }
-            
+              
         (*moves)[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
     }
     std::sort(moves->begin(), moves->end(), greater<move_t>());

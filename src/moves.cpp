@@ -1325,6 +1325,7 @@ void make_nullmove() {
     if(prev_en_passant != NONE)
         b.board_hash ^= zobrist_table.en_passant_file[FILE(prev_en_passant)];
     SET_EN_PASSANT_SQ(state, NONE);
+    SET_LAST_MOVE(state, NO_MOVE);
     b.t = !b.t;
     b.board_hash ^= zobrist_table.black_to_move;
     b.state_history.push(state);

@@ -200,6 +200,7 @@ int main(int argc, char** argv){
     // decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"); /* testing move ordering */
 
     // decode_fen("5b1k/2p3pp/1p6/4QpN1/3P1P2/6K1/2nq2PP/8 w - - 0 1"); /* screwed this up against comm (play Qe6) */
+    // decode_fen("3r2kr/6pp/1pR2p2/p3R3/2B5/8/PP2KPPP/8 b - - 0 1"); /* screwed this up (play Kf8) */
     // decode_fen("6k1/5p1p/p1rpb1p1/6r1/1R4P1/2B5/PP4P1/4R2K b - - 0 1"); /* mate in 3 after black takes the pawn with the rook */
     // decode_fen("4rr1k/1pp1qp2/p1n1p2p/4P3/3P1Q2/2P3R1/PP4PP/R5K1 b - - 0 1"); /* mate in 5 after Kh7 */
     move_t move;
@@ -345,30 +346,30 @@ int main(int argc, char** argv){
         }
 
         /* code to play itself */
-        // LoadDisplayBoardFromGameState(b.sq_board);
-        // SDL_RenderClear(renderer);
-        // DrawChessBoard();
-        // DrawPieces();
-        // DrawSelectedPiece(selectedPiece);
-        // SDL_RenderPresent(renderer);
+        LoadDisplayBoardFromGameState(b.sq_board);
+        SDL_RenderClear(renderer);
+        DrawChessBoard();
+        DrawPieces();
+        DrawSelectedPiece(selectedPiece);
+        SDL_RenderPresent(renderer);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
-        // if(legal_moves.size() == 0) {
-        //     if(checking_pieces()) {
-        //         cout << "Checkmate!" << endl;
-        //         break;
-        //     }
-        //     cout << "Stalemate!" << endl;
-        //     break;
-        // }
+        legal_moves.clear();
+        generate_moves(&legal_moves);
+        if(legal_moves.size() == 0) {
+            if(checking_pieces()) {
+                cout << "Checkmate!" << endl;
+                break;
+            }
+            cout << "Stalemate!" << endl;
+            break;
+        }
 
-        // move = find_best_move();
-        // make_move(move); // leaking memory here
-        // LoadDisplayBoardFromGameState(b.sq_board);
+        move = find_best_move();
+        make_move(move); // leaking memory here
+        LoadDisplayBoardFromGameState(b.sq_board);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
+        legal_moves.clear();
+        generate_moves(&legal_moves);
         /* code to play itself */
 
         SDL_RenderClear(renderer);

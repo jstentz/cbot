@@ -128,7 +128,11 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
             return 0;
     }
 
-    int check_flag = in_check();
+    bool check_flag;
+    if(!can_null) /* if we just made a null move (passed the turn), we cannot be in check */
+        check_flag = false;
+    else
+        check_flag = in_check();
 
     /* check extension */
     if(check_flag)
@@ -156,7 +160,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
         make_nullmove();
         int score = -search_moves(ply_from_root, depth - reduce - 1, -beta, -beta + 1, NO_PV, NO_NULL);
         unmake_nullmove();
-
+        if(abort_search) return 0;
         if(score >= beta) return beta;
     }
 

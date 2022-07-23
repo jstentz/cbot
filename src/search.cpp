@@ -22,7 +22,6 @@ using namespace std;
 size_t nodes_reached = 0; // speed test purposes
 size_t beta_cutoffs = 0;
 size_t q_nodes = 0;
-int max_ply = 0;
 
 bool search_complete = false;
 bool abort_search = false;
@@ -101,8 +100,7 @@ int qsearch(int alpha, int beta) {
     for (move_t capture : captures) {
         /* delta pruning helps to stop searching helpless nodes */
         // piece captured_piece = b.sq_board[TO(capture)];
-
-        if(see_capture(capture) <= -50) /* don't consider captures that we consider bad */
+        if(is_bad_capture(capture)) /* don't consider captures that are bad */
             continue;
         make_move(capture);
         int evaluation = -qsearch(-beta, -alpha);
@@ -115,7 +113,7 @@ int qsearch(int alpha, int beta) {
     return alpha;
 }
 
-int search_moves(int ply_from_root, int depth, int alpha, int beta) {
+int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, bool can_null) {
     if(abort_search)
         return 0;
 
@@ -146,10 +144,21 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
 
     if(depth == 0) {
         return qsearch(alpha, beta);
-        // nodes_reached++;
-        // return evaluate();
     }
 
+    if(depth > 2 && 
+       can_null && 
+       !is_pv && 
+       b.total_material > ENDGAME_MATERIAL &&
+       !check_flag) {
+        int reduce = 2;
+        if(depth > 6) reduce = 3;
+        make_nullmove();
+        int score = -search_moves(ply_from_root, depth - reduce - 1, -beta, -beta + 1, NO_PV, NO_NULL);
+        unmake_nullmove();
+
+        if(score >= beta) return beta;
+    }
 
     move_t best_tt_move = TT.best_move;
     generate_moves(&moves);
@@ -164,12 +173,12 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
         move = moves[i];
         make_move(move);
         if(pv_search) {
-            evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
+            evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha, IS_PV, CAN_NULL);
         }
         else {
-            evaluation = -search_moves(ply_from_root + 1, depth - 1, -alpha - 1, -alpha);
+            evaluation = -search_moves(ply_from_root + 1, depth - 1, -alpha - 1, -alpha, NO_PV, CAN_NULL);
             if(evaluation > alpha) {
-                evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
+                evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha, IS_PV, CAN_NULL);
             }
         }
 
@@ -191,13 +200,13 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta) {
             flags = EXACT;
             alpha = evaluation;
             best_move = move;
-            pv_search = false;
             /* if we are at the root node, replace the best move we've seen so far */
             if(ply_from_root == 0 && !abort_search) {
                 search_result.best_move = best_move;
                 search_result.score = alpha;
             }
         }
+        pv_search = false;
     }
 
     if(num_moves == 0) {
@@ -276,7 +285,7 @@ move_t find_best_move() {
                 t.join();
             search_complete = false;
             depth++;
-            t = std::thread{search_moves, 0, depth, alpha, beta};
+            t = std::thread{search_moves, 0, depth, alpha, beta, CAN_NULL, IS_PV};
             // cout << notation_from_move(search_result.best_move) << endl;
         }
         
@@ -295,7 +304,10 @@ move_t find_best_move() {
     move_t best_move = search_result.best_move;
 
     int perspective = (b.t == W) ? 1 : -1;
-    std::cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
+    if(is_mate_score(search_result.score))
+        std::cout << "Evaluation: Mate in " << moves_until_mate(search_result.score) << " move(s)" << endl;
+    else
+        std::cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
     std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
     std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
     std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
@@ -411,15 +423,3 @@ move_t find_best_move() {
 //     free_eval_table();
 //     return 0;
 // }
-
-/*
-
-    revisit move ordering and make sure its fixed with new game phase
-
-    look at how the CPW-Engine does the sizing for the transposition table
-
-    try the "open" flag in the transposition table
-
-    do attack maps
-
-*/

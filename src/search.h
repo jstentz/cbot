@@ -19,6 +19,12 @@
 
 typedef unsigned long long int uint64_t;
 
+#define IS_PV 1
+#define NO_PV 0
+
+#define CAN_NULL 1
+#define NO_NULL 0
+
 extern size_t transpositions;
 
 typedef struct search_result_struct {
@@ -76,7 +82,7 @@ int qsearch(int alpha, int beta);
  * @param beta Beta cutoff
  * @return Best score
  */
-int search_moves(int ply_from_root, int depth, int alpha, int beta);
+int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, bool can_null);
 
 /**
  * @brief Given a board state, returns the best move.

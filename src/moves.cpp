@@ -550,6 +550,18 @@ int see_capture(move_t capture) {
     return value;
 }
 
+bool is_bad_capture(move_t capture) {
+    piece mv_piece = b.sq_board[FROM(capture)];
+    piece cap_piece = b.sq_board[TO(capture)];
+    /* if we are capturing a piece of higher material, its probably good */
+    if(abs(piece_values[INDEX_FROM_PIECE(cap_piece)]) 
+       - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]) > 50) {
+        return false;
+    }
+
+    return see_capture(capture) < -50;
+}
+
 // bool is_bad_capture(move_t capture) {
 //     int from = FROM(capture);
 //     int to = TO(capture);
@@ -592,9 +604,9 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
         }
         to = TO(mv);
         from = FROM(mv);
+        flags = FLAGS(mv);
         mv_piece = b.sq_board[from];
         if(IS_PROMO(mv)) {
-            flags = FLAGS(mv);
             if(flags == KNIGHT_PROMO || flags == KNIGHT_PROMO_CAPTURE) {
                 score += piece_values[WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
             }
@@ -633,6 +645,10 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
         else {
             score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
         }
+
+        // if(flags == QUIET_MOVE) {
+        //     score -= 1000; /* try quiet moves last even behind bad captures */
+        // }
               
         (*moves)[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
     }
@@ -903,20 +919,24 @@ void make_move(move_t move) {
             b.positional_score -= piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.material_score -= piece_values[INDEX_FROM_PIECE(captured_piece)];
         b.piece_counts[INDEX_FROM_PIECE(captured_piece)]--;
+        b.total_material -= abs(piece_values[INDEX_FROM_PIECE(captured_piece)]);
     }
 
     if(promo_piece != EMPTY) {
         if(COLOR(promo_piece) == WHITE) {
             b.material_score -= piece_values[WHITE_PAWNS_INDEX];
             b.piece_counts[WHITE_PAWNS_INDEX]--;
+            b.total_material -= abs(piece_values[WHITE_PAWNS_INDEX]);
         }
         else {
             b.material_score -= piece_values[BLACK_PAWNS_INDEX];
             b.piece_counts[BLACK_PAWNS_INDEX]--;
+            b.total_material -= abs(piece_values[BLACK_PAWNS_INDEX]);
         }
         b.material_score += piece_values[INDEX_FROM_PIECE(promo_piece)];
         b.positional_score += piece_scores[INDEX_FROM_PIECE(promo_piece)][to];
         b.piece_counts[INDEX_FROM_PIECE(promo_piece)]++;
+        b.total_material += abs(piece_values[INDEX_FROM_PIECE(promo_piece)]);
     }
     else if(PIECE(moving_piece) != KING) {
         b.positional_score += piece_scores[INDEX_FROM_PIECE(moving_piece)][to];
@@ -1266,6 +1286,7 @@ void unmake_move(move_t move) {
             b.positional_score += piece_scores[INDEX_FROM_PIECE(captured_piece)][to];
         b.material_score += piece_values[INDEX_FROM_PIECE(captured_piece)];
         b.piece_counts[INDEX_FROM_PIECE(captured_piece)]++;
+        b.total_material += abs(piece_values[INDEX_FROM_PIECE(captured_piece)]);
     }
 
     if(promo_piece != EMPTY) {
@@ -1273,15 +1294,18 @@ void unmake_move(move_t move) {
             b.material_score += piece_values[WHITE_PAWNS_INDEX];
             b.piece_counts[WHITE_PAWNS_INDEX]++;
             b.positional_score += piece_scores[WHITE_PAWNS_INDEX][from];
+            b.total_material += abs(piece_values[WHITE_PAWNS_INDEX]);
         }
         else {
             b.material_score += piece_values[BLACK_PAWNS_INDEX];
             b.piece_counts[BLACK_PAWNS_INDEX]++;
             b.positional_score += piece_scores[BLACK_PAWNS_INDEX][from];
+            b.total_material += abs(piece_values[BLACK_PAWNS_INDEX]);
         }
         b.material_score -= piece_values[INDEX_FROM_PIECE(promo_piece)];
         b.positional_score -= piece_scores[INDEX_FROM_PIECE(promo_piece)][to];
         b.piece_counts[INDEX_FROM_PIECE(promo_piece)]--;
+        b.total_material -= abs(piece_values[INDEX_FROM_PIECE(promo_piece)]);
     }
     else if(PIECE(moving_piece) != KING) {
         b.positional_score -= piece_scores[INDEX_FROM_PIECE(moving_piece)][to];
@@ -1295,7 +1319,27 @@ void unmake_move(move_t move) {
 }
 
 void make_nullmove() {
-    
+    state_t prev_state = b.state_history.top();
+    state_t state = prev_state;
+    square prev_en_passant = (square)EN_PASSANT_SQ(prev_state);
+    if(prev_en_passant != NONE)
+        b.board_hash ^= zobrist_table.en_passant_file[FILE(prev_en_passant)];
+    SET_EN_PASSANT_SQ(state, NONE);
+    b.t = !b.t;
+    b.board_hash ^= zobrist_table.black_to_move;
+    b.state_history.push(state);
+    return;
+}
+
+void unmake_nullmove() {
+    b.state_history.pop();
+    state_t state = b.state_history.top();
+    square en_passant_sq = (square)EN_PASSANT_SQ(state);
+    if(en_passant_sq != NONE)
+        b.board_hash ^= zobrist_table.en_passant_file[FILE(en_passant_sq)];
+    b.t = !b.t;
+    b.board_hash ^= zobrist_table.black_to_move;
+    return;
 }
 
 /*

@@ -119,6 +119,12 @@ move_t construct_move(int from, int to, int flags);
 
 int see_capture(move_t capture);
 
+bool is_bad_capture(move_t capture);
+
 string algebraic_notation(move_t move);
 
 void sort_by_algebraic_notation(vector<move_t> *moves);
+
+void make_nullmove();
+
+void unmake_nullmove();

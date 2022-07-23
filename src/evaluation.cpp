@@ -353,3 +353,12 @@ int evaluate() {
     store_eval_entry(b.board_hash, eval);
     return eval;
 }
+
+bool is_mate_score(int score) {
+    return (score > (INT_MAX - 100)) || (score < ((INT_MIN + 1) + 100));
+}
+
+int moves_until_mate(int mate_score) {
+    mate_score = abs(mate_score);
+    return (INT_MAX - mate_score) / 2;
+}

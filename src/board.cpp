@@ -366,47 +366,6 @@ bitboard checking_pieces() {
         bitboard rook_from_king = get_rook_attacks(friendly_king, b.all_pieces);
         checkers |= rook_from_king & cardinal_sliders;
     }
-
-    // int king_rank = RANK(friendly_king);
-    // int piece_rank = RANK(from);
-    // bitboard rank_ray_from_king;
-    // if(king_rank == piece_rank) {
-    //     rank_ray_from_king = get_rook_attacks(friendly_king, b.all_pieces) & luts.mask_rank[king_rank];
-    //     if(rank_ray_from_king & (opponent_rooks | opponent_queens))
-    //         discovered_check = true;
-    // }
-
-    // int king_file = FILE(friendly_king);
-    // int piece_file = FILE(from);
-    // bitboard file_ray_from_king;
-    // if(king_file == piece_file) {
-    //     file_ray_from_king = get_rook_attacks(friendly_king, b.all_pieces) & luts.mask_file[king_file];
-    //     if(file_ray_from_king & (opponent_rooks | opponent_queens))
-    //         discovered_check = true;
-    // }
-
-    // /* make a function for finding the diagonal */
-    // int king_diag;
-    // if(king_file >= king_rank) king_diag = king_file - king_rank;
-    // else                       king_diag = 15 - (king_rank - king_file);
-
-    // int piece_diag;
-    // if(piece_file >= piece_rank) piece_diag = piece_file - piece_rank;
-    // else                         piece_diag = 15 - (piece_rank - piece_file);
-    // bitboard diag_ray_from_king;
-    // if(king_diag == piece_diag) {
-    //     diag_ray_from_king = get_bishop_attacks(friendly_king, b.all_pieces) & luts.mask_diagonal[king_diag];
-    //     if(diag_ray_from_king & (opponent_bishops | opponent_queens));
-    // }
-    
-    // size_t bishop_diag;
-    // if(bishop_file >= bishop_rank) bishop_diag = bishop_file - bishop_rank;
-    // else                           bishop_diag = 15 - (bishop_rank - bishop_file);
-    // // do same for antidiag
-    // size_t bishop_antidiag;
-    // if(bishop_file > (7 - bishop_rank)) bishop_antidiag = 15 - (bishop_file - (7 - bishop_rank));
-    // else                                bishop_antidiag = (7 - bishop_rank) - bishop_file;
-
     return checkers;
 }
 

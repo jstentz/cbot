@@ -14,7 +14,7 @@
 #include "board.h"
 
 #define EVAL_SIZE 64000
-
+#define ENDGAME_MATERIAL 2000
 #define FAILED_LOOKUP INT_MIN
 
 const int piece_values[10] = {100, // white pawn
@@ -244,3 +244,7 @@ extern int eval_hits;
 extern int eval_probes;
 
 int evaluate_mobility();
+
+bool is_mate_score(int score);
+
+int moves_until_mate(int mate_score);

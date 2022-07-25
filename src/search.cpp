@@ -161,6 +161,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
         int score = -search_moves(ply_from_root, depth - reduce - 1, -beta, -beta + 1, NO_PV, NO_NULL);
         unmake_nullmove();
         if(abort_search) return 0;
+        store_entry(h, depth, BETA, beta, NO_MOVE);
         if(score >= beta) return beta;
     }
 

@@ -338,6 +338,16 @@ int evaluate() {
     middlegame_eval += (knight_mobility + bishop_mobility) * 5;
     endgame_eval += (knight_mobility + bishop_mobility + rook_mobility + queen_mobility) * 5;
 
+    /* check for pawn shield */
+    bitboard white_king_area = get_king_attacks(white_king_loc);
+    bitboard black_king_area = get_king_attacks(black_king_loc);
+
+    int white_pawn_shield_penalty =  60 - 20 * pop_count(white_king_area & b.piece_boards[WHITE_PAWNS_INDEX]);
+    int black_pawn_shield_penalty = -60 + 20 * pop_count(black_king_area & b.piece_boards[BLACK_PAWNS_INDEX]);
+
+    middlegame_eval -= white_pawn_shield_penalty;
+    middlegame_eval -= black_pawn_shield_penalty;
+
     eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
 
     if(b.piece_counts[WHITE_BISHOPS_INDEX] >= 2) eval += 30; /* bishop pair bonus for white */

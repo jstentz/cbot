@@ -185,10 +185,12 @@ int main(int argc, char** argv){
     LoadPieceTextures();
 
     decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); /* starting position */
+    // decode_fen("4k3/2nnnn2/8/8/8/8/8/3QK3 w - - 0 1"); /* fun position */
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */
     // decode_fen("k7/8/8/8/8/8/8/4BNK w - - 1 2"); /* bishop and knight checkmate */
+    // decode_fen("7k/8/8/8/8/8/6P1/K7 w - - 1 2");
     // decode_fen("8/4k3/8/8/8/5P2/5K2/8 w - - 0 1"); /* drawn pawn endgame except mine doesn't draw it */
     // decode_fen("8/4k3/8/8/5K2/5P2/8/8 w - - 0 1"); /* winning pawn endgame */
     // decode_fen("7k/5P2/5K2/7P/1p6/1P6/8/8 b - - 0 1"); /* rook promotion */
@@ -306,6 +308,7 @@ int main(int argc, char** argv){
                             game_history.erase(b.board_hash);
                             unmake_move(LAST_MOVE(b.state_history.top()));
                             LoadDisplayBoardFromGameState(b.sq_board);
+                            legal_moves.clear();
                             generate_moves(&legal_moves);
                         }
                     }
@@ -401,56 +404,7 @@ int main(int argc, char** argv){
 }
 
 /*
-    Notes:
-        - Load the display board with rects when you decode the fen
-        - draw the board based off of the display board
-
-    - there is some strange bug with this position (move white rook):
-        8/8/8/8/8/2K5/7R/1k6 w - - 0 1
-      when the computer has a low number of moves, it just doesn't play a move...
-      its finding my move to be the best move?
-      its not my move generation that's wrong, its my find_best_move function
-
-      it thinks that they all lead to mate eventually, so it doesn't know which to pick
-      It can't see far enough to know the exact mate
-
-      To do list:
-       - dark squares are light squares
-       - zobrist hashing and repetition draws (bookmark)
-       - test simple checkmates again
-       - transposition table
-       - opening book
-       - iterative deepening
-       - better move ordering
-       - qsearch (done but now its very slow... try move ordering?)
-       - better eval function (done for now)
-       - transposition tables
-       - eventually switch away from SDL for better quality... Maybe try Unity?
-         or UE4?
-       - store the material in the board state
-       - add checks to qsearch
-
-
-      before adding new eval, we have 3527924 positions searched after Nd5
-
-      consider doing what I do in evaluate() incrementally in make_move
-      then just access the evaluation of the board when evaluating
-
-      now I would like to make a better in_check function. This will consider
-      the opponent's last move, and see if the piece they moved is attacking
-      the king. Also I need to make a ray between where the piece came from,
-      and see if that intersects with an opponent sliding piece
-
-      outline for function
-      1. check to see if the last move was no move
-            if so, get the number of attackers in the traditional way
-      2. look at their last move and see the piece that they just moved.
-      Get the attacks of that piece from that square and see if it attacks
-      our king. Then use the ray functions to get the ray from the square 
-      that their piece came from and see if they are in check
-
-      test this function a lot for all types of checks
-
-      I can use this function in place of the move generation and for when 
-      im searching
+    Big things to do:
+    1. why does it sometimes think there are mates when there aren't?
+    2. Draw eval is so bad rn
 */

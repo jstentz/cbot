@@ -70,3 +70,26 @@ hash_val zobrist_hash() {
     }
     return h;
 }
+
+hash_val hash_pieces() {
+    hash_val h = 0;
+    for(int i = 0; i < 64; i++) {
+        piece pc = b.sq_board[i];
+        if(pc != EMPTY) {
+            size_t j = INDEX_FROM_PIECE(pc);
+            h ^= zobrist_table.table[i][j];
+        }
+    }
+    return h;
+}
+
+hash_val hash_pawns() {
+    hash_val h = 0;
+    for(int i = 0; i < 64; i++) {
+        piece pc = b.sq_board[i];
+        if(PIECE(pc) == PAWN) {
+            h ^= zobrist_table.table[i][INDEX_FROM_PIECE(pc)];
+        }
+    }
+    return h;
+}

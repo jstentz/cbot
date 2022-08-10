@@ -141,6 +141,8 @@ void decode_fen(string fen) {
     b.state_history.push(state);
     update_boards();
     b.board_hash = zobrist_hash(); // hash the board initially
+    b.piece_hash = hash_pieces(); // hash the pieces initially
+    b.pawn_hash = hash_pawns(); // hash the pawns initially
     game_history.insert(b.board_hash); // might not need this
 
     /* more eval stuff */

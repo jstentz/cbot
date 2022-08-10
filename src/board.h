@@ -138,6 +138,8 @@ typedef struct Board
 
     /* hashing items */
     hash_val board_hash;
+    hash_val piece_hash;
+    hash_val pawn_hash;
 
     /* evaluation items */
     int material_score;

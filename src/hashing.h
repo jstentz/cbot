@@ -32,4 +32,8 @@ zobrist_table_t init_zobrist();
 
 hash_val zobrist_hash();
 
+hash_val hash_pieces();
+
+hash_val hash_pawns();
+
 hash_val rand64();

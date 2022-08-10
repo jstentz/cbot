@@ -284,9 +284,9 @@ int evaluate_queens_mobility() {
 /* everything in here is scored in white's perspective until the end */
 int evaluate() {
     /* probe the eval table */
-    int table_score = probe_eval_table(b.board_hash);
+    int table_score = probe_eval_table(b.piece_hash); /* use the pieces since that's all that matters for eval */
     // cout << "probed!" << endl;
-    if(table_score != FAILED_LOOKUP)
+    if(table_score != FAILED_LOOKUP) 
         return table_score;
 
 
@@ -320,9 +320,9 @@ int evaluate() {
         else endgame_eval += mop_up_eval(B);
     }
     
-    /* add a tempo bonus to middle game */
-    if(b.t == W) middlegame_eval += 10;
-    else         middlegame_eval -= 10;
+    // /* add a tempo bonus to middle game */
+    // if(b.t == W) middlegame_eval += 10;
+    // else         middlegame_eval -= 10;
 
     int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
     int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
@@ -360,7 +360,7 @@ int evaluate() {
     /* save the evaluation we just made */
     /* here I just need to hash the board's pieces 
     add this after I finish unmake move */
-    store_eval_entry(b.board_hash, eval);
+    store_eval_entry(b.piece_hash, eval); /* use just the pieces again */
     return eval;
 }
 

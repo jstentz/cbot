@@ -253,9 +253,12 @@ move_t find_best_move() {
     hash_val h = b.board_hash;
     game_history.insert(h); // insert the board hash from the user's move
 
+    int search_time = 1250;
+
     /* check in opening book */
     move_t opening_move = get_opening_move();
     if(opening_move != NO_MOVE) {
+        this_thread::sleep_for(chrono::milliseconds(search_time));
         std::cout << "Played from book!" << endl << endl;
 
         /* include the move that was made in the history */
@@ -279,7 +282,7 @@ move_t find_best_move() {
     while(true) {
         // cout << search_complete << endl;
         tStop = clock();
-        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > 1.25){
+        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
             abort_search = true;
             // cout << "aborted!" << endl;
             break;

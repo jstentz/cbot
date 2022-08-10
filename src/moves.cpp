@@ -656,13 +656,14 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
     return;
 }
 
-/* need to fix the eval items for this and unmake move */ 
 void make_move(move_t move) {
     /* make a copy of the irreversible aspects of the position */
     state_t prev_state = b.state_history.top();
     state_t state = prev_state;
 
-    hash_val h = b.board_hash;
+    hash_val board_hash = b.board_hash;
+    hash_val piece_hash = b.piece_hash;
+    hash_val pawn_hash = b.pawn_hash;
 
     int from = FROM(move);
     int to = TO(move);
@@ -682,7 +683,12 @@ void make_move(move_t move) {
         b.positional_score -= piece_scores[INDEX_FROM_PIECE(moving_piece)][from];
     
     /* XOR out the piece from hash value */
-    h ^= zobrist_table.table[from][INDEX_FROM_PIECE(moving_piece)];
+    hash_val from_zobrist = zobrist_table.table[from][INDEX_FROM_PIECE(moving_piece)];
+    board_hash ^= from_zobrist;
+    piece_hash ^= from_zobrist;
+    if(PIECE(moving_piece) == PAWN) {
+        pawn_hash ^= from_zobrist;
+    }
     
     /* update the king locations and castling rights */
     if(moving_piece == (WHITE | KING)) {
@@ -717,16 +723,23 @@ void make_move(move_t move) {
     piece promo_piece = EMPTY;
     bitboard *promo_board;
     int opponent_pawn_sq;
+    // std::cout << to << std::endl;
+    hash_val to_zobrist = zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)];
     switch (flags) {
         case QUIET_MOVE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             b.sq_board[to] = moving_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)]; // place moving piece in hash value
+            board_hash ^= to_zobrist; // place moving piece in hash value
+            piece_hash ^= to_zobrist;
+            if(PIECE(moving_piece) == PAWN) 
+                pawn_hash ^= to_zobrist;
             break;
         case DOUBLE_PUSH:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             b.sq_board[to] = moving_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)]; // place the pawn in hash value
+            board_hash ^= to_zobrist; // place the pawn in hash value
+            piece_hash ^= to_zobrist;
+            pawn_hash ^= to_zobrist;
             /* 
                 if it's a double pawn push and we are starting on rank 2, its white pushing
                 otherwise it is black pushing the pawn
@@ -740,15 +753,18 @@ void make_move(move_t move) {
         case KING_SIDE_CASTLE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             b.sq_board[to] = moving_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)]; // place the king in hash value
+            board_hash ^= to_zobrist; // place the king in hash value
+            piece_hash ^= to_zobrist;
             if(from == E1) { // white king side
                 rook_board = &b.piece_boards[WHITE_ROOKS_INDEX];
                 REM_PIECE(*rook_board, H1);
                 PLACE_PIECE(*rook_board, F1);
                 b.sq_board[H1] = EMPTY;
                 b.sq_board[F1] = WHITE | ROOK;
-                h ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
-                h ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // place white rook on F1
+                board_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
+                board_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // place white rook on F1
+                piece_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
+                piece_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // place white rook on F1
                 b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][H1];
                 b.positional_score += piece_scores[WHITE_ROOKS_INDEX][F1];
             }
@@ -758,8 +774,10 @@ void make_move(move_t move) {
                 PLACE_PIECE(*rook_board, F8);
                 b.sq_board[H8] = EMPTY;
                 b.sq_board[F8] = BLACK | ROOK;
-                h ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
-                h ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // place black rook on F8
+                board_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
+                board_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // place black rook on F8
+                piece_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
+                piece_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // place black rook on F8
                 b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][H8];
                 b.positional_score += piece_scores[BLACK_ROOKS_INDEX][F8];
             }
@@ -767,15 +785,18 @@ void make_move(move_t move) {
         case QUEEN_SIDE_CASTLE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             b.sq_board[to] = moving_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)]; // place the king in hash value
+            board_hash ^= to_zobrist; // place the king in hash value
+            // piece_hash ^= to_zobrist;
             if(from == E1) { // white queen side
                 rook_board = &b.piece_boards[WHITE_ROOKS_INDEX];
                 REM_PIECE(*rook_board, A1);
                 PLACE_PIECE(*rook_board, D1);
                 b.sq_board[A1] = EMPTY;
                 b.sq_board[D1] = WHITE | ROOK;
-                h ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
-                h ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // place white rook on D1
+                board_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
+                board_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // place white rook on D1
+                piece_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
+                piece_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // place white rook on D1
                 b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][A1];
                 b.positional_score += piece_scores[WHITE_ROOKS_INDEX][D1];
             }
@@ -785,15 +806,20 @@ void make_move(move_t move) {
                 PLACE_PIECE(*rook_board, D8);
                 b.sq_board[A8] = EMPTY;
                 b.sq_board[D8] = BLACK | ROOK;
-                h ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
-                h ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // place black rook on D8
+                board_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
+                board_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // place black rook on D8
+                piece_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
+                piece_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // place black rook on D8
                 b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][A8];
                 b.positional_score += piece_scores[BLACK_ROOKS_INDEX][D8];
             }
             break;
         case NORMAL_CAPTURE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)]; // place the moving piece in hash value
+            board_hash ^= to_zobrist; // place the moving piece in hash value
+            piece_hash ^= to_zobrist;
+            if(PIECE(moving_piece) == PAWN) 
+                pawn_hash ^= to_zobrist;
 
             /* remove the captured piece from it's bitboard */
             captured_piece = b.sq_board[to];
@@ -802,7 +828,10 @@ void make_move(move_t move) {
 
             b.sq_board[to] = moving_piece;
 
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)];
+            if(PIECE(captured_piece) == PAWN)
+                pawn_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)];
 
             /* remove castling rights if rook is captured in corner */
             if(PIECE(captured_piece) == ROOK) {
@@ -815,7 +844,9 @@ void make_move(move_t move) {
         case EN_PASSANT_CAPTURE:
             PLACE_PIECE(*moving_piece_board, to); // place the moving piece
             b.sq_board[to] = moving_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)]; // place the pawn in hash value
+            board_hash ^= to_zobrist; // place the pawn in hash value
+            piece_hash ^= to_zobrist;
+            pawn_hash ^= to_zobrist;
 
             /* distinguish between white and black en passant */
             opponent_pawn_sq = (RANK(to) == RANK_6) ? (to - 8) : (to + 8);
@@ -825,88 +856,98 @@ void make_move(move_t move) {
             captured_board = &b.piece_boards[INDEX_FROM_PIECE(captured_piece)];
             REM_PIECE(*captured_board, opponent_pawn_sq);
             b.sq_board[opponent_pawn_sq] = EMPTY;
-            h ^= zobrist_table.table[opponent_pawn_sq][INDEX_FROM_PIECE(captured_piece)]; // remove the captured pawn from hash value
+            board_hash ^= zobrist_table.table[opponent_pawn_sq][INDEX_FROM_PIECE(captured_piece)]; // remove the captured pawn from hash value
+            piece_hash ^= zobrist_table.table[opponent_pawn_sq][INDEX_FROM_PIECE(captured_piece)];
+            pawn_hash ^= zobrist_table.table[opponent_pawn_sq][INDEX_FROM_PIECE(captured_piece)];
             break;
         case KNIGHT_PROMO_CAPTURE:
             /* remove the captured piece from it's bitboard */
             captured_piece = b.sq_board[to];
             captured_board = &b.piece_boards[INDEX_FROM_PIECE(captured_piece)];
             REM_PIECE(*captured_board, to);
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)];
             /* fallthrough */
         case KNIGHT_PROMO:
             if(b.t == W) {promo_piece = WHITE | KNIGHT; promo_board = &b.piece_boards[WHITE_KNIGHTS_INDEX];}
             else         {promo_piece = BLACK | KNIGHT; promo_board = &b.piece_boards[BLACK_KNIGHTS_INDEX];}
             PLACE_PIECE(*promo_board, to);
             b.sq_board[to] = promo_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place knight in hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place knight in hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
             break;
         case BISHOP_PROMO_CAPTURE:
             /* remove the captured piece from it's bitboard */
             captured_piece = b.sq_board[to];
             captured_board = &b.piece_boards[INDEX_FROM_PIECE(captured_piece)];
             REM_PIECE(*captured_board, to);
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)];
             /* fallthrough */
         case BISHOP_PROMO:
             if(b.t == W) {promo_piece = WHITE | BISHOP; promo_board = &b.piece_boards[WHITE_BISHOPS_INDEX];}
             else         {promo_piece = BLACK | BISHOP; promo_board = &b.piece_boards[BLACK_BISHOPS_INDEX];}
             PLACE_PIECE(*promo_board, to);
             b.sq_board[to] = promo_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place bishop in hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place bishop in hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
             break;
         case ROOK_PROMO_CAPTURE:
             /* remove the captured piece from it's bitboard */
             captured_piece = b.sq_board[to];
             captured_board = &b.piece_boards[INDEX_FROM_PIECE(captured_piece)];
             REM_PIECE(*captured_board, to);
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)];
             /* fallthrough */
         case ROOK_PROMO:
             if(b.t == W) {promo_piece = WHITE | ROOK; promo_board = &b.piece_boards[WHITE_ROOKS_INDEX];}
             else         {promo_piece = BLACK | ROOK; promo_board = &b.piece_boards[BLACK_ROOKS_INDEX];}
             PLACE_PIECE(*promo_board, to);
             b.sq_board[to] = promo_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place rook in hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place rook in hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
             break;
         case QUEEN_PROMO_CAPTURE:
             /* remove the captured piece from it's bitboard */
             captured_piece = b.sq_board[to];
             captured_board = &b.piece_boards[INDEX_FROM_PIECE(captured_piece)];
             REM_PIECE(*captured_board, to);
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)]; // remove the captured piece from hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(captured_piece)];
             /* fallthrough */
         case QUEEN_PROMO:
             if(b.t == W) {promo_piece = WHITE | QUEEN; promo_board = &b.piece_boards[WHITE_QUEENS_INDEX];}
             else         {promo_piece = BLACK | QUEEN; promo_board = &b.piece_boards[BLACK_QUEENS_INDEX];}
             PLACE_PIECE(*promo_board, to);
             b.sq_board[to] = promo_piece;
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place queen in hash value
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)]; // place queen in hash value
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
             break;
     }
 
     /* update hash value castling rights */
     if(b.t == W) { // castling rights have changed
         if(WHITE_KING_SIDE(prev_state) && !WHITE_KING_SIDE(state))
-            h ^= zobrist_table.white_king_side;
+            board_hash ^= zobrist_table.white_king_side;
         if(WHITE_QUEEN_SIDE(prev_state) && !WHITE_QUEEN_SIDE(state))
-            h ^= zobrist_table.white_queen_side;
+            board_hash ^= zobrist_table.white_queen_side;
     }
     else { 
         if(BLACK_KING_SIDE(prev_state) && !BLACK_KING_SIDE(state))
-            h ^= zobrist_table.black_king_side;
+            board_hash ^= zobrist_table.black_king_side;
         if(BLACK_QUEEN_SIDE(prev_state) && !BLACK_QUEEN_SIDE(state))
-            h ^= zobrist_table.black_queen_side;
+            board_hash ^= zobrist_table.black_queen_side;
     }
 
     /* update en passant file in hash value */
     square prev_en_passant_sq = (square)EN_PASSANT_SQ(prev_state);
     square curr_en_passant_sq = (square)EN_PASSANT_SQ(state);
     if(prev_en_passant_sq != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(prev_en_passant_sq)]; // remove the last board's en passant from hash value
+        board_hash ^= zobrist_table.en_passant_file[FILE(prev_en_passant_sq)]; // remove the last board's en passant from hash value
     
     if(curr_en_passant_sq != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
+        board_hash ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
 
     /* add the last captured piece to the state */
     SET_LAST_CAPTURE(state, captured_piece);
@@ -944,11 +985,13 @@ void make_move(move_t move) {
     
     b.t = !b.t;
     /* reverse the black_to_move hash */
-    h ^= zobrist_table.black_to_move;
+    board_hash ^= zobrist_table.black_to_move;
 
     update_boards();
     SET_LAST_MOVE(state, move);
-    b.board_hash = h;
+    b.board_hash = board_hash;
+    b.piece_hash = piece_hash;
+    b.pawn_hash = pawn_hash;
     b.state_history.push(state);
     return;
 }
@@ -957,13 +1000,15 @@ void unmake_move(move_t move) {
     /* make a copy of the irreversible aspects of the position */
     state_t state = b.state_history.top();
 
-    hash_val h = b.board_hash;
+    hash_val board_hash = b.board_hash;
+    hash_val piece_hash = b.piece_hash;
+    hash_val pawn_hash = b.pawn_hash;
 
     int from = FROM(move);
     int to = TO(move);
     int flags = FLAGS(move);
 
-    piece moving_piece;
+    piece moving_piece = b.sq_board[to];
     bitboard *moving_piece_board;
     bitboard *rook_board;
     piece captured_piece = EMPTY;
@@ -971,21 +1016,28 @@ void unmake_move(move_t move) {
     piece promo_piece = EMPTY;
     bitboard *promo_board;
     int opponent_pawn_sq;
-    int mv_index;
+    int mv_index = INDEX_FROM_PIECE(moving_piece);
     int cap_index;
+    hash_val from_zobrist = zobrist_table.table[from][mv_index];
+    hash_val to_zobrist = zobrist_table.table[to][mv_index];
     switch (flags) {
         case QUIET_MOVE:
             /* the moving piece will always be the same piece unless we are dealing with a promotion */
             moving_piece = b.sq_board[to];
-            mv_index = INDEX_FROM_PIECE(moving_piece);
             moving_piece_board = &b.piece_boards[mv_index];
             PLACE_PIECE(*moving_piece_board, from);
             REM_PIECE(*moving_piece_board, to);
             b.sq_board[from] = moving_piece;
             b.sq_board[to] = EMPTY;
 
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][mv_index];
+            board_hash ^= from_zobrist;
+            board_hash ^= to_zobrist;
+            piece_hash ^= from_zobrist;
+            piece_hash ^= to_zobrist;
+            if(PIECE(moving_piece) == PAWN) {
+                pawn_hash ^= from_zobrist;
+                pawn_hash ^= to_zobrist;
+            }
             break;
         case DOUBLE_PUSH:
             moving_piece = b.sq_board[to];
@@ -996,8 +1048,12 @@ void unmake_move(move_t move) {
             b.sq_board[from] = moving_piece;
             b.sq_board[to] = EMPTY;
 
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][mv_index];
+            board_hash ^= from_zobrist;
+            board_hash ^= to_zobrist;
+            piece_hash ^= from_zobrist;
+            piece_hash ^= to_zobrist;
+            pawn_hash ^= from_zobrist;
+            pawn_hash ^= to_zobrist;
             break;
         case KING_SIDE_CASTLE:
             moving_piece = b.sq_board[to];
@@ -1008,8 +1064,10 @@ void unmake_move(move_t move) {
             b.sq_board[from] = moving_piece;
             b.sq_board[to] = EMPTY;
             
-            h ^= zobrist_table.table[to][mv_index]; /* remove the castled king from hash value */
-            h ^= zobrist_table.table[from][mv_index]; /* place the uncastled king in hash value */
+            board_hash ^= from_zobrist; /* remove the castled king from hash value */
+            board_hash ^= to_zobrist; /* place the uncastled king in hash value */
+            piece_hash ^= from_zobrist;
+            piece_hash ^= to_zobrist;
 
             if(from == E1) { // white king side
                 rook_board = &b.piece_boards[WHITE_ROOKS_INDEX];
@@ -1017,8 +1075,10 @@ void unmake_move(move_t move) {
                 PLACE_PIECE(*rook_board, H1);
                 b.sq_board[F1] = EMPTY;
                 b.sq_board[H1] = WHITE | ROOK;
-                h ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
-                h ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // place white rook on H1
+                board_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
+                board_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // place white rook on H1
+                piece_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
+                piece_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // place white rook on H1
                 b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][F1];
                 b.positional_score += piece_scores[WHITE_ROOKS_INDEX][H1];
             }
@@ -1028,8 +1088,10 @@ void unmake_move(move_t move) {
                 PLACE_PIECE(*rook_board, H8);
                 b.sq_board[F8] = EMPTY;
                 b.sq_board[H8] = BLACK | ROOK;
-                h ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
-                h ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // place black rook on H8
+                board_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
+                board_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // place black rook on H8
+                piece_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
+                piece_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // place black rook on H8
                 b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][F8];
                 b.positional_score += piece_scores[BLACK_ROOKS_INDEX][H8];
             }
@@ -1043,8 +1105,10 @@ void unmake_move(move_t move) {
             b.sq_board[from] = moving_piece;
             b.sq_board[to] = EMPTY;
             
-            h ^= zobrist_table.table[to][mv_index]; /* remove the castled king from hash value */
-            h ^= zobrist_table.table[from][mv_index]; /* place the uncastled king in hash value */
+            board_hash ^= from_zobrist; /* remove the castled king from hash value */
+            board_hash ^= to_zobrist; /* place the uncastled king in hash value */
+            piece_hash ^= from_zobrist;
+            piece_hash ^= to_zobrist;
 
             if(from == E1) { // white queen side
                 rook_board = &b.piece_boards[WHITE_ROOKS_INDEX];
@@ -1052,8 +1116,10 @@ void unmake_move(move_t move) {
                 PLACE_PIECE(*rook_board, A1);
                 b.sq_board[D1] = EMPTY;
                 b.sq_board[A1] = WHITE | ROOK;
-                h ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
-                h ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // place white rook on A1
+                board_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
+                board_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // place white rook on A1
+                piece_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
+                piece_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // place white rook on A1
                 b.positional_score -= piece_scores[WHITE_ROOKS_INDEX][D1];
                 b.positional_score += piece_scores[WHITE_ROOKS_INDEX][A1];
             }
@@ -1063,8 +1129,10 @@ void unmake_move(move_t move) {
                 PLACE_PIECE(*rook_board, A8);
                 b.sq_board[D8] = EMPTY;
                 b.sq_board[A8] = BLACK | ROOK;
-                h ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
-                h ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // place black rook on A8
+                board_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
+                board_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // place black rook on A8
+                piece_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
+                piece_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // place black rook on A8
                 b.positional_score -= piece_scores[BLACK_ROOKS_INDEX][D8];
                 b.positional_score += piece_scores[BLACK_ROOKS_INDEX][A8];
             }
@@ -1077,8 +1145,14 @@ void unmake_move(move_t move) {
             REM_PIECE(*moving_piece_board, to);
             b.sq_board[from] = moving_piece;
 
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][mv_index];
+            board_hash ^= from_zobrist;
+            board_hash ^= to_zobrist;
+            piece_hash ^= from_zobrist;
+            piece_hash ^= to_zobrist;
+            if(PIECE(moving_piece) == PAWN) {
+                pawn_hash ^= from_zobrist;
+                pawn_hash ^= to_zobrist;
+            }
 
             /* place the captured piece back where it was captured from */
             captured_piece = LAST_CAPTURE(state);
@@ -1087,7 +1161,10 @@ void unmake_move(move_t move) {
             PLACE_PIECE(*captured_board, to);
             b.sq_board[to] = captured_piece;
 
-            h ^= zobrist_table.table[to][cap_index]; /* place the captured piece in the hash value */
+            board_hash ^= zobrist_table.table[to][cap_index]; /* place the captured piece in the hash value */
+            piece_hash ^= zobrist_table.table[to][cap_index];
+            if(PIECE(captured_piece) == PAWN)
+                pawn_hash ^= zobrist_table.table[to][cap_index];
             break;
         case EN_PASSANT_CAPTURE:
             moving_piece = b.sq_board[to];
@@ -1098,8 +1175,12 @@ void unmake_move(move_t move) {
             b.sq_board[from] = moving_piece;
             b.sq_board[to] = EMPTY;
 
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][mv_index];
+            board_hash ^= from_zobrist;
+            board_hash ^= to_zobrist;
+            piece_hash ^= from_zobrist;
+            piece_hash ^= to_zobrist;
+            pawn_hash ^= from_zobrist;
+            pawn_hash ^= to_zobrist;
 
             /* distinguish between white and black en passant */
             opponent_pawn_sq = (RANK(to) == RANK_6) ? (to - 8) : (to + 8);
@@ -1110,7 +1191,9 @@ void unmake_move(move_t move) {
             captured_board = &b.piece_boards[cap_index];
             PLACE_PIECE(*captured_board, opponent_pawn_sq);
             b.sq_board[opponent_pawn_sq] = captured_piece;
-            h ^= zobrist_table.table[opponent_pawn_sq][cap_index]; // place the captured pawn in hash value
+            board_hash ^= zobrist_table.table[opponent_pawn_sq][cap_index]; // place the captured pawn in hash value
+            piece_hash ^= zobrist_table.table[opponent_pawn_sq][cap_index];
+            pawn_hash ^= zobrist_table.table[opponent_pawn_sq][cap_index];
             break;
         case KNIGHT_PROMO_CAPTURE:
             /* place the captured piece back */
@@ -1119,7 +1202,8 @@ void unmake_move(move_t move) {
             captured_board = &b.piece_boards[cap_index];
             PLACE_PIECE(*captured_board, to);
             b.sq_board[to] = captured_piece;
-            h ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            board_hash ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            piece_hash ^= zobrist_table.table[to][cap_index];
             /* fallthrough */
         case KNIGHT_PROMO:
             /* if it is currently black's turn, then white must have been the one to promote */
@@ -1138,8 +1222,11 @@ void unmake_move(move_t move) {
             mv_index = INDEX_FROM_PIECE(moving_piece);
             PLACE_PIECE(*moving_piece_board, from); /* place the pawn back */
             b.sq_board[from] = moving_piece;
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            board_hash ^= zobrist_table.table[from][mv_index];
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            piece_hash ^= zobrist_table.table[from][mv_index];
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            pawn_hash ^= zobrist_table.table[from][mv_index];
 
             REM_PIECE(*promo_board, to);
             if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
@@ -1152,7 +1239,8 @@ void unmake_move(move_t move) {
             captured_board = &b.piece_boards[cap_index];
             PLACE_PIECE(*captured_board, to);
             b.sq_board[to] = captured_piece;
-            h ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            board_hash ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            piece_hash ^= zobrist_table.table[to][cap_index];
             /* fallthrough */
         case BISHOP_PROMO:
             /* if it is currently black's turn, then white must have been the one to promote */
@@ -1171,8 +1259,11 @@ void unmake_move(move_t move) {
             mv_index = INDEX_FROM_PIECE(moving_piece);
             PLACE_PIECE(*moving_piece_board, from); /* place the pawn back */
             b.sq_board[from] = moving_piece;
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            board_hash ^= zobrist_table.table[from][mv_index];
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            piece_hash ^= zobrist_table.table[from][mv_index];
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            pawn_hash ^= zobrist_table.table[from][mv_index];
 
             REM_PIECE(*promo_board, to);
             if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
@@ -1185,7 +1276,8 @@ void unmake_move(move_t move) {
             captured_board = &b.piece_boards[cap_index];
             PLACE_PIECE(*captured_board, to);
             b.sq_board[to] = captured_piece;
-            h ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            board_hash ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            piece_hash ^= zobrist_table.table[to][cap_index];
             /* fallthrough */
         case ROOK_PROMO:
             /* if it is currently black's turn, then white must have been the one to promote */
@@ -1204,8 +1296,11 @@ void unmake_move(move_t move) {
             mv_index = INDEX_FROM_PIECE(moving_piece);
             PLACE_PIECE(*moving_piece_board, from); /* place the pawn back */
             b.sq_board[from] = moving_piece;
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            board_hash ^= zobrist_table.table[from][mv_index];
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            piece_hash ^= zobrist_table.table[from][mv_index];
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            pawn_hash ^= zobrist_table.table[from][mv_index];
 
             REM_PIECE(*promo_board, to);
             if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
@@ -1218,7 +1313,8 @@ void unmake_move(move_t move) {
             captured_board = &b.piece_boards[cap_index];
             PLACE_PIECE(*captured_board, to);
             b.sq_board[to] = captured_piece;
-            h ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            board_hash ^= zobrist_table.table[to][cap_index]; /* place captured piece back in hash value */
+            piece_hash ^= zobrist_table.table[to][cap_index];
             /* fallthrough */
         case QUEEN_PROMO:
             /* if it is currently black's turn, then white must have been the one to promote */
@@ -1237,8 +1333,11 @@ void unmake_move(move_t move) {
             mv_index = INDEX_FROM_PIECE(moving_piece);
             PLACE_PIECE(*moving_piece_board, from); /* place the pawn back */
             b.sq_board[from] = moving_piece;
-            h ^= zobrist_table.table[from][mv_index];
-            h ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            board_hash ^= zobrist_table.table[from][mv_index];
+            board_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            piece_hash ^= zobrist_table.table[from][mv_index];
+            piece_hash ^= zobrist_table.table[to][INDEX_FROM_PIECE(promo_piece)];
+            pawn_hash ^= zobrist_table.table[from][mv_index];
 
             REM_PIECE(*promo_board, to);
             if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
@@ -1251,7 +1350,7 @@ void unmake_move(move_t move) {
     else if(moving_piece == (BLACK | KING))
         b.black_king_loc = (square)from;
 
-    h ^= zobrist_table.black_to_move;
+    board_hash ^= zobrist_table.black_to_move;
 
     b.state_history.pop(); // go back to previous board's irreversible state
     state_t prev_state = b.state_history.top();
@@ -1259,24 +1358,24 @@ void unmake_move(move_t move) {
     /* update hash value castling rights */
     if(b.t == B) { // castling rights have changed
         if(WHITE_KING_SIDE(prev_state) && !WHITE_KING_SIDE(state))
-            h ^= zobrist_table.white_king_side;
+            board_hash ^= zobrist_table.white_king_side;
         if(WHITE_QUEEN_SIDE(prev_state) && !WHITE_QUEEN_SIDE(state))
-            h ^= zobrist_table.white_queen_side;
+            board_hash ^= zobrist_table.white_queen_side;
     }
     else { 
         if(BLACK_KING_SIDE(prev_state) && !BLACK_KING_SIDE(state))
-            h ^= zobrist_table.black_king_side;
+            board_hash ^= zobrist_table.black_king_side;
         if(BLACK_QUEEN_SIDE(prev_state) && !BLACK_QUEEN_SIDE(state))
-            h ^= zobrist_table.black_queen_side;
+            board_hash ^= zobrist_table.black_queen_side;
     }
 
     /* update en passant file in hash value */
     square prev_en_passant_sq = (square)EN_PASSANT_SQ(prev_state);
     square curr_en_passant_sq = (square)EN_PASSANT_SQ(state);
     if(prev_en_passant_sq != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(prev_en_passant_sq)]; // remove the last board's en passant from hash value
+        board_hash ^= zobrist_table.en_passant_file[FILE(prev_en_passant_sq)]; // remove the last board's en passant from hash value
     if(curr_en_passant_sq != NONE)
-        h ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
+        board_hash ^= zobrist_table.en_passant_file[FILE(curr_en_passant_sq)]; // place the current en passant file in hash value
 
     /* update evaluation items */
     if(captured_piece != EMPTY){
@@ -1313,7 +1412,9 @@ void unmake_move(move_t move) {
     }
 
     b.t = !b.t;
-    b.board_hash = h;
+    b.board_hash = board_hash;
+    b.piece_hash = piece_hash;
+    b.pawn_hash = pawn_hash;
     update_boards();
     return;
 }
@@ -1435,10 +1536,10 @@ move_t move_from_notation(string notation) {
     // cout << notation << endl;
     string notation_copy = notation;
     if(notation.length() == 0) {
-        cout << "Empty notation!\n";
+        std::cout << "Empty notation!\n";
         int y;
-        cin >> y;
-        exit(-1);
+        std::cin >> y;
+        std::exit(-1);
     }
     notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
     vector<move_t> moves;
@@ -1525,12 +1626,12 @@ move_t move_from_notation(string notation) {
             if(start_rank == RANK(FROM(move)) && start_file == FILE(FROM(move))) return move;
         }
     }
-    cout << "Move: " << notation_copy << endl;
+    std::cout << "Move: " << notation_copy << endl;
     print_squarewise(b.sq_board);
     int x;
-    cout << "No match found!" << endl;
-    cin >> x;
-    exit(-1); // should match to a move
+    std::cout << "No match found!" << endl;
+    std::cin >> x;
+    std::exit(-1); // should match to a move
 }
 
 string algebraic_notation(move_t move) {

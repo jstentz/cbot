@@ -316,8 +316,8 @@ int evaluate() {
 
     /* mop up eval for winning side */
     if(b.material_score != 0){
-        if(b.material_score > 0) endgame_eval += mop_up_eval(W);
-        else endgame_eval += mop_up_eval(B);
+        if(b.material_score > 0) endgame_eval += mop_up_eval(W) * 5;
+        else endgame_eval += mop_up_eval(B) * 5;
     }
     
     // /* add a tempo bonus to middle game */

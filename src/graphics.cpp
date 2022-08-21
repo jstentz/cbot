@@ -185,7 +185,7 @@ int main(int argc, char** argv){
     LoadPieceTextures();
 
     decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); /* starting position */
-    // decode_fen("4k3/2nnnn2/8/8/8/8/8/3QK3 w - - 0 1"); /* fun position */
+    // decode_fen("8/8/rnbqkbnr/pppppppp/8/PPPPPPPP/RNBQKBNR/8 w KQkq - 0 1"); /* fun position */
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */
@@ -196,7 +196,7 @@ int main(int argc, char** argv){
     // decode_fen("7k/5P2/5K2/7P/1p6/1P6/8/8 b - - 0 1"); /* rook promotion */
     // decode_fen("8/2q1P1k1/8/5K2/8/8/5B2/8 w - - 0 1"); /* knight promotion + bishop knight mate */
     // decode_fen("8/7p/8/7k/8/2NN4/2K5/8 w - - 0 1"); /* checkmate with 2 knights */
-    // decode_fen("k2K4/8/8/8/8/8/8/8 w - - 0 1"); /* lone kings */
+    // decode_fen("8/8/8/3k4/8/8/8/6KR w - - 0 1"); /* rook mate */
 
     // decode_fen("7k/6q1/8/8/3p4/8/4P3/1K6 b - - 0 1"); /* testing new check detection */
     // decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"); /* testing move ordering */

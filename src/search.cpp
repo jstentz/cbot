@@ -225,6 +225,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
             alpha = 0;
         }
         flags = EXACT; /* we know the exact score of checkmated or stalemated positions */
+        depth = INT_MAX; /* this position is searched to the best depth if we are in checkmate or stalemate */
     }
 
     nodes_reached++;

@@ -61,8 +61,8 @@ void init_tt_table();
 
 void free_tt_table();
 
-int probe_tt_table(hash_val h, int depth, int alpha, int beta);
+int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta);
 
-void store_entry(hash_val key, int depth, int flags, int score, move_t best_move);
+void store_entry(hash_val key, int depth, int ply_searched, int flags, int score, move_t best_move);
 
 void clear_tt_table();

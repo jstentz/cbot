@@ -140,7 +140,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
 
     /* look up the hash value in the transposition table 
        this will set the tt best move global variable */
-    int tt_score = probe_tt_table(h, depth, alpha, beta);
+    int tt_score = probe_tt_table(h, depth, ply_from_root, alpha, beta);
     if(tt_score != FAILED_LOOKUP) {
         nodes_reached++;
         return tt_score;
@@ -161,7 +161,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
         int score = -search_moves(ply_from_root, depth - reduce - 1, -beta, -beta + 1, NO_PV, NO_NULL);
         unmake_nullmove();
         if(abort_search) return 0;
-        store_entry(h, depth, BETA, beta, NO_MOVE);
+        store_entry(h, depth, ply_from_root, BETA, beta, NO_MOVE);
         if(score >= beta) return beta;
     }
 
@@ -195,7 +195,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
             return 0;
         
         if(evaluation >= beta) {
-            store_entry(h, depth, BETA, beta, move);
+            store_entry(h, depth, ply_from_root, BETA, beta, move);
             nodes_reached++;
             beta_cutoffs++;
             return beta;
@@ -231,12 +231,118 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     nodes_reached++;
 
     /* store this in the transposition table */
-    store_entry(h, depth, flags, alpha, best_move);
+    store_entry(h, depth, ply_from_root, flags, alpha, best_move);
 
     if(ply_from_root == 0)
         search_complete = true;
     return alpha;
 }
+
+int simple_search(int ply_from_root, int depth, int alpha, int beta) {
+    if(abort_search)
+        return 0;
+
+    vector<move_t> moves;
+    hash_val h = b.board_hash;
+
+    int flags = ALPHA;
+
+    // if(ply_from_root > 0) {
+    //     /* check for repetition draw */
+    //     if(probe_game_history(h))
+    //         return 0;
+    // }
+
+    bool check_flag;
+    check_flag = in_check();
+
+    /* look up the hash value in the transposition table 
+       this will set the tt best move global variable */
+    int tt_score = probe_tt_table(h, depth, ply_from_root, alpha, beta);
+    if(tt_score != FAILED_LOOKUP) {
+        nodes_reached++;
+        return tt_score;
+    }
+
+    if(depth == 0) {
+        return evaluate();
+    }
+
+    move_t best_tt_move = TT.best_move;
+    generate_moves(&moves);
+    order_moves(&moves, NO_SCORE(best_tt_move));
+    
+    move_t best_move = NO_MOVE;
+    int num_moves = moves.size();
+    move_t move;
+    int evaluation;
+    for(int i = 0; i < num_moves; i++) {
+        move = moves[i];
+        make_move(move);
+        evaluation = -simple_search(ply_from_root + 1, depth - 1, -beta, -alpha);
+        unmake_move(move);
+
+        if(abort_search)
+            return 0;
+        
+        if(evaluation >= beta) {
+            store_entry(h, depth, ply_from_root, BETA, beta, move);
+            nodes_reached++;
+            beta_cutoffs++;
+            return beta;
+        }
+        /* found a new best move here! */
+        if(evaluation > alpha) {
+            flags = EXACT;
+            alpha = evaluation;
+            best_move = move;
+            /* if we are at the root node, replace the best move we've seen so far */
+            if(ply_from_root == 0 && !abort_search) {
+                search_result.best_move = best_move;
+                search_result.score = alpha;
+            }
+        }
+    }
+
+    if(num_moves == 0) {
+        nodes_reached++;
+        if(check_flag) { /* checkmate */
+            checkmates++;
+            // alpha = INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
+            return INT_MIN + 1 + ply_from_root; 
+        }
+        else {
+            /* stalemate! */
+            // alpha = 0;
+            return 0;
+        }
+        // flags = EXACT; /* we know the exact score of checkmated or stalemated positions */
+        // depth = INT_MAX; /* this position is searched to the best depth if we are in checkmate or stalemate */
+    }
+
+    nodes_reached++;
+
+    /* store this in the transposition table */
+    store_entry(h, depth, ply_from_root, flags, alpha, best_move);
+
+    if(ply_from_root == 0)
+        search_complete = true;
+    return alpha;
+}
+
+/*
+IMPORTANT NOTE:
+
+I MUST CORRECT THE MATE SCORES IN THE TT BECAUSE THE PLY FROM ROOT IS DIFFERENT 
+DEPENDING ON THE PATH WE GOT TO THAT POSITION, SO THE MATING SCORE WOULD BE DIFFERENT
+
+CHECK SEBLAGUES CODE
+
+https://github.com/SebLague/Chess-AI/blob/main/Assets/Scripts/Core/TranspositionTable.cs
+https://github.com/SebLague/Chess-AI/blob/main/Assets/Scripts/Core/AI/Search.cs
+
+
+*/
 
 move_t find_best_move() {
     /* clear the eval table */
@@ -295,16 +401,28 @@ move_t find_best_move() {
             search_complete = false;
             depth++;
             t = std::thread{search_moves, 0, depth, alpha, beta, CAN_NULL, IS_PV};
+            // t = std::thread{simple_search, 0, depth, alpha, beta};
             // cout << notation_from_move(search_result.best_move) << endl;
         }
         
-        // if(search_result.score > 100000) { // mating score
+        // if(is_mate_score(search_result.score)) { // mating score
         //     abort_search = true;
         //     break;
         // }
     }
     if(t.joinable())
         t.join();
+
+    for (int i = 0; i < 10; i++) {
+        search_moves(0, i, alpha, beta, CAN_NULL, IS_PV);
+    }
+
+    // for (int i = 0; i < 10; i++) {
+    //     simple_search(0, 10, alpha, beta);
+    // }
+
+    // simple_search(0, 10, alpha, beta);
+
     // cout << "After waiting for thread to close: " << notation_from_move(search_result.best_move) << endl;
     // t.join(); /* once we abort wait for it to finish */
     float time_elapsed = (tStop - tStart);
@@ -340,7 +458,7 @@ move_t find_best_move() {
 //     init_tt_table();
 //     init_eval_table();
 //     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     string test_pos_1 = "8/6k1/8/5RK1/8/8/8/8 b - - 0 1";
 //     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
 //     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
 //     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";

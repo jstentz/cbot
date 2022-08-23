@@ -285,7 +285,6 @@ int evaluate_queens_mobility() {
 int evaluate() {
     /* probe the eval table */
     int table_score = probe_eval_table(b.piece_hash); /* use the pieces since that's all that matters for eval */
-    // cout << "probed!" << endl;
     if(table_score != FAILED_LOOKUP) 
         return table_score;
 
@@ -316,8 +315,8 @@ int evaluate() {
 
     /* mop up eval for winning side */
     if(b.material_score != 0){
-        if(b.material_score > 0) endgame_eval += mop_up_eval(W) * 5;
-        else endgame_eval += mop_up_eval(B) * 5;
+        if(b.material_score > 0) endgame_eval += mop_up_eval(W) * 3;
+        else endgame_eval += mop_up_eval(B) * 3;
     }
     
     // /* add a tempo bonus to middle game */
@@ -335,8 +334,8 @@ int evaluate() {
     int rook_mobility = evaluate_rooks_mobility();
     int queen_mobility = evaluate_queens_mobility();
 
-    middlegame_eval += (knight_mobility + bishop_mobility) * 5;
-    endgame_eval += (knight_mobility + bishop_mobility + rook_mobility + queen_mobility) * 5;
+    middlegame_eval += (knight_mobility + bishop_mobility) * 2;
+    endgame_eval += (knight_mobility + bishop_mobility + rook_mobility + queen_mobility) * 2;
 
     /* check for pawn shield */
     bitboard white_king_area = get_king_attacks(white_king_loc);
@@ -370,5 +369,5 @@ bool is_mate_score(int score) {
 
 int moves_until_mate(int mate_score) {
     mate_score = abs(mate_score);
-    return (INT_MAX - mate_score) / 2;
+    return (INT_MAX - mate_score - 1) / 2;
 }

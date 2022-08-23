@@ -1,6 +1,7 @@
 #include "tt.h"
 #include "hashing.h"
 #include "moves.h"
+#include "evaluation.h"
 
 #include <unordered_set>
 #include <cstdlib>
@@ -8,9 +9,7 @@
 history_t game_history;
 
 bool probe_game_history(hash_val h) {
-    if(game_history.find(h) == game_history.end())
-        return false;
-    return true;
+    return game_history.find(h) != game_history.end();
 }
 
 tt_t TT;
@@ -26,17 +25,34 @@ void init_tt_table() {
     TT.best_move = NO_MOVE;
 }
 
-int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
+int correct_retrieved_mate_score(int score, int ply_searched) {
+    if(is_mate_score(score)) {
+        int sign = (score >= 0) ? 1 : -1;
+        return (score * sign - ply_searched) * sign; /* correct it by adding onto it how far in the search we are from the root */
+    }
+    return score;
+}
+
+int correct_stored_mate_score(int score, int ply_searched) {
+    if(is_mate_score(score)) {
+        int sign = (score >= 0) ? 1 : -1;
+        return (score * sign + ply_searched) * sign; /* correct it by adding onto it how far in the search we are from the root */
+    }
+    return score;
+}
+
+int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta) {
     tt_probes++;
     tt_entry entry = TT.table[h % TABLE_SIZE];
     if(entry.key == h) {
         tt_hits++;
         if(entry.depth >= depth) {
+            int corrected_score = correct_retrieved_mate_score(entry.score, ply_searched);
             if(entry.flags == EXACT)
-                return entry.score;
-            if(entry.flags == ALPHA && entry.score <= alpha)
+                return corrected_score;
+            if(entry.flags == ALPHA && corrected_score <= alpha)
                 return alpha;
-            if(entry.flags == BETA && entry.score >= beta)
+            if(entry.flags == BETA && corrected_score >= beta)
                 return beta;
         }
         TT.best_move = entry.best_move;
@@ -47,18 +63,15 @@ int probe_tt_table(hash_val h, int depth, int alpha, int beta) {
     return FAILED_LOOKUP;
 }
 
-// always replace
-void store_entry(hash_val key, int depth, int flags, int score, move_t best_move) {
-    tt_entry* entry = &TT.table[key % TABLE_SIZE];
 
-    /* no need to replace it if we are making it worse */
-    if((entry->key == key) && (entry->depth > depth)) 
-        return;
-    // entry->valid = true;
+// always replace
+void store_entry(hash_val key, int depth, int ply_searched, int flags, int score, move_t best_move) {
+    int corrected_score = correct_stored_mate_score(score, ply_searched);
+    tt_entry* entry = &TT.table[key % TABLE_SIZE];
     entry->key = key;
     entry->depth = depth;
     entry->flags = flags;
-    entry->score = score;
+    entry->score = corrected_score;
     entry->best_move = best_move;
 }
 

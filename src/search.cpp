@@ -225,7 +225,6 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
             alpha = 0;
         }
         flags = EXACT; /* we know the exact score of checkmated or stalemated positions */
-        depth = INT_MAX; /* this position is searched to the best depth if we are in checkmate or stalemate */
     }
 
     nodes_reached++;
@@ -330,19 +329,6 @@ int simple_search(int ply_from_root, int depth, int alpha, int beta) {
     return alpha;
 }
 
-/*
-IMPORTANT NOTE:
-
-I MUST CORRECT THE MATE SCORES IN THE TT BECAUSE THE PLY FROM ROOT IS DIFFERENT 
-DEPENDING ON THE PATH WE GOT TO THAT POSITION, SO THE MATING SCORE WOULD BE DIFFERENT
-
-CHECK SEBLAGUES CODE
-
-https://github.com/SebLague/Chess-AI/blob/main/Assets/Scripts/Core/TranspositionTable.cs
-https://github.com/SebLague/Chess-AI/blob/main/Assets/Scripts/Core/AI/Search.cs
-
-
-*/
 
 move_t find_best_move() {
     /* clear the eval table */

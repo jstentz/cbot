@@ -413,16 +413,6 @@ move_t find_best_move() {
     if(t.joinable())
         t.join();
 
-    for (int i = 0; i < 10; i++) {
-        search_moves(0, i, alpha, beta, CAN_NULL, IS_PV);
-    }
-
-    // for (int i = 0; i < 10; i++) {
-    //     simple_search(0, 10, alpha, beta);
-    // }
-
-    // simple_search(0, 10, alpha, beta);
-
     // cout << "After waiting for thread to close: " << notation_from_move(search_result.best_move) << endl;
     // t.join(); /* once we abort wait for it to finish */
     float time_elapsed = (tStop - tStart);

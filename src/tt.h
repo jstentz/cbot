@@ -22,17 +22,14 @@
 
 #define FAILED_LOOKUP INT_MIN
 
-#define TABLE_SIZE 64000
+#define TABLE_SIZE 65536
 
 typedef unsigned short int uint16_t; 
 
 // I need to learn more about the difference between alpha and beta cuttoffs
 // what is a good size for a transposition table
 
-
-// use a union here
 typedef struct tt {
-    // bool valid;
     hash_val key;
     uint16_t depth;
     char flags;

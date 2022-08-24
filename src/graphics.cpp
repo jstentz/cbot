@@ -185,7 +185,7 @@ int main(int argc, char** argv){
     LoadPieceTextures();
 
     decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); /* starting position */
-    // decode_fen("8/8/rnbqkbnr/pppppppp/8/PPPPPPPP/RNBQKBNR/8 w KQkq - 0 1"); /* fun position */
+    // decode_fen("k7/8/8/8/8/8/8/4KNNN b - - 0 1"); /* fun position */
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
     // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */

@@ -26,7 +26,7 @@ void clear_eval_table() {
 
 int probe_eval_table(hash_val key) {
     eval_probes++;
-    eval_entry entry = eval_table[key % EVAL_SIZE];
+    eval_entry entry = eval_table[key & (EVAL_SIZE - 1)];
     if(entry.key == key) {
         eval_hits++;
         return entry.score;
@@ -35,7 +35,7 @@ int probe_eval_table(hash_val key) {
 }
 
 void store_eval_entry(hash_val key, int score) {
-    eval_entry* entry = &eval_table[key % EVAL_SIZE];
+    eval_entry* entry = &eval_table[key & (EVAL_SIZE - 1)];
     entry->key = key;
     entry->score = score;
 }
@@ -323,29 +323,29 @@ int evaluate() {
     // if(b.t == W) middlegame_eval += 10;
     // else         middlegame_eval -= 10;
 
-    int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
-    int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
+    // int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
+    // int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
 
-    middlegame_eval -= queen_moves_from_white_king * 5;
-    middlegame_eval += queen_moves_from_black_king * 5;
+    // middlegame_eval -= queen_moves_from_white_king * 5;
+    // middlegame_eval += queen_moves_from_black_king * 5;
     
     int knight_mobility = evaluate_knights_mobility();
     int bishop_mobility = evaluate_bishops_mobility();
     int rook_mobility = evaluate_rooks_mobility();
     int queen_mobility = evaluate_queens_mobility();
 
-    middlegame_eval += (knight_mobility + bishop_mobility) * 2;
-    endgame_eval += (knight_mobility + bishop_mobility + rook_mobility + queen_mobility) * 2;
+    middlegame_eval += (knight_mobility + bishop_mobility);
+    endgame_eval += (knight_mobility + bishop_mobility + rook_mobility + queen_mobility);
 
     /* check for pawn shield */
-    bitboard white_king_area = get_king_attacks(white_king_loc);
-    bitboard black_king_area = get_king_attacks(black_king_loc);
+    // bitboard white_king_area = get_king_attacks(white_king_loc);
+    // bitboard black_king_area = get_king_attacks(black_king_loc);
 
-    int white_pawn_shield_penalty =  60 - 20 * pop_count(white_king_area & b.piece_boards[WHITE_PAWNS_INDEX]);
-    int black_pawn_shield_penalty = -60 + 20 * pop_count(black_king_area & b.piece_boards[BLACK_PAWNS_INDEX]);
+    // int white_pawn_shield_penalty =  60 - 20 * pop_count(white_king_area & b.piece_boards[WHITE_PAWNS_INDEX]);
+    // int black_pawn_shield_penalty = -60 + 20 * pop_count(black_king_area & b.piece_boards[BLACK_PAWNS_INDEX]);
 
-    middlegame_eval -= white_pawn_shield_penalty;
-    middlegame_eval -= black_pawn_shield_penalty;
+    // middlegame_eval -= white_pawn_shield_penalty;
+    // middlegame_eval -= black_pawn_shield_penalty;
 
     eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
 

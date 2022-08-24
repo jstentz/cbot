@@ -13,7 +13,7 @@
 
 #include "board.h"
 
-#define EVAL_SIZE 65536
+#define EVAL_SIZE 65536 /* 2^16 THIS MUST BE A POWER OF 2 */
 #define ENDGAME_MATERIAL 2000
 #define FAILED_LOOKUP INT_MIN
 

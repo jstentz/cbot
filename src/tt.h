@@ -22,7 +22,7 @@
 
 #define FAILED_LOOKUP INT_MIN
 
-#define TABLE_SIZE 65536
+#define TABLE_SIZE 65536 /* 2^16 THIS MUST BE A POWER OF 2 */
 
 typedef unsigned short int uint16_t; 
 

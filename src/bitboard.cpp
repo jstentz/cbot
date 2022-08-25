@@ -94,6 +94,7 @@ bitboard rem_first_bit(bitboard bits) {
 }
 
 int pop_count(bitboard b) {
+    if(b == 0) return 0;
     const bitboard k1 = (bitboard)0x5555555555555555;
     const bitboard k2 = (bitboard)0x3333333333333333;
     const bitboard k4 = (bitboard)0x0F0F0F0F0F0F0F0F;

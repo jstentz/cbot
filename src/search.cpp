@@ -187,8 +187,6 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
             }
         }
 
-        // evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha);
-            
         unmake_move(move);
 
         if(abort_search)
@@ -237,99 +235,6 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     return alpha;
 }
 
-int simple_search(int ply_from_root, int depth, int alpha, int beta) {
-    if(abort_search)
-        return 0;
-
-    vector<move_t> moves;
-    hash_val h = b.board_hash;
-
-    int flags = ALPHA;
-
-    // if(ply_from_root > 0) {
-    //     /* check for repetition draw */
-    //     if(probe_game_history(h))
-    //         return 0;
-    // }
-
-    bool check_flag;
-    check_flag = in_check();
-
-    /* look up the hash value in the transposition table 
-       this will set the tt best move global variable */
-    int tt_score = probe_tt_table(h, depth, ply_from_root, alpha, beta);
-    if(tt_score != FAILED_LOOKUP) {
-        nodes_reached++;
-        return tt_score;
-    }
-
-    if(depth == 0) {
-        return evaluate();
-    }
-
-    move_t best_tt_move = TT.best_move;
-    generate_moves(&moves);
-    order_moves(&moves, NO_SCORE(best_tt_move));
-    
-    move_t best_move = NO_MOVE;
-    int num_moves = moves.size();
-    move_t move;
-    int evaluation;
-    for(int i = 0; i < num_moves; i++) {
-        move = moves[i];
-        make_move(move);
-        evaluation = -simple_search(ply_from_root + 1, depth - 1, -beta, -alpha);
-        unmake_move(move);
-
-        if(abort_search)
-            return 0;
-        
-        if(evaluation >= beta) {
-            store_entry(h, depth, ply_from_root, BETA, beta, move);
-            nodes_reached++;
-            beta_cutoffs++;
-            return beta;
-        }
-        /* found a new best move here! */
-        if(evaluation > alpha) {
-            flags = EXACT;
-            alpha = evaluation;
-            best_move = move;
-            /* if we are at the root node, replace the best move we've seen so far */
-            if(ply_from_root == 0 && !abort_search) {
-                search_result.best_move = best_move;
-                search_result.score = alpha;
-            }
-        }
-    }
-
-    if(num_moves == 0) {
-        nodes_reached++;
-        if(check_flag) { /* checkmate */
-            checkmates++;
-            // alpha = INT_MIN + 1 + ply_from_root; // the deeper in the search we are, the less good the checkmate is
-            return INT_MIN + 1 + ply_from_root; 
-        }
-        else {
-            /* stalemate! */
-            // alpha = 0;
-            return 0;
-        }
-        // flags = EXACT; /* we know the exact score of checkmated or stalemated positions */
-        // depth = INT_MAX; /* this position is searched to the best depth if we are in checkmate or stalemate */
-    }
-
-    nodes_reached++;
-
-    /* store this in the transposition table */
-    store_entry(h, depth, ply_from_root, flags, alpha, best_move);
-
-    if(ply_from_root == 0)
-        search_complete = true;
-    return alpha;
-}
-
-
 move_t find_best_move() {
     /* clear the eval table */
     clear_eval_table();
@@ -366,7 +271,6 @@ move_t find_best_move() {
     int beta = INT_MAX;
     clock_t tStart = clock();
     clock_t tStop = clock();
-    // (((double)(tStop - tStart)) / CLOCKS_PER_SEC) < 1.0
     abort_search = false;
     search_complete = true;
     search_result.score = 0;
@@ -387,14 +291,7 @@ move_t find_best_move() {
             search_complete = false;
             depth++;
             t = std::thread{search_moves, 0, depth, alpha, beta, CAN_NULL, IS_PV};
-            // t = std::thread{simple_search, 0, depth, alpha, beta};
-            // cout << notation_from_move(search_result.best_move) << endl;
         }
-        
-        // if(is_mate_score(search_result.score)) { // mating score
-        //     abort_search = true;
-        //     break;
-        // }
     }
     if(t.joinable())
         t.join();
@@ -411,6 +308,20 @@ move_t find_best_move() {
         std::cout << "Evaluation: Mate in " << moves_until_mate(search_result.score) << " move(s)" << endl;
     else
         std::cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
+
+    // std::cout << "Principal Variation: ";
+
+    // for(int i = 0; i < depth; i++) {
+    //     move_t m = search_result.principal_variation[i];
+    //     std::cout << notation_from_move(m) << " ";
+    //     make_move(m);
+    // }
+
+    // for(int i = depth - 1; i >= 0; i--) {
+    //     move_t m = search_result.principal_variation[i];
+    //     unmake_move(m);
+    // }
+
     std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
     std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
     std::cout << "Leaf-nodes reached: " << nodes_reached << endl;

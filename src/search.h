@@ -29,6 +29,7 @@ extern size_t transpositions;
 
 typedef struct search_result_struct {
     move_t best_move;
+    move_t principal_variation[100]; /* just a placeholder value */
     int score;
 } search_t;
 

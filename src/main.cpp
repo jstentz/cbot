@@ -20,18 +20,18 @@
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
 
-#define BB_PATH "assets/bB.svg"
-#define BK_PATH "assets/bK.svg"
-#define BN_PATH "assets/bN.svg"
-#define BP_PATH "assets/bP.svg"
-#define BQ_PATH "assets/bQ.svg"
-#define BR_PATH "assets/bR.svg"
-#define WB_PATH "assets/wB.svg"
-#define WK_PATH "assets/wK.svg"
-#define WN_PATH "assets/wN.svg"
-#define WP_PATH "assets/wP.svg"
-#define WQ_PATH "assets/wQ.svg"
-#define WR_PATH "assets/wR.svg"
+#define BB_PATH "assets/images/bB.svg"
+#define BK_PATH "assets/images/bK.svg"
+#define BN_PATH "assets/images/bN.svg"
+#define BP_PATH "assets/images/bP.svg"
+#define BQ_PATH "assets/images/bQ.svg"
+#define BR_PATH "assets/images/bR.svg"
+#define WB_PATH "assets/images/wB.svg"
+#define WK_PATH "assets/images/wK.svg"
+#define WN_PATH "assets/images/wN.svg"
+#define WP_PATH "assets/images/wP.svg"
+#define WQ_PATH "assets/images/wQ.svg"
+#define WR_PATH "assets/images/wR.svg"
 
 typedef struct display_square {
     SDL_Rect rect;

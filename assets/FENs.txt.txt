@@ -1,0 +1,9 @@
+starting position:      	rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 
+fun position: 			8/8/rnbqkbnr/pppppppp/PPPPPPPP/RNBQKBNR/8/8 w KQkq - 0 1
+fun position 2: 		k7/8/8/8/8/8/8/4KNNN b - - 0 1
+drawn KP endgame: 		k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1
+KP endgame winning for white: 	8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2
+KP endgame drawn: 		8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2
+bishop and knight checkmate:	k7/8/8/8/8/8/8/4BNK w - - 1 2
+rook promotion:			7k/5P2/5K2/7P/1p6/1P6/8/8 b - - 0 1
+knight promo: 			8/2q1P1k1/8/5K2/8/8/5B2/8 w - - 0 1

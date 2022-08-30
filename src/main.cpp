@@ -287,30 +287,7 @@ int main(int argc, char** argv){
     LoadPieceTextures();
 
     decode_fen(FEN_STRING);
-
-    // decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); /* starting position */
-    // decode_fen("8/8/rnbqkbnr/pppppppp/PPPPPPPP/RNBQKBNR/8/8 w KQkq - 0 1");
-    // decode_fen("k7/8/8/8/8/8/8/4KNNN b - - 0 1"); /* fun position */
-    // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
-    // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2"); /* KP endgame winning for white */
-    // decode_fen("8/k7/3p4/p2P1p2/P2P1P2/8/1K6/8 b - - 2 2"); /* KP endgame drawn */
-    // decode_fen("k7/8/8/8/8/8/8/4BNK w - - 1 2"); /* bishop and knight checkmate */
-    // decode_fen("7k/8/8/8/8/8/6P1/K7 w - - 1 2");
-    // decode_fen("8/4k3/8/8/8/5P2/5K2/8 w - - 0 1"); /* drawn pawn endgame except mine doesn't draw it */
-    // decode_fen("8/4k3/8/8/5K2/5P2/8/8 w - - 0 1"); /* winning pawn endgame */
-    // decode_fen("7k/5P2/5K2/7P/1p6/1P6/8/8 b - - 0 1"); /* rook promotion */
-    // decode_fen("8/2q1P1k1/8/5K2/8/8/5B2/8 w - - 0 1"); /* knight promotion + bishop knight mate */
-    // decode_fen("8/7p/8/7k/8/2NN4/2K5/8 w - - 0 1"); /* checkmate with 2 knights */
-    // decode_fen("8/8/8/3k4/8/8/8/6KR w - - 0 1"); /* rook mate */
-    // decode_fen("8/6k1/8/5RK1/8/8/8/8 b - - 0 1"); /* broken mate eval */
-
-    // decode_fen("7k/6q1/8/8/3p4/8/4P3/1K6 b - - 0 1"); /* testing new check detection */
-    // decode_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"); /* testing move ordering */
-
-    // decode_fen("5b1k/2p3pp/1p6/4QpN1/3P1P2/6K1/2nq2PP/8 w - - 0 1"); /* screwed this up against comm (play Qe6) */
-    // decode_fen("3r2kr/6pp/1pR2p2/p3R3/2B5/8/PP2KPPP/8 b - - 0 1"); /* screwed this up (play Kf8) */
-    // decode_fen("6k1/5p1p/p1rpb1p1/6r1/1R4P1/2B5/PP4P1/4R2K b - - 0 1"); /* mate in 3 after black takes the pawn with the rook */
-    // decode_fen("4rr1k/1pp1qp2/p1n1p2p/4P3/3P1Q2/2P3R1/PP4PP/R5K1 b - - 0 1"); /* mate in 5 after Kh7 */
+    
     move_t move;
     vector<move_t> legal_moves;
     generate_moves(&legal_moves);

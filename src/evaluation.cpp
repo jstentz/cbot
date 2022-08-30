@@ -155,64 +155,6 @@ int evaluate_pawn_structure() {
     return 0;
 }
 
-/* I'm probably going to have to split this up into 6 functions to evaluate each of the pieces seperately */
-int evaluate_mobility() {
-    int white_mobility = 0;
-    int black_mobility = 0;
-
-    bitboard white_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
-    bitboard white_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
-    bitboard white_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
-    bitboard white_queens = b.piece_boards[WHITE_QUEENS_INDEX];
-
-    bitboard black_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
-    bitboard black_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
-    bitboard black_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
-    bitboard black_queens = b.piece_boards[BLACK_QUEENS_INDEX];
-
-    while(white_knights) {
-        white_mobility += pop_count(get_knight_attacks((square)first_set_bit(white_knights)));
-        REMOVE_FIRST(white_knights);
-    }
-
-    while(white_bishops) {
-        white_mobility += pop_count(get_bishop_attacks((square)first_set_bit(white_bishops), b.all_pieces));
-        REMOVE_FIRST(white_bishops);
-    }
-
-    while(white_rooks) {
-        white_mobility += pop_count(get_rook_attacks((square)first_set_bit(white_rooks), b.all_pieces));
-        REMOVE_FIRST(white_rooks);
-    }
-
-    while(white_queens) {
-        white_mobility += pop_count(get_queen_attacks((square)first_set_bit(white_queens), b.all_pieces));
-        REMOVE_FIRST(white_queens);
-    }
-
-    while(black_knights) {
-        black_mobility += pop_count(get_knight_attacks((square)first_set_bit(black_knights)));
-        REMOVE_FIRST(black_knights);
-    }
-
-    while(black_bishops) {
-        black_mobility += pop_count(get_bishop_attacks((square)first_set_bit(black_bishops), b.all_pieces));
-        REMOVE_FIRST(black_bishops);
-    }
-
-    while(white_rooks) {
-        black_mobility += pop_count(get_rook_attacks((square)first_set_bit(black_rooks), b.all_pieces));
-        REMOVE_FIRST(black_rooks);
-    }
-
-    while(black_queens) {
-        black_mobility += pop_count(get_queen_attacks((square)first_set_bit(black_queens), b.all_pieces));
-        REMOVE_FIRST(black_queens);
-    }
-
-    return (white_mobility - black_mobility) * 10;
-}
-
 int evaluate_knights_mobility() {
     int mobility = 0;
     bitboard white_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];

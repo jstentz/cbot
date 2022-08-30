@@ -215,4 +215,11 @@ bitboard checking_pieces();
  */
 int check_type(bitboard attackers);
 
+/**
+ * @brief Given the current board state, return whether or not the side to move
+ * is in check.
+ * 
+ * @return true 
+ * @return false 
+ */
 bool in_check();

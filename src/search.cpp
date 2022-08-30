@@ -150,7 +150,15 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     if(depth == 0) {
         return qsearch(alpha, beta);
     }
-
+    
+    /* 
+        Null Move Pruning:
+            - Runs on the assumption that if you give your opponent a free move, and the resulting
+            shorter-depth search still causes a cutoff, it is very likely the initial position would have 
+            caused a cutoff.
+            - Because of ZugZwang in the endgame, where making a null move can be good, this pruning
+            is turned off in the endgame.
+    */
     if(depth > 2 && 
        can_null && 
        !is_pv && 
@@ -178,6 +186,13 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     for(int i = 0; i < num_moves; i++) {
         move = moves[i];
         make_move(move);
+        /*
+            Principal Variation Search (PVS):
+                - There is only one pathway of moves that are acceptable for both players in any given search.
+                - All we have to do in non PV nodes is prove that they are not acceptable for either player.
+                - If we are wrong about being in a PV node, a costly re-search is required.
+        */
+
         if(pv_search) {
             evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha, IS_PV, CAN_NULL);
         }
@@ -258,7 +273,8 @@ move_t find_best_move() {
     move_t opening_move = get_opening_move();
     if(opening_move != NO_MOVE) {
         this_thread::sleep_for(chrono::milliseconds(search_time));
-        std::cout << "Played from book!" << endl << endl;
+        std::cout << "Depth: None | Evaluation: Book | Move: ";
+        std::cout << notation_from_move(opening_move) << endl;
 
         /* include the move that was made in the history */
         make_move(opening_move);
@@ -277,16 +293,15 @@ move_t find_best_move() {
     search_result.score = 0;
     search_result.best_move = NO_MOVE;
     thread t;
+
+    /* iterative deepening framework with threading */
     while(true) {
-        // cout << search_complete << endl;
         tStop = clock();
         if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
             abort_search = true;
-            // cout << "aborted!" << endl;
             break;
         }
         if(search_complete) {
-            // cout << "search completed!" << endl;
             if(t.joinable())
                 t.join();
             search_complete = false;
@@ -294,39 +309,27 @@ move_t find_best_move() {
             t = std::thread{search_moves, 0, depth, alpha, beta, CAN_NULL, IS_PV};
         }
     }
+    /* wait for any lingering thread to finish */
     if(t.joinable())
         t.join();
 
-    // cout << "After waiting for thread to close: " << notation_from_move(search_result.best_move) << endl;
-    // t.join(); /* once we abort wait for it to finish */
     float time_elapsed = (tStop - tStart);
-    std::cout << "IDDFS Depth: " << depth << endl;
+    std::cout << "Depth: " << depth << " | ";
 
     move_t best_move = search_result.best_move;
-
     int perspective = (b.t == W) ? 1 : -1;
-    if(is_mate_score(search_result.score))
-        std::cout << "Evaluation: Mate in " << moves_until_mate(search_result.score) << " move(s)" << endl;
+    int score = search_result.score * perspective;
+    if(is_mate_score(score) && score > 0)
+        std::cout << "Evaluation: White has mate in " << moves_until_mate(score) << " move(s) | ";
+    else if(is_mate_score(score) && score < 0)
+        std::cout << "Evaluation: Black has mate in " << moves_until_mate(score) << " move(s) | ";
     else
-        std::cout << "Evaluation: " << (search_result.score * perspective) / 100.0 << endl;
-
-    // std::cout << "Principal Variation: ";
-
-    // for(int i = 0; i < depth; i++) {
-    //     move_t m = search_result.principal_variation[i];
-    //     std::cout << notation_from_move(m) << " ";
-    //     make_move(m);
-    // }
-
-    // for(int i = depth - 1; i >= 0; i--) {
-    //     move_t m = search_result.principal_variation[i];
-    //     unmake_move(m);
-    // }
-
-    std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
-    std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
-    std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
-    std::cout << "Beta cutoffs: " << beta_cutoffs << endl << endl;
+        std::cout << "Evaluation: " << score / 100.0 << " | ";
+    std::cout << "Move: " << notation_from_move(best_move) << endl;
+    // std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
+    // std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
+    // std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
+    // std::cout << "Beta cutoffs: " << beta_cutoffs << endl << endl;
 
     /* include the move that was made in the history */
     /* MOVE THIS SOMEWHERE OUTSIDE OF THIS FUNCTION */
@@ -336,105 +339,3 @@ move_t find_best_move() {
 
     return best_move;
 }
-
-// int main() {
-//     luts = init_LUT(); // must do this first
-//     zobrist_table = init_zobrist();
-//     // opening_book = create_opening_book(); // uncomment if you need to update opening_book
-//     // generate_num_data(); // uncomment if you need to update opening_book
-//     opening_book = populate_opening_book();
-//     init_tt_table();
-//     init_eval_table();
-//     string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     string test_pos_1 = "8/6k1/8/5RK1/8/8/8/8 b - - 0 1";
-//     string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
-//     string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
-//     string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-//     string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-//     string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
-
-//     size_t depth;
-//     size_t total_nodes;
-//     clock_t tStart;
-//     clock_t tStop;
-//     double time_elapsed;
-
-//     char answer;
-//     string fen;
-//     while(true) {
-//         cout << "Perft test or speed test or move test? (p/s/m)" << endl;
-//         cin >> answer;
-//         if(answer == 'p') {
-//             cout << endl << "Enter depth: ";
-//             cin >> depth;
-
-//             decode_fen(test_pos_1);
-//             cout << "Test 1 at depth " << depth << endl;
-//             perft(depth);
-//             cout << endl;
-
-//             decode_fen(test_pos_2);
-//             cout << "Test 2 at depth " << depth << endl;
-//             perft(depth);
-//             cout << endl;
-
-//             decode_fen(test_pos_3);
-//             cout << "Test 3 at depth " << depth << endl;
-//             perft(depth);
-//             cout << endl;
-
-//             decode_fen(test_pos_4);
-//             cout << "Test 4 at depth " << depth << endl;
-//             perft(depth);
-//             cout << endl;
-
-//             decode_fen(test_pos_5);
-//             cout << "Test 5 at depth " << depth << endl;
-//             perft(depth);
-//             cout << endl;
-
-//             decode_fen(test_pos_6);
-//             cout << "Test 6 at depth " << depth << endl;
-//             perft(depth);
-//             cout << endl;
-//         }
-//         else if(answer == 's') {
-//             cout << endl << "Enter depth: ";
-//             cin >> depth;
-//             total_nodes = 0;
-//             tStart = clock();
-//             /* having to decode the fen in between will slow it down */
-//             /* rework this for that reason */
-//             decode_fen(test_pos_1);
-//             total_nodes += num_nodes_bulk(depth);
-//             decode_fen(test_pos_2);
-//             total_nodes += num_nodes_bulk(depth);
-//             decode_fen(test_pos_3);
-//             total_nodes += num_nodes_bulk(depth);
-//             decode_fen(test_pos_4);
-//             total_nodes += num_nodes_bulk(depth);
-//             decode_fen(test_pos_5);
-//             total_nodes += num_nodes_bulk(depth);
-//             decode_fen(test_pos_6);
-//             total_nodes += num_nodes_bulk(depth);
-//             tStop = clock();
-//             time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
-//             cout << "Total nodes: " << total_nodes << endl;
-//             cout << "Time elapsed: " << time_elapsed << endl;
-//             cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
-//         }
-//         else if(answer == 'm') {
-//             fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
-//             decode_fen(fen);
-//             cout << endl;
-//             print_squarewise(b.sq_board);
-//             cout << endl;
-//             move_t move = find_best_move();
-//             cout << endl << "Best move: ";
-//             cout << notation_from_move(move) << endl;
-//         }
-//     }
-//     free_tt_table();
-//     free_eval_table();
-//     return 0;
-// }

@@ -74,4 +74,10 @@ bitboard undo_pseudo_rotate_45_anticlockwise(bitboard b);
  */
 uint16_t first_set_bit(bitboard bits); 
 
+/**
+ * @brief Given a bitboard, return the number of 1s in the bit pattern.
+ * 
+ * @param b bitboard
+ * @return int 
+ */
 int pop_count(bitboard b);

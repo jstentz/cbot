@@ -39,5 +39,3 @@ void load_settings_from_config() {
 
     config_file.close();
 }
-
-

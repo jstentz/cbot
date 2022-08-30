@@ -181,8 +181,29 @@ bitboard attackers_from_square(square sq);
  */
 bitboard opponent_slider_rays_to_square(square sq);
 
+/**
+ * @brief Given a square on the board, return if this square is attacked by an enemy pawn. If
+ * it is white's turn, than black pawns are the enemy pawns and vice versa.
+ * 
+ * @param sq 
+ * @return true if attacked by an enemy pawn
+ * @return false if not attacked by an enemy pawn
+ */
 bool is_attacked_by_pawn(square sq);
 
+/**
+ * @brief Given a square on the board, return the least valued attacker of that square by the opponent.
+ * 
+ * @param sq 
+ * @return piece attacking the square or EMPTY
+ */
 piece least_valued_attacker(square sq);
 
+/**
+ * @brief Given a square on the board, return the square of the least valued attacker of that square by the opponent.
+ * 
+ * @param sq 
+ * @param side side the attackers are on
+ * @return square of the attacking piece
+ */
 square least_valued_attacker_sq(square sq, turn side);

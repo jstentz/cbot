@@ -233,18 +233,41 @@ typedef struct eval_entry_struct {
  */
 int evaluate();
 
+/**
+ * @brief Initializes the eval hash table.
+ * 
+ */
 void init_eval_table();
 
+/**
+ * @brief Frees the eval hash table.
+ * 
+ */
 void free_eval_table();
 
+/**
+ * @brief Reinitializes the eval hash table.
+ * 
+ */
 void clear_eval_table();
 
 extern int eval_hits;
 
 extern int eval_probes;
 
-int evaluate_mobility();
-
+/**
+ * @brief Given a score, returns true if it is a mating score and false otherwise.
+ * 
+ * @param score 
+ * @return true 
+ * @return false 
+ */
 bool is_mate_score(int score);
 
+/**
+ * @brief Given a mating score, returns the moves until checkmate
+ * 
+ * @param mate_score 
+ * @return moves until mate 
+ */
 int moves_until_mate(int mate_score);

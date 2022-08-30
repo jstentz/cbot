@@ -8,6 +8,7 @@
 #include "debugging.h"
 #include "attacks.h"
 #include "tt.h"
+#include "configuration.h"
 
 #include <stddef.h>
 #include <stack>
@@ -251,7 +252,7 @@ move_t find_best_move() {
     hash_val h = b.board_hash;
     game_history.insert(h); // insert the board hash from the user's move
 
-    int search_time = 1250;
+    int search_time = SEARCH_TIME;
 
     /* check in opening book */
     move_t opening_move = get_opening_move();

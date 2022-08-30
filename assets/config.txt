@@ -1,0 +1,4 @@
+Mode:Play
+FEN:rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+AIvsAI:True
+Search Time:1250

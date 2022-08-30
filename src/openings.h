@@ -18,6 +18,8 @@
 #include <unordered_map>
 #include <vector>
 
+std::vector<std::string> split(const std::string &s, char delim);
+
 unordered_map<hash_val, vector<move_t>> create_opening_book();
 
 move_t get_opening_move();

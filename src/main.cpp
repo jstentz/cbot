@@ -15,6 +15,7 @@
 #include "evaluation.h"
 #include "debugging.h"
 #include "moves.h"
+#include "configuration.h"
 
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
@@ -145,6 +146,102 @@ square SquareNumFromLoc(SDL_Point mousePos) {
     return (square)((7 - (mousePos.y / sq_width)) * 8 + (mousePos.x / sq_width));
 }
 
+
+int test_main() {
+    string starting_pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
+    string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
+    string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+    string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+
+    size_t depth;
+    size_t total_nodes;
+    clock_t tStart;
+    clock_t tStop;
+    double time_elapsed;
+
+    char answer;
+    string fen;
+    while(true) {
+        cout << "Perft test or speed test or move test? (p/s/m)" << endl;
+        cin >> answer;
+        if(answer == 'p') {
+            cout << endl << "Enter depth: ";
+            cin >> depth;
+
+            decode_fen(test_pos_1);
+            cout << "Test 1 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
+
+            decode_fen(test_pos_2);
+            cout << "Test 2 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
+
+            decode_fen(test_pos_3);
+            cout << "Test 3 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
+
+            decode_fen(test_pos_4);
+            cout << "Test 4 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
+
+            decode_fen(test_pos_5);
+            cout << "Test 5 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
+
+            decode_fen(test_pos_6);
+            cout << "Test 6 at depth " << depth << endl;
+            perft(depth);
+            cout << endl;
+        }
+        else if(answer == 's') {
+            cout << endl << "Enter depth: ";
+            cin >> depth;
+            total_nodes = 0;
+            tStart = clock();
+            /* having to decode the fen in between will slow it down */
+            /* rework this for that reason */
+            decode_fen(test_pos_1);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_2);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_3);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_4);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_5);
+            total_nodes += num_nodes_bulk(depth);
+            decode_fen(test_pos_6);
+            total_nodes += num_nodes_bulk(depth);
+            tStop = clock();
+            time_elapsed = (double)(tStop - tStart)/CLOCKS_PER_SEC;
+            cout << "Total nodes: " << total_nodes << endl;
+            cout << "Time elapsed: " << time_elapsed << endl;
+            cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << endl << endl;
+        }
+        else if(answer == 'm') {
+            fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+            decode_fen(fen);
+            cout << endl;
+            print_squarewise(b.sq_board);
+            cout << endl;
+            move_t move = find_best_move();
+            cout << endl << "Best move: ";
+            cout << notation_from_move(move) << endl;
+        }
+    }
+    free_tt_table();
+    free_eval_table();
+    return 0;
+}
+
 int main(int argc, char** argv){
     luts = init_LUT(); // must do this first
     zobrist_table = init_zobrist();
@@ -153,8 +250,13 @@ int main(int argc, char** argv){
     opening_book = populate_opening_book();
     init_tt_table();
     init_eval_table();
-    
 
+    load_settings_from_config();
+
+    if(TEST_MODE) {
+        test_main();
+        return 0;
+    }
 
     if(SDL_Init(SDL_INIT_VIDEO) < 0){
         printf("Error: SDL failed to initialize\nSDL Error: '%s'\n", SDL_GetError());
@@ -184,7 +286,9 @@ int main(int argc, char** argv){
 
     LoadPieceTextures();
 
-    decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); /* starting position */
+    decode_fen(FEN_STRING);
+
+    // decode_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); /* starting position */
     // decode_fen("8/8/rnbqkbnr/pppppppp/PPPPPPPP/RNBQKBNR/8/8 w KQkq - 0 1");
     // decode_fen("k7/8/8/8/8/8/8/4KNNN b - - 0 1"); /* fun position */
     // decode_fen("k7/8/3p4/p2P1p2/P2P1P2/8/8/K7 b - - 0 1"); /* drawn KP endgame */
@@ -351,30 +455,32 @@ int main(int argc, char** argv){
         }
 
         /* code to play itself */
-        // LoadDisplayBoardFromGameState(b.sq_board);
-        // SDL_RenderClear(renderer);
-        // DrawChessBoard();
-        // DrawPieces();
-        // DrawSelectedPiece(selectedPiece);
-        // SDL_RenderPresent(renderer);
+        if(AIVSAI) {
+            LoadDisplayBoardFromGameState(b.sq_board);
+            SDL_RenderClear(renderer);
+            DrawChessBoard();
+            DrawPieces();
+            DrawSelectedPiece(selectedPiece);
+            SDL_RenderPresent(renderer);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
-        // if(legal_moves.size() == 0) {
-        //     if(checking_pieces()) {
-        //         cout << "Checkmate!" << endl;
-        //         break;
-        //     }
-        //     cout << "Stalemate!" << endl;
-        //     break;
-        // }
+            legal_moves.clear();
+            generate_moves(&legal_moves);
+            if(legal_moves.size() == 0) {
+                if(checking_pieces()) {
+                    cout << "Checkmate!" << endl;
+                    break;
+                }
+                cout << "Stalemate!" << endl;
+                break;
+            }
 
-        // move = find_best_move();
-        // make_move(move); // leaking memory here
-        // LoadDisplayBoardFromGameState(b.sq_board);
+            move = find_best_move();
+            make_move(move); // leaking memory here
+            LoadDisplayBoardFromGameState(b.sq_board);
 
-        // legal_moves.clear();
-        // generate_moves(&legal_moves);
+            legal_moves.clear();
+            generate_moves(&legal_moves);
+        }
         /* code to play itself */
 
         SDL_RenderClear(renderer);

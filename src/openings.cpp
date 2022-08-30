@@ -31,7 +31,6 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return elems;
 }
 
-
 unordered_map<hash_val, vector<move_t>> create_opening_book() {
     srand(clock());
     string starting_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

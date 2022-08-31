@@ -562,16 +562,6 @@ bool is_bad_capture(move_t capture) {
     return see_capture(capture) < -50;
 }
 
-// bool is_bad_capture(move_t capture) {
-//     int from = FROM(capture);
-//     int to = TO(capture);
-//     piece moving_piece = b.sq_board[from];
-//     if(PIECE(moving_piece) == PAWN) return false; /* we can't lose material by capturing with a pawn */
-    
-//     piece captured_piece = b.sq_board[to];
-
-// }
-
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
 void order_moves(vector<move_t> *moves, move_t tt_best_move) {

@@ -281,9 +281,6 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    // SDL_SetHint(SDL_HINT_RENDER_BATCHING, "2");
-
     LoadPieceTextures();
 
     decode_fen(FEN_STRING);
@@ -487,9 +484,3 @@ int main(int argc, char** argv){
     free_eval_table();
     return 0;
 }
-
-/*
-    Big things to do:
-    1. why does it sometimes think there are mates when there aren't?
-    2. Draw eval is so bad rn
-*/

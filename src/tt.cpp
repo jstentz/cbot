@@ -9,6 +9,7 @@
 history_t game_history;
 
 bool probe_game_history(hash_val h) {
+    /* I'm not sure that it is accurate to use the full board state, since I don't know if it has to be a specific person's turn or not */
     return game_history.find(h) != game_history.end();
 }
 

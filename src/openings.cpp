@@ -125,8 +125,6 @@ move_t get_opening_move() {
         return NO_MOVE; // position not found
     }
     unsigned int r = rand64() % got_board->second.size();
-    // cout << "Random num: " << r << endl;
-    // cout << "Size: " << got_board->second.size() << endl;
 
     if(got_board->second.size() == 0) {
         cout << "no known moves from this position!" << endl;
@@ -136,11 +134,3 @@ move_t get_opening_move() {
     
     return got_board->second[r];
 }
-
-// int main() {
-//     unordered_map<hash_val, set<move_t>> opening_book = create_opening_book();
-//     cout << "Book size: " << opening_book.size() << endl;
-//     int x;
-//     cin >> x;
-//     return 0;
-// }

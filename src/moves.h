@@ -115,16 +115,58 @@ string notation_from_move(move_t move);
  */
 move_t move_from_notation(string notation);
 
+/**
+ * @brief Builds the bit pattern to represent the move based on the inputs.
+ * 
+ * @param from Square the piece is coming from
+ * @param to Square the piece is moving to
+ * @param flags Type of move
+ * @return move_t 
+ */
 move_t construct_move(int from, int to, int flags);
 
+/**
+ * @brief Returns the score of a given capture move ignoring all other aspects of the position,
+ * except the enemy and friendly pieces attacking a given square.
+ * 
+ * @param capture 
+ * @return int score
+ */
 int see_capture(move_t capture);
 
+/**
+ * @brief Returns true if the input capture move is bad, and false otherwise.
+ * 
+ * @param capture 
+ * @return true 
+ * @return false 
+ */
 bool is_bad_capture(move_t capture);
 
+/**
+ * @brief Returns the move in algebraic notation (eg a1c1).
+ * 
+ * @param move 
+ * @return string 
+ */
 string algebraic_notation(move_t move);
 
+/**
+ * @brief Function to sort a list of moves by their algebraic notation.
+ * 
+ * @param moves 
+ */
 void sort_by_algebraic_notation(vector<move_t> *moves);
 
+/**
+ * @brief Passes the move to the opponent without changing the board state. Used
+ * in null move pruning.
+ * 
+ */
 void make_nullmove();
 
+/**
+ * @brief Undoes a nullmove. Again used in null move pruning.
+ * 
+ */
 void unmake_nullmove();

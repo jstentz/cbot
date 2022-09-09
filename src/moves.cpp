@@ -217,7 +217,7 @@ move_t construct_move(int from, int to, int flags) {
     return (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12);
 }
 
-void generate_knight_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_knight_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     int from;
     int to;
     int flags;
@@ -248,7 +248,7 @@ void generate_knight_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_
             to_bit = BIT_FROM_SQ(to);
             if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
             else                         flags = QUIET_MOVE;
-            (*curr_moves).push_back(construct_move(from, to, flags));
+            curr_moves.push_back(construct_move(from, to, flags));
             REMOVE_FIRST(knight_moves);
         }
         REMOVE_FIRST(knights);
@@ -256,7 +256,7 @@ void generate_knight_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_
     return;
 }
 
-void generate_king_moves(vector<move_t> *curr_moves, bool captures_only) {
+void generate_king_moves(vector<move_t> &curr_moves, bool captures_only) {
     int from;
     int to;
     int flags;
@@ -279,15 +279,15 @@ void generate_king_moves(vector<move_t> *curr_moves, bool captures_only) {
             to = first_set_bit(king_moves);
             to_bit = BIT_FROM_SQ(to);
             if(to - from == 2) { // king side castle
-                (*curr_moves).push_back(construct_move(from, to, KING_SIDE_CASTLE));
+                curr_moves.push_back(construct_move(from, to, KING_SIDE_CASTLE));
             }
             else if (to - from == -2) { // queen side castle
-                (*curr_moves).push_back(construct_move(from, to, QUEEN_SIDE_CASTLE));
+                curr_moves.push_back(construct_move(from, to, QUEEN_SIDE_CASTLE));
             } 
             else{
                 if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
                 else                         flags = QUIET_MOVE;
-                (*curr_moves).push_back(construct_move(from, to, flags));
+                curr_moves.push_back(construct_move(from, to, flags));
             }
             
             REMOVE_FIRST(king_moves);
@@ -297,7 +297,7 @@ void generate_king_moves(vector<move_t> *curr_moves, bool captures_only) {
     return;
 }
 
-void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
+void generate_pawn_moves(vector<move_t> &curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
     state_t state = b.state_history.top();
     int from;
     int to;
@@ -340,24 +340,24 @@ void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool p
             int to_rank = RANK(to);
             if(to_rank == RANK_8 || to_rank == RANK_1) {
                 if(FILE(to) != FILE(from)) {
-                    (*curr_moves).push_back(construct_move(from, to, KNIGHT_PROMO_CAPTURE)); // or this on to flag because we check for captures prior to this
-                    (*curr_moves).push_back(construct_move(from, to, BISHOP_PROMO_CAPTURE));
-                    (*curr_moves).push_back(construct_move(from, to, ROOK_PROMO_CAPTURE));
-                    (*curr_moves).push_back(construct_move(from, to, QUEEN_PROMO_CAPTURE));
+                    curr_moves.push_back(construct_move(from, to, KNIGHT_PROMO_CAPTURE)); // or this on to flag because we check for captures prior to this
+                    curr_moves.push_back(construct_move(from, to, BISHOP_PROMO_CAPTURE));
+                    curr_moves.push_back(construct_move(from, to, ROOK_PROMO_CAPTURE));
+                    curr_moves.push_back(construct_move(from, to, QUEEN_PROMO_CAPTURE));
                 }
                 else {
-                    (*curr_moves).push_back(construct_move(from, to, KNIGHT_PROMO));
-                    (*curr_moves).push_back(construct_move(from, to, BISHOP_PROMO));
-                    (*curr_moves).push_back(construct_move(from, to, ROOK_PROMO));
-                    (*curr_moves).push_back(construct_move(from, to, QUEEN_PROMO));
+                    curr_moves.push_back(construct_move(from, to, KNIGHT_PROMO));
+                    curr_moves.push_back(construct_move(from, to, BISHOP_PROMO));
+                    curr_moves.push_back(construct_move(from, to, ROOK_PROMO));
+                    curr_moves.push_back(construct_move(from, to, QUEEN_PROMO));
                 }
                 
             }
             else if (abs(from - to) == 16) { // double pawn push
-                (*curr_moves).push_back(construct_move(from, to, DOUBLE_PUSH));
+                curr_moves.push_back(construct_move(from, to, DOUBLE_PUSH));
             }
             else {
-                (*curr_moves).push_back(construct_move(from, to, flags)); // should already be set to quiet or capture
+                curr_moves.push_back(construct_move(from, to, flags)); // should already be set to quiet or capture
             }
             REMOVE_FIRST(pawn_moves);
         }
@@ -366,7 +366,7 @@ void generate_pawn_moves(vector<move_t> *curr_moves, bitboard check_mask, bool p
     return;
 }
 
-void generate_rook_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_rook_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     int from;
     int to;
     int flags;
@@ -397,7 +397,7 @@ void generate_rook_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t 
             to_bit = BIT_FROM_SQ(to);
             if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
             else                         flags = QUIET_MOVE;
-            (*curr_moves).push_back(construct_move(from, to, flags));
+            curr_moves.push_back(construct_move(from, to, flags));
             REMOVE_FIRST(rook_moves);
         }
         REMOVE_FIRST(rooks);
@@ -405,7 +405,7 @@ void generate_rook_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t 
     return;
 }
 
-void generate_bishop_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_bishop_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     int from;
     int to;
     int flags;
@@ -436,7 +436,7 @@ void generate_bishop_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_
             to_bit = BIT_FROM_SQ(to);
             if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
             else                         flags = QUIET_MOVE;
-            (*curr_moves).push_back(construct_move(from, to, flags));
+            curr_moves.push_back(construct_move(from, to, flags));
             REMOVE_FIRST(bishop_moves);
         }
         REMOVE_FIRST(bishops);
@@ -444,7 +444,7 @@ void generate_bishop_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_
     return;
 }
 
-void generate_queen_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_queen_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
     int from;
     int to;
     int flags;
@@ -475,7 +475,7 @@ void generate_queen_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t
             to_bit = BIT_FROM_SQ(to);
             if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
             else                         flags = QUIET_MOVE;
-            (*curr_moves).push_back(construct_move(from, to, flags));
+            curr_moves.push_back(construct_move(from, to, flags));
             REMOVE_FIRST(queen_moves);
         }
         REMOVE_FIRST(queens);
@@ -483,7 +483,7 @@ void generate_queen_moves(vector<move_t> *curr_moves, bitboard check_mask, pin_t
     return;
 }
 
-void generate_moves(vector<move_t> *curr_moves, bool captures_only) {
+void generate_moves(vector<move_t> &curr_moves, bool captures_only) {
     bitboard check_pieces = checking_pieces();
     bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
     bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
@@ -564,10 +564,9 @@ bool is_bad_capture(move_t capture) {
 
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
-void order_moves(vector<move_t> *moves, move_t tt_best_move) {
+void order_moves(vector<move_t> &moves, move_t tt_best_move) {
     state_t state = b.state_history.top();
     signed short int score;
-    vector<move_t> mvs = *moves;
     piece mv_piece;
     piece tar_piece;
     int to;
@@ -585,9 +584,9 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
     if(last_move != NO_MOVE && IS_CAPTURE(last_move)) {
         recapture_square = TO(last_move);
     }
-    for(int i = 0; i < mvs.size(); i++) {
+    for(int i = 0; i < moves.size(); i++) {
         score = 0;
-        mv = mvs[i];
+        mv = moves[i];
         if(tt_best_move != NO_MOVE && mv == tt_best_move) {
             // cout << "trying pv move" << endl;
             score += 10000; // idk try the PV node first
@@ -640,9 +639,9 @@ void order_moves(vector<move_t> *moves, move_t tt_best_move) {
         //     score -= 1000; /* try quiet moves last even behind bad captures */
         // }
               
-        (*moves)[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
+        moves[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
     }
-    std::sort(moves->begin(), moves->end(), greater<move_t>());
+    std::sort(moves.begin(), moves.end(), greater<move_t>());
     return;
 }
 
@@ -1440,7 +1439,7 @@ void unmake_nullmove() {
  */
 string notation_from_move(move_t move) {
     vector<move_t> all_moves;
-    generate_moves(&all_moves);
+    generate_moves(all_moves);
     // conflicting doesn't work for knights right now
     // need to update for check (+) and checkmate (#)
     // need to add castling
@@ -1533,7 +1532,7 @@ move_t move_from_notation(string notation) {
     }
     notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
     vector<move_t> moves;
-    generate_moves(&moves);
+    generate_moves(moves);
     // this is so ugly
     if(notation == "O-O") {
         for (move_t move : moves) {
@@ -1642,8 +1641,8 @@ string algebraic_notation(move_t move) {
     return result;
 }
 
-void sort_by_algebraic_notation(vector<move_t> *moves) {
-    sort(moves->begin(), moves->end(), 
+void sort_by_algebraic_notation(vector<move_t> &moves) {
+    sort(moves.begin(), moves.end(), 
             [](move_t a, move_t b) {
                 return algebraic_notation(a) < algebraic_notation(b);
             } 

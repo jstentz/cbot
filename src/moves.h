@@ -64,7 +64,7 @@ typedef signed int move_t;
  * @param curr_moves Place to store the moves
  * @param captures_only Whether to generate only captures or all legal moves
  */
-void generate_moves(vector<move_t> *curr_moves, bool captures_only = false);
+void generate_moves(vector<move_t> &curr_moves, bool captures_only = false);
 
 /**
  * @brief Given a list of moves, tries to order the moves from best to worse
@@ -72,7 +72,7 @@ void generate_moves(vector<move_t> *curr_moves, bool captures_only = false);
  * 
  * @param moves Vector of moves to reorder
  */
-void order_moves(vector<move_t> *moves, move_t tt_best_move);
+void order_moves(vector<move_t> &moves, move_t tt_best_move);
 
 /**
  * @brief Takes in a pointer to the current board state, along with a move
@@ -156,7 +156,7 @@ string algebraic_notation(move_t move);
  * 
  * @param moves 
  */
-void sort_by_algebraic_notation(vector<move_t> *moves);
+void sort_by_algebraic_notation(vector<move_t> &moves);
 
 /**
  * @brief Passes the move to the opponent without changing the board state. Used

@@ -29,7 +29,7 @@ bool abort_search = false;
 
 uint64_t num_nodes_bulk(size_t depth) {
     vector<move_t> moves;
-    generate_moves(&moves);
+    generate_moves(moves);
     if(depth == 1) {
         return moves.size();
     }
@@ -53,7 +53,7 @@ uint64_t num_nodes(size_t depth) {
 
     uint64_t total_moves = 0;
     vector<move_t> moves;
-    generate_moves(&moves);
+    generate_moves(moves);
     for(move_t move : moves) {
         make_move(move);
         total_moves += num_nodes(depth - 1); 
@@ -64,10 +64,10 @@ uint64_t num_nodes(size_t depth) {
 
 uint64_t perft(size_t depth) {
     vector<move_t> moves;
-    generate_moves(&moves);
+    generate_moves(moves);
     uint64_t total_nodes = 0;
     uint64_t nodes_from_move = 0;
-    sort_by_algebraic_notation(&moves);
+    sort_by_algebraic_notation(moves);
     for(move_t move : moves) {
         std::cout << algebraic_notation(move) << ": ";
         make_move(move);
@@ -96,8 +96,8 @@ int qsearch(int alpha, int beta) {
     if(stand_pat >= beta) {nodes_reached++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 
-    generate_moves(&captures, true); // true flag generates only captures
-    order_moves(&captures, NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
+    generate_moves(captures, true); // true flag generates only captures
+    order_moves(captures, NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
     for (move_t capture : captures) {
         /* delta pruning helps to stop searching helpless nodes */
         // piece captured_piece = b.sq_board[TO(capture)];
@@ -175,8 +175,8 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     }
 
     move_t best_tt_move = TT.best_move;
-    generate_moves(&moves);
-    order_moves(&moves, NO_SCORE(best_tt_move));
+    generate_moves(moves);
+    order_moves(moves, NO_SCORE(best_tt_move));
     
     move_t best_move = NO_MOVE;
     int num_moves = moves.size();

@@ -287,7 +287,7 @@ int main(int argc, char** argv){
     
     move_t move;
     vector<move_t> legal_moves;
-    generate_moves(&legal_moves);
+    generate_moves(legal_moves);
  
     LoadDisplayBoardFromGameState(b.sq_board);
     
@@ -389,7 +389,7 @@ int main(int argc, char** argv){
                             unmake_move(LAST_MOVE(b.state_history.top()));
                             LoadDisplayBoardFromGameState(b.sq_board);
                             legal_moves.clear();
-                            generate_moves(&legal_moves);
+                            generate_moves(legal_moves);
                         }
                     }
                     break;
@@ -408,7 +408,7 @@ int main(int argc, char** argv){
             SDL_RenderPresent(renderer);
 
             legal_moves.clear();
-            generate_moves(&legal_moves);
+            generate_moves(legal_moves);
             if(legal_moves.size() == 0) {
                 if(in_check()) {
                     cout << "Checkmate!" << endl;
@@ -423,7 +423,7 @@ int main(int argc, char** argv){
             LoadDisplayBoardFromGameState(b.sq_board);
 
             legal_moves.clear();
-            generate_moves(&legal_moves);
+            generate_moves(legal_moves);
 
             madeMove = false;
         }
@@ -438,7 +438,7 @@ int main(int argc, char** argv){
             SDL_RenderPresent(renderer);
 
             legal_moves.clear();
-            generate_moves(&legal_moves);
+            generate_moves(legal_moves);
             if(legal_moves.size() == 0) {
                 if(checking_pieces()) {
                     cout << "Checkmate!" << endl;
@@ -453,7 +453,7 @@ int main(int argc, char** argv){
             LoadDisplayBoardFromGameState(b.sq_board);
 
             legal_moves.clear();
-            generate_moves(&legal_moves);
+            generate_moves(legal_moves);
         }
         /* code to play itself */
 

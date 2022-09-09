@@ -1,4 +1,4 @@
 Mode:Play
-FEN:8/p7/1p1k2p1/6P1/P1K5/8/1P6/8 w - - 0 1
+FEN:8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 1 2
 AIvsAI:True
 Search Time:1250

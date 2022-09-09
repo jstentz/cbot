@@ -265,11 +265,11 @@ int evaluate() {
     // if(b.t == W) middlegame_eval += 10;
     // else         middlegame_eval -= 10;
 
-    // int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
-    // int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
+    int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
+    int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
 
-    // middlegame_eval -= queen_moves_from_white_king * 5;
-    // middlegame_eval += queen_moves_from_black_king * 5;
+    middlegame_eval -= queen_moves_from_white_king * 5;
+    middlegame_eval += queen_moves_from_black_king * 5;
     
     int knight_mobility = evaluate_knights_mobility();
     int bishop_mobility = evaluate_bishops_mobility();

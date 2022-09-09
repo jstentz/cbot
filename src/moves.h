@@ -144,6 +144,16 @@ int see_capture(move_t capture);
 bool is_bad_capture(move_t capture);
 
 /**
+ * @brief Returns true if the move is a promotion move or if the move is pushing a pawn to the 7th or 2nd
+ * rank respectively. Make sure to call this function before making the move on the board.
+ * 
+ * @param move 
+ * @return true 
+ * @return false 
+ */
+bool pawn_promo_or_close_push(move_t move);
+
+/**
  * @brief Returns the move in algebraic notation (eg a1c1).
  * 
  * @param move 

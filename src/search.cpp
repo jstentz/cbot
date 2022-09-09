@@ -183,8 +183,12 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     move_t move;
     int evaluation;
     bool pv_search = true;
+    int promotion_extension = 0;
     for(int i = 0; i < num_moves; i++) {
         move = moves[i];
+        /* searches lines deeper where you push a pawn close to promotion (or promote it)! */
+        promotion_extension = 0;
+        if(pawn_promo_or_close_push(move)) promotion_extension = 1;
         make_move(move);
         /*
             Principal Variation Search (PVS):
@@ -194,15 +198,14 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
         */
 
         if(pv_search) {
-            evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha, IS_PV, CAN_NULL);
+            evaluation = -search_moves(ply_from_root + 1, depth - 1 + promotion_extension, -beta, -alpha, IS_PV, CAN_NULL);
         }
         else {
-            evaluation = -search_moves(ply_from_root + 1, depth - 1, -alpha - 1, -alpha, NO_PV, CAN_NULL);
+            evaluation = -search_moves(ply_from_root + 1, depth - 1 + promotion_extension, -alpha - 1, -alpha, NO_PV, CAN_NULL);
             if(evaluation > alpha) {
-                evaluation = -search_moves(ply_from_root + 1, depth - 1, -beta, -alpha, IS_PV, CAN_NULL);
+                evaluation = -search_moves(ply_from_root + 1, depth - 1 + promotion_extension, -beta, -alpha, IS_PV, CAN_NULL);
             }
         }
-
         unmake_move(move);
 
         if(abort_search)

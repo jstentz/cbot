@@ -562,6 +562,17 @@ bool is_bad_capture(move_t capture) {
     return see_capture(capture) < -50;
 }
 
+bool pawn_promo_or_close_push(move_t move) {
+    if(IS_PROMO(move)) return true;
+    int from = FROM(move);
+    int to = TO(move);
+    piece moving_piece = b.sq_board[from];
+    if(PIECE(moving_piece) != PAWN) return false;
+    if(RANK(to) == RANK_7 && COLOR(moving_piece) == WHITE) return true;
+    if(RANK(to) == RANK_2 && COLOR(moving_piece) == BLACK) return true;
+    return false;
+}
+
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
 void order_moves(vector<move_t> &moves, move_t tt_best_move) {

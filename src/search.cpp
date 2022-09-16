@@ -92,7 +92,7 @@ int qsearch(int alpha, int beta) {
      * them not taking the piece. We will see if it is better or worse for
      * them to make that capture.
      */
-    int stand_pat = evaluate(); // fall back evaluation
+    int stand_pat = evaluate(alpha, beta); // fall back evaluation
     if(stand_pat >= beta) {nodes_reached++; return beta;}
     if(alpha < stand_pat) alpha = stand_pat;
 

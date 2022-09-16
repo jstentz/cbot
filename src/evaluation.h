@@ -15,6 +15,11 @@
 
 #define EVAL_SIZE 131072 /* 2^17 THIS MUST BE A POWER OF 2 */
 #define ENDGAME_MATERIAL 2000
+#define LAZY_EVAL_MARGIN 200 /* we won't consider positions that are two pawns different than alpha / beta */
+
+#define EXACT 0
+#define ALPHA 1
+#define BETA 2
 #define FAILED_LOOKUP INT_MIN
 
 const int piece_values[10] = {100, // white pawn
@@ -223,6 +228,7 @@ extern float game_phase;
 typedef struct eval_entry_struct {
     hash_val key;
     int score;
+    char flags;
 } eval_entry;
 
 /**
@@ -231,7 +237,7 @@ typedef struct eval_entry_struct {
  * @param board board to evaluate
  * @return score from the perspective of who's turn it is
  */
-int evaluate();
+int evaluate(int alpha, int beta);
 
 /**
  * @brief Initializes the eval hash table.

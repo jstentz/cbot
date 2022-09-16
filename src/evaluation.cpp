@@ -24,20 +24,27 @@ void clear_eval_table() {
     init_eval_table();
 }
 
-int probe_eval_table(hash_val key) {
+int probe_eval_table(hash_val key, int alpha, int beta) {
     eval_probes++;
     eval_entry entry = eval_table[key & (EVAL_SIZE - 1)];
     if(entry.key == key) {
         eval_hits++;
-        return entry.score;
+        int score = entry.score;
+        if(entry.flags == EXACT)
+            return score;
+        if(entry.flags == ALPHA && score <= alpha)
+            return alpha;
+        if(entry.flags == BETA && score >= beta)
+            return beta;
     }
     return FAILED_LOOKUP;
 }
 
-void store_eval_entry(hash_val key, int score) {
+void store_eval_entry(hash_val key, int score, int flags) {
     eval_entry* entry = &eval_table[key & (EVAL_SIZE - 1)];
     entry->key = key;
     entry->score = score;
+    entry->flags = flags;
 }
 
 float game_phase;
@@ -223,19 +230,24 @@ int evaluate_queens_mobility() {
     return mobility;
 }
 
-/* everything in here is scored in white's perspective until the end */
-int evaluate() {
+int evaluate(int alpha, int beta) {
+    /* widen the margins a bit for lazy evaluation */
+    if(!is_mate_score(alpha)) alpha -= LAZY_EVAL_MARGIN; /* prevents underflow */
+    if(!is_mate_score(beta))  beta  += LAZY_EVAL_MARGIN; /* prevents overflow  */
+
     /* probe the eval table */
-    int table_score = probe_eval_table(b.piece_hash); /* use the pieces since that's all that matters for eval */
+    int table_score = probe_eval_table(b.piece_hash, alpha, beta); /* use the pieces since that's all that matters for eval */
     if(table_score != FAILED_LOOKUP) 
         return table_score;
 
-
     int eval;
+    int lazy_eval;
     int middlegame_eval;
     int endgame_eval;
+    int perspective = (b.t == W) ? 1 : -1;
 
     if(!sufficient_checkmating_material()) {
+        store_eval_entry(b.piece_hash, 0, EXACT);
         return 0;
     }
 
@@ -254,6 +266,19 @@ int evaluate() {
 
     middlegame_eval = middlegame_positional + b.material_score;
     endgame_eval = endgame_positional + b.material_score;
+
+    /* in order to do lazy eval, we will see if this exceeds the alpha-beta bounds */
+    lazy_eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
+    lazy_eval *= perspective;
+    if(lazy_eval >= beta) {
+        store_eval_entry(b.piece_hash, beta, BETA);
+        return beta;
+    }
+    else if(lazy_eval <= alpha) {
+        store_eval_entry(b.piece_hash, alpha, ALPHA);
+        return alpha;
+    }
+    /* otherwise we get the exact score */
 
     /* mop up eval for winning side */
     if(b.material_score != 0){
@@ -294,14 +319,12 @@ int evaluate() {
     if(b.piece_counts[WHITE_BISHOPS_INDEX] >= 2) eval += 30; /* bishop pair bonus for white */
     if(b.piece_counts[BLACK_BISHOPS_INDEX] >= 2) eval -= 30; /* bishop pair bonus for black */
 
-
-    int perspective = (b.t == W) ? 1 : -1;
     eval *= perspective;
 
     /* save the evaluation we just made */
     /* here I just need to hash the board's pieces 
     add this after I finish unmake move */
-    store_eval_entry(b.piece_hash, eval); /* use just the pieces again */
+    store_eval_entry(b.piece_hash, eval, EXACT); /* use just the pieces again */
     return eval;
 }
 

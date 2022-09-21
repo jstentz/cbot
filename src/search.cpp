@@ -349,4 +349,5 @@ move_t find_best_move() {
  * by decreasing the index. I can also just have make_move update that list and then I'll be able to search in the past.
  * Write an is_repetition function. Take a look at where the cpw engine calls this function (theres is called isRepetition).
  * 
+ * also consider looking at contempt scores... will make the AI pursue draws / not pursue them under certain conditions
  */

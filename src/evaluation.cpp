@@ -334,5 +334,5 @@ bool is_mate_score(int score) {
 
 int moves_until_mate(int mate_score) {
     mate_score = abs(mate_score);
-    return (INT_MAX - mate_score - 1) / 2;
+    return (INT_MAX - mate_score - 1) / 2 + 1;
 }

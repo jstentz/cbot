@@ -6,6 +6,7 @@
 #include "evaluation.h"
 #include "hashing.h"
 #include "debugging.h"
+#include "tt.h"
 
 #include <vector>
 #include <stack>
@@ -993,6 +994,7 @@ void make_move(move_t move) {
     b.piece_hash = piece_hash;
     b.pawn_hash = pawn_hash;
     b.state_history.push(state);
+    // game_history.insert(board_hash); /* insert the new board hash into the game history */
     return;
 }
 
@@ -1003,6 +1005,8 @@ void unmake_move(move_t move) {
     hash_val board_hash = b.board_hash;
     hash_val piece_hash = b.piece_hash;
     hash_val pawn_hash = b.pawn_hash;
+
+    // game_history.erase(board_hash); /* remove the board hash from the game history */
 
     int from = FROM(move);
     int to = TO(move);

@@ -48,19 +48,6 @@ typedef struct tt_table {
     move_t best_move;
 } tt_t;
 
-typedef unordered_set<hash_val> history_t;
-
-extern history_t game_history;
-
-/**
- * @brief Checks the game history to see if this position has been reached before.
- * 
- * @param h 
- * @return true 
- * @return false 
- */
-bool probe_game_history(hash_val h);
-
 extern tt_t TT;
 
 extern size_t tt_hits; // number of transpositions

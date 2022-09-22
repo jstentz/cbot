@@ -661,6 +661,7 @@ void make_move(move_t move) {
     /* make a copy of the irreversible aspects of the position */
     state_t prev_state = b.state_history.top();
     state_t state = prev_state;
+    b.ply++; /* we do this here to be able to update irr_ply */
 
     hash_val board_hash = b.board_hash;
     hash_val piece_hash = b.piece_hash;
@@ -983,6 +984,10 @@ void make_move(move_t move) {
     else if(PIECE(moving_piece) != KING) {
         b.positional_score += piece_scores[INDEX_FROM_PIECE(moving_piece)][to];
     }
+
+    /* if we make an irreversible move, remember it! */
+    if(IS_CAPTURE(move) || IS_PROMO(move) || PIECE(moving_piece) == PAWN)
+        SET_IRR_PLY(state, b.ply);
     
     b.t = !b.t;
     /* reverse the black_to_move hash */
@@ -994,6 +999,7 @@ void make_move(move_t move) {
     b.piece_hash = piece_hash;
     b.pawn_hash = pawn_hash;
     b.state_history.push(state);
+    b.board_history.push_back(board_hash);
     // game_history.insert(board_hash); /* insert the new board hash into the game history */
     return;
 }
@@ -1001,6 +1007,8 @@ void make_move(move_t move) {
 void unmake_move(move_t move) {
     /* make a copy of the irreversible aspects of the position */
     state_t state = b.state_history.top();
+    b.ply--;
+    b.board_history.pop_back();
 
     hash_val board_hash = b.board_hash;
     hash_val piece_hash = b.piece_hash;

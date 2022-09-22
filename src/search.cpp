@@ -121,13 +121,11 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     vector<move_t> moves;
     hash_val h = b.board_hash;
 
-    int flags = ALPHA;
-
-    if(ply_from_root > 0) {
-        /* check for repetition draw */
-        if(probe_game_history(h))
-            return 0;
+    if(ply_from_root > 0 && is_repetition()) {
+        return 0;
     }
+
+    int flags = ALPHA;
 
     bool check_flag;
     if(!can_null) /* if we just made a null move (passed the turn), we cannot be in check */
@@ -150,7 +148,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     if(depth == 0) {
         return qsearch(alpha, beta);
     }
-    
+
     /* 
         Null Move Pruning:
             - Runs on the assumption that if you give your opponent a free move, and the resulting
@@ -268,21 +266,13 @@ move_t find_best_move() {
     beta_cutoffs = 0;
 
     hash_val h = b.board_hash;
-    game_history.insert(h); // insert the board hash from the user's move
-
-    int search_time = SEARCH_TIME;
 
     /* check in opening book */
     move_t opening_move = get_opening_move();
     if(opening_move != NO_MOVE) {
-        this_thread::sleep_for(chrono::milliseconds(search_time));
+        this_thread::sleep_for(chrono::milliseconds(SEARCH_TIME));
         std::cout << "Depth: None | Evaluation: Book | Move: ";
         std::cout << notation_from_move(opening_move) << endl;
-
-        /* include the move that was made in the history */
-        make_move(opening_move);
-        game_history.insert(b.board_hash);
-        unmake_move(opening_move);
         return opening_move;
     }
 
@@ -300,7 +290,7 @@ move_t find_best_move() {
     /* iterative deepening framework with threading */
     while(true) {
         tStop = clock();
-        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
+        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)SEARCH_TIME / 1000)){
             abort_search = true;
             break;
         }
@@ -333,13 +323,6 @@ move_t find_best_move() {
     // std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
     // std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
     // std::cout << "Beta cutoffs: " << beta_cutoffs << endl << endl;
-
-    /* include the move that was made in the history */
-    /* MOVE THIS SOMEWHERE OUTSIDE OF THIS FUNCTION */
-    make_move(best_move);
-    game_history.insert(b.board_hash);
-    unmake_move(best_move);
-
     return best_move;
 }
 

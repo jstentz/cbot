@@ -385,7 +385,7 @@ int main(int argc, char** argv){
                     }
                     else if (event.button.button == SDL_BUTTON_RIGHT) {
                         if(b.state_history.size() > 1) {
-                            game_history.erase(b.board_hash);
+                            // game_history.erase(b.board_hash);
                             unmake_move(LAST_MOVE(b.state_history.top()));
                             LoadDisplayBoardFromGameState(b.sq_board);
                             legal_moves.clear();

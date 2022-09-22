@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string>
 #include <stack>
+#include <vector>
 
 #include "bitboard.h"
 #include "pieces.h"
@@ -81,10 +82,14 @@ typedef signed int move_t;
 #define CL_LAST_CAPTURE(state)      (state & 0xFFFFFFFFFFFF87FF)
 #define SET_LAST_CAPTURE(state, pc) (state = CL_LAST_CAPTURE(state) | (((state_t)pc) << 11))
 
-#define FIFTY_MOVE(state)            ((state >> 15) & 0x000000000001FFFF)
+#define FIFTY_MOVE(state)            ((state >> 15) & 0x000000000000007F)
 #define SET_FIFTY_MOVE(state, count) (state |= (((state_t)count) << 15))
 #define INC_FIFTY_MOVE(state)        (SET_FIFTY_MOVE(state, FIFTY_MOVE(state) + 1))
-#define CL_FIFTY_MOVE(state)         (state &= ~(0x000000000001FFFF << 15))
+#define CL_FIFTY_MOVE(state)         (state &= ~(0x000000000000007F << 15))
+
+#define IRR_PLY(state)               ((state >> 22) & 0x00000000000003FF)
+#define CL_IRR_PLY(state)            (state & 0xFFFFFFFF003FFFFF)
+#define SET_IRR_PLY(state, ply)      (state = CL_IRR_PLY(state) | (((state_t)ply) << 22))
 
 #define LAST_MOVE(state)         ((state >> 32) & 0x00000000FFFFFFFF)
 #define CL_LAST_MOVE(state)      (state & 0x00000000FFFFFFFF)
@@ -149,6 +154,11 @@ typedef struct Board
     int total_material;
 
     stack<state_t> state_history;
+
+    /* for detecting repetition */
+    /* I have to encode the ply of the last irreversible in the state */
+    int ply;
+    vector<hash_val> board_history;
 } board_t;
 
 extern board_t b;
@@ -223,3 +233,5 @@ int check_type(bitboard attackers);
  * @return false 
  */
 bool in_check();
+
+bool is_repetition();

@@ -52,6 +52,8 @@ board_t zero_board() {
     for(int i = 0; i < 10; i++) {
         board.piece_counts[i] = 0;
     }
+
+    board.ply = 0;
     return board;
 }
 
@@ -138,12 +140,14 @@ void decode_fen(string fen) {
     SET_EN_PASSANT_SQ(state, NONE);
     SET_LAST_CAPTURE(state, EMPTY);
     CL_FIFTY_MOVE(state);
+    SET_IRR_PLY(state, 0);
     b.state_history.push(state);
     update_boards();
     b.board_hash = zobrist_hash(); // hash the board initially
     b.piece_hash = hash_pieces(); // hash the pieces initially
     b.pawn_hash = hash_pawns(); // hash the pawns initially
-    game_history.insert(b.board_hash); // might not need this
+    // game_history.insert(b.board_hash); // might not need this
+    b.board_history.push_back(b.board_hash);
 
     /* more eval stuff */
     for(int i = 0; i < 10; i++) {
@@ -380,4 +384,17 @@ int check_type(bitboard checkers) {
 
 bool in_check() {
     return check_type(checking_pieces()) != NO_CHECK;
+}
+
+bool is_repetition() {
+    hash_val curr_hash = b.board_hash;
+    int irr_ply = IRR_PLY(b.state_history.top());
+    /* we start searching at the previous board state, and up to and including the board with 
+       the most recent irreversible move played on the board. We decrement by two since we only need to check
+       board states where it was the current player's turn. */
+    for(int i = b.ply - 2; i >= irr_ply; i = i - 2) {
+        if(b.board_history[i] == curr_hash)
+            return true;
+    }
+    return false;
 }

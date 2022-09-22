@@ -121,10 +121,6 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     vector<move_t> moves;
     hash_val h = b.board_hash;
 
-    if(ply_from_root > 0 && is_repetition()) {
-        return 0;
-    }
-
     int flags = ALPHA;
 
     bool check_flag;
@@ -147,6 +143,10 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
 
     if(depth == 0) {
         return qsearch(alpha, beta);
+    }
+
+    if(ply_from_root > 0 && is_repetition()) {
+        return 0;
     }
 
     /* 

@@ -519,21 +519,9 @@ void generate_moves(vector<move_t> &curr_moves, bool captures_only) {
 int see(int sq) {
     int value = 0;
     square attacker_sq = least_valued_attacker_sq((square)sq, !b.t);
-    // cout << "attacker sq: " << attacker_sq << endl;
     if(attacker_sq != NONE) {
-        // move_t capture;
-        // int cap_rank = RANK(sq);
-        // if((cap_rank == RANK_1 || cap_rank == RANK_8) && PIECE(b.sq_board[attacker_sq]) == PAWN) {
-        //     capture = construct_move(attacker_sq, sq, QUEEN_PROMO_CAPTURE); /* assume you would promote to a queen */
-        //     cout << "Here!" << endl;
-        //     /* the issue with may be that the person capturing the new queen may think they are winning a queen when in reality it would just be a pawn */
-        // }
-        // else {
-        //     capture = construct_move(attacker_sq, sq, NORMAL_CAPTURE);
-        // }
         move_t capture = construct_move(attacker_sq, sq, NORMAL_CAPTURE); /* would this also work for promotions? */
         piece captured_piece = b.sq_board[sq];
-        // if(PIECE(captured_piece) == KING) cout << "wtf" << endl;
         make_move(capture);
         value = max(0, abs(piece_values[INDEX_FROM_PIECE(captured_piece)]) - see(sq));
         unmake_move(capture);

@@ -186,79 +186,70 @@ int evaluate_knights(bitboard white_king_squares, bitboard black_king_squares) {
     return mobility + attacking_score;
 }
 
-int evaluate_bishops(bitboard white_king_squares, bitboard black_king_squares, bitboard only_pawns) {
+int evaluate_bishops(bitboard white_king_squares, bitboard black_king_squares) {
     int mobility = 0;
     int attacking_score = 0;
 
     bitboard white_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
     bitboard black_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
-    bitboard attacks_all_pieces;
-    bitboard attacks_only_pawns;
+    bitboard attacks;
     while(white_bishops) {
-        attacks_all_pieces = get_bishop_attacks((square)first_set_bit(white_bishops), b.all_pieces);
-        attacks_only_pawns = get_bishop_attacks((square)first_set_bit(white_bishops), only_pawns);
-        mobility += pop_count(attacks_all_pieces) * MOBILITY_WEIGHT;
-        attacking_score += pop_count(attacks_only_pawns & black_king_squares) * ATTACKING_WEIGHT;
+        attacks = get_bishop_attacks((square)first_set_bit(white_bishops), b.all_pieces);
+        mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+        attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
         REMOVE_FIRST(white_bishops);
     }
 
     while(black_bishops) {
-        attacks_all_pieces = get_bishop_attacks((square)first_set_bit(black_bishops), b.all_pieces);
-        attacks_only_pawns = get_bishop_attacks((square)first_set_bit(black_bishops), only_pawns);
-        mobility -= pop_count(attacks_all_pieces) * MOBILITY_WEIGHT;
-        attacking_score -= pop_count(attacks_only_pawns & white_king_squares) * ATTACKING_WEIGHT;
+        attacks = get_bishop_attacks((square)first_set_bit(black_bishops), b.all_pieces);
+        mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+        attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
         REMOVE_FIRST(black_bishops);
     }
     return mobility + attacking_score;
 }
 
-int evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares, bitboard only_pawns) {
+int evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares) {
     int mobility = 0;
-    int attacking_score = 0;
-
+    int attacking_score;
     bitboard white_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
     bitboard black_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
-    bitboard attacks_all_pieces;
-    bitboard attacks_only_pawns;
+    bitboard attacks;
+
     while(white_rooks) {
-        attacks_all_pieces = get_rook_attacks((square)first_set_bit(white_rooks), b.all_pieces);
-        attacks_only_pawns = get_rook_attacks((square)first_set_bit(white_rooks), only_pawns);
-        mobility += pop_count(attacks_all_pieces) * MOBILITY_WEIGHT;
-        attacking_score += pop_count(attacks_only_pawns & black_king_squares) * ATTACKING_WEIGHT;
+        attacks = get_rook_attacks((square)first_set_bit(white_rooks), b.all_pieces);
+        mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+        attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
         REMOVE_FIRST(white_rooks);
     }
 
     while(black_rooks) {
-        attacks_all_pieces = get_rook_attacks((square)first_set_bit(black_rooks), b.all_pieces);
-        attacks_only_pawns = get_rook_attacks((square)first_set_bit(black_rooks), only_pawns);
-        mobility -= pop_count(attacks_all_pieces) * MOBILITY_WEIGHT;
-        attacking_score -= pop_count(attacks_only_pawns & white_king_squares) * ATTACKING_WEIGHT;
+        attacks = get_rook_attacks((square)first_set_bit(black_rooks), b.all_pieces);
+        mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+        attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
         REMOVE_FIRST(black_rooks);
     }
     return mobility + attacking_score;
 }
 
-int evaluate_queens(bitboard white_king_squares, bitboard black_king_squares, bitboard only_pawns) {
+int evaluate_queens(bitboard white_king_squares, bitboard black_king_squares) {
     int mobility = 0;
-    int attacking_score = 0;
-
+    int attacking_score;
     bitboard white_queens = b.piece_boards[WHITE_QUEENS_INDEX];
     bitboard black_queens = b.piece_boards[BLACK_QUEENS_INDEX];
-    bitboard attacks_all_pieces;
-    bitboard attacks_only_pawns;
+    bitboard attacks;
+
     while(white_queens) {
-        attacks_all_pieces = get_queen_attacks((square)first_set_bit(white_queens), b.all_pieces);
-        attacks_only_pawns = get_queen_attacks((square)first_set_bit(white_queens), only_pawns);
-        mobility += pop_count(attacks_all_pieces) * MOBILITY_WEIGHT;
-        attacking_score += pop_count(attacks_only_pawns & black_king_squares) * ATTACKING_WEIGHT;
+        attacks = get_queen_attacks((square)first_set_bit(white_queens), b.all_pieces);
+        mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+        attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
         REMOVE_FIRST(white_queens);
     }
 
     while(black_queens) {
-        attacks_all_pieces = get_queen_attacks((square)first_set_bit(black_queens), b.all_pieces);
-        attacks_only_pawns = get_queen_attacks((square)first_set_bit(black_queens), only_pawns);
-        mobility -= pop_count(attacks_all_pieces) * MOBILITY_WEIGHT;
-        attacking_score -= pop_count(attacks_only_pawns & white_king_squares) * ATTACKING_WEIGHT;
+        attacks = get_queen_attacks((square)first_set_bit(black_queens), b.all_pieces);
+        mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+        attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
         REMOVE_FIRST(black_queens);
     }
     return mobility + attacking_score;
@@ -334,13 +325,11 @@ int evaluate(int alpha, int beta) {
     /* evaluate the mobility and attacking score of each piece */
     bitboard white_king_squares = BIT_FROM_SQ(white_king_loc) | get_king_attacks(white_king_loc);
     bitboard black_king_squares = BIT_FROM_SQ(black_king_loc) | get_king_attacks(black_king_loc);
-    bitboard only_pawns = b.piece_boards[WHITE_PAWNS_INDEX] | b.piece_boards[BLACK_PAWNS_INDEX];
     
-    /* NOTE: Maybe I should calculate the attacking potential by generating the sliding piece moves without friendly pieces on the board (batteries are good) */
     int knight_score = evaluate_knights(white_king_squares, black_king_squares);
-    int bishop_score = evaluate_bishops(white_king_squares, black_king_squares, only_pawns);
-    int rook_score = evaluate_rooks(white_king_squares, black_king_squares, only_pawns);
-    int queen_score = evaluate_queens(white_king_squares, black_king_squares, only_pawns);
+    int bishop_score = evaluate_bishops(white_king_squares, black_king_squares);
+    int rook_score = evaluate_rooks(white_king_squares, black_king_squares);
+    int queen_score = evaluate_queens(white_king_squares, black_king_squares);
 
     /* we care more about the placement of our minor pieces in the middle game */
     middlegame_eval += (knight_score + bishop_score) * 2 + (rook_score + queen_score);
@@ -376,5 +365,5 @@ bool is_mate_score(int score) {
 
 int moves_until_mate(int mate_score) {
     mate_score = abs(mate_score);
-    return (INT_MAX - mate_score - 1) / 2 + 1;
+    return (INT_MAX - mate_score - 1) / 2;
 }

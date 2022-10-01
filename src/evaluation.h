@@ -16,6 +16,8 @@
 #define EVAL_SIZE 131072 /* 2^17 THIS MUST BE A POWER OF 2 */
 #define ENDGAME_MATERIAL 2000
 #define LAZY_EVAL_MARGIN 200 /* we won't consider positions that are two pawns different than alpha / beta */
+#define ATTACKING_WEIGHT 5
+#define MOBILITY_WEIGHT 1
 
 #define EXACT 0
 #define ALPHA 1

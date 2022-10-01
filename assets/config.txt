@@ -1,4 +1,4 @@
 Mode:Play
-FEN:5k2/8/5P1p/4K2P/8/8/8/8 w - - 0 1
-AIvsAI:True
+FEN:rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+AIvsAI:False
 Search Time:1250

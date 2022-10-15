@@ -1,6 +1,2 @@
 While in the Cbot directory:
-    For engine only:
         g++ -o Cbot src/*.cpp -static-libgcc -static-libstdc++ -lmingw32 -Ofast
-    
-    For grapics (REMOVE LATER):
-        g++ -o Cbot src/*.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -static-libgcc -static-libstdc++ -Ofast

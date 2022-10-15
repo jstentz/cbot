@@ -1,10 +1,6 @@
-For graphics:
-    g++ -Isrc/include -Lsrc/lib -o main graphics.cpp -lmingw32 -lSDL2main -lSDL2
-
-For engine:
-    g++ -o engine engine.cpp -static-libgcc -static-libstdc++
-
-For both:
-    g++ -o Cbot graphics.cpp engine.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -static-libgcc -static-libstdc++ -Ofast
-    g++ -o ../Cbot graphics.cpp engine.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -static-libgcc -static-libstdc++ -Ofast
-    g++ -o ../Cbot *.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -static-libgcc -static-libstdc++ -Ofast
+While in the Cbot directory:
+    For engine only:
+        g++ -o Cbot src/*.cpp -static-libgcc -static-libstdc++ -lmingw32 -Ofast
+    
+    For grapics (REMOVE LATER):
+        g++ -o Cbot src/*.cpp -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -static-libgcc -static-libstdc++ -Ofast

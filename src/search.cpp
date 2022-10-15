@@ -8,7 +8,6 @@
 #include "debugging.h"
 #include "attacks.h"
 #include "tt.h"
-#include "configuration.h"
 
 #include <stddef.h>
 #include <stack>
@@ -252,7 +251,7 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
     return alpha;
 }
 
-move_t find_best_move() {
+move_t find_best_move(int search_time) {
     /* clear the eval table */
     clear_eval_table();
     eval_hits = 0;
@@ -270,7 +269,7 @@ move_t find_best_move() {
     /* check in opening book */
     move_t opening_move = get_opening_move();
     if(opening_move != NO_MOVE) {
-        this_thread::sleep_for(chrono::milliseconds(SEARCH_TIME));
+        this_thread::sleep_for(chrono::milliseconds(search_time));
         std::cout << "Depth: None | Evaluation: Book | Move: ";
         std::cout << notation_from_move(opening_move) << endl;
         return opening_move;
@@ -290,7 +289,7 @@ move_t find_best_move() {
     /* iterative deepening framework with threading */
     while(true) {
         tStop = clock();
-        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)SEARCH_TIME / 1000)){
+        if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
             abort_search = true;
             break;
         }
@@ -319,18 +318,5 @@ move_t find_best_move() {
     else
         std::cout << "Evaluation: " << score / 100.0 << " | ";
     std::cout << "Move: " << notation_from_move(best_move) << endl;
-    // std::cout << "Transposition hit percentage: " << ((float)tt_hits / (float)tt_probes * 100.0) << endl;
-    // std::cout << "Eval hit percentage: " << ((float)eval_hits / (float)eval_probes * 100.0) << endl;
-    // std::cout << "Leaf-nodes reached: " << nodes_reached << endl;
-    // std::cout << "Beta cutoffs: " << beta_cutoffs << endl << endl;
     return best_move;
 }
-
-/**
- * Things to add:
- * I need to do the indexable list of hash values instead of this hash value nonsense... then I can just search backwards in time
- * by decreasing the index. I can also just have make_move update that list and then I'll be able to search in the past.
- * Write an is_repetition function. Take a look at where the cpw engine calls this function (theres is called isRepetition).
- * 
- * also consider looking at contempt scores... will make the AI pursue draws / not pursue them under certain conditions
- */

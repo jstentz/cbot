@@ -89,8 +89,9 @@ int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, 
  * @brief Given a board state, returns the best move.
  * 
  * @param board 
+ * @param search_time
  * @return Best move 
  */
-move_t find_best_move();
+move_t find_best_move(int search_time);
 
 extern size_t positions_searched; // debugging

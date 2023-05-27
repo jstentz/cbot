@@ -128,37 +128,37 @@ typedef unsigned long long int state_t;
  */
 typedef struct Board
 {
-    bitboard piece_boards[12];
+  bitboard piece_boards[12];
 
-    bitboard white_pieces;
-    bitboard black_pieces;
-    bitboard all_pieces;
+  bitboard white_pieces;
+  bitboard black_pieces;
+  bitboard all_pieces;
 
-    piece sq_board[64];
+  piece sq_board[64];
 
-    turn t;
+  turn t;
 
-    square white_king_loc;
-    square black_king_loc;
+  square white_king_loc;
+  square black_king_loc;
 
-    /* hashing items */
-    hash_val board_hash;
-    hash_val piece_hash;
-    hash_val pawn_hash;
+  /* hashing items */
+  hash_val board_hash;
+  hash_val piece_hash;
+  hash_val pawn_hash;
 
-    /* evaluation items */
-    int material_score;
-    int positional_score; // doesn't include kings
-    int piece_counts[10];
+  /* evaluation items */
+  int material_score;
+  int positional_score; // doesn't include kings
+  int piece_counts[10];
 
-    int total_material;
+  int total_material;
 
-    stack<state_t> state_history;
+  stack<state_t> state_history;
 
-    /* for detecting repetition */
-    /* I have to encode the ply of the last irreversible in the state */
-    int ply;
-    vector<hash_val> board_history;
+  /* for detecting repetition */
+  /* I have to encode the ply of the last irreversible in the state */
+  int ply;
+  vector<hash_val> board_history;
 } board_t;
 
 extern board_t b;
@@ -168,8 +168,8 @@ extern board_t b;
  * 
  */
 typedef struct pin_struct {
-    bitboard ray_at_sq[64];
-    bitboard pinned_pieces;
+  bitboard ray_at_sq[64];
+  bitboard pinned_pieces;
 } pin_t;
 
 /**

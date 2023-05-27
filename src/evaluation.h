@@ -12,6 +12,7 @@
 #pragma once
 
 #include "board.h"
+#include "limits.h"
 
 #define EVAL_SIZE 131072 /* 2^17 THIS MUST BE A POWER OF 2 */
 #define ENDGAME_MATERIAL 2000

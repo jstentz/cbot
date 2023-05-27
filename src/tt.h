@@ -13,6 +13,7 @@
 
 #include "hashing.h"
 #include "moves.h"
+#include "limits.h"
 
 #include <unordered_set>
 

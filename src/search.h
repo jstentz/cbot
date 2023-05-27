@@ -17,8 +17,6 @@
 #include <stddef.h>
 #include <stack>
 
-typedef unsigned long long int uint64_t;
-
 #define IS_PV 1
 #define NO_PV 0
 

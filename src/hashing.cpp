@@ -1,6 +1,6 @@
-#include "hashing.h"
-#include "pieces.h"
-#include "board.h"
+#include "include/hashing.h"
+#include "include/pieces.h"
+#include "include/board.h"
 
 #include <stdlib.h>
 #include <time.h>

@@ -1,12 +1,12 @@
-#include "moves.h"
-#include "bitboard.h"
-#include "board.h"
-#include "attacks.h"
-#include "pieces.h"
-#include "evaluation.h"
-#include "hashing.h"
-#include "debugging.h"
-#include "tt.h"
+#include "include/moves.h"
+#include "include/bitboard.h"
+#include "include/board.h"
+#include "include/attacks.h"
+#include "include/pieces.h"
+#include "include/evaluation.h"
+#include "include/hashing.h"
+#include "include/debugging.h"
+#include "include/tt.h"
 
 #include <vector>
 #include <stack>

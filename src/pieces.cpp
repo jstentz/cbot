@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <string>
 
-#include "pieces.h"
+#include "include/pieces.h"
 
 bool is_sliding_piece(piece pc) {
     piece masked_pc = pc & 0xE; // add #define COLOR and #define PIECE

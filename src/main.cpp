@@ -2,17 +2,17 @@
 #include <iostream>
 #include <algorithm>
 
-#include "search.h"
-#include "pieces.h"
-#include "board.h"
-#include "hashing.h"
-#include "openings.h"
-#include "attacks.h"
-#include "hashing.h"
-#include "tt.h"
-#include "evaluation.h"
-#include "debugging.h"
-#include "moves.h"
+#include "include/search.h"
+#include "include/pieces.h"
+#include "include/board.h"
+#include "include/hashing.h"
+#include "include/openings.h"
+#include "include/attacks.h"
+#include "include/hashing.h"
+#include "include/tt.h"
+#include "include/evaluation.h"
+#include "include/debugging.h"
+#include "include/moves.h"
 
 /*
 Plan: make us able to play a full game of chess in this format (passing in the moves and such)

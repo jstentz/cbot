@@ -1,7 +1,7 @@
-#include "tt.h"
-#include "hashing.h"
-#include "moves.h"
-#include "evaluation.h"
+#include "include/tt.h"
+#include "include/hashing.h"
+#include "include/moves.h"
+#include "include/evaluation.h"
 
 #include <unordered_set>
 #include <cstdlib>

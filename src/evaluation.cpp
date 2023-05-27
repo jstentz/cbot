@@ -1,8 +1,8 @@
-#include "evaluation.h"
-#include "board.h"
-#include "bitboard.h"
-#include "pieces.h"
-#include "attacks.h"
+#include "include/evaluation.h"
+#include "include/board.h"
+#include "include/bitboard.h"
+#include "include/pieces.h"
+#include "include/attacks.h"
 
 #include <cstdlib>
 

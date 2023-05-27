@@ -1,13 +1,13 @@
-#include "search.h"
-#include "bitboard.h"
-#include "board.h"
-#include "moves.h"
-#include "evaluation.h"
-#include "hashing.h"
-#include "openings.h"
-#include "debugging.h"
-#include "attacks.h"
-#include "tt.h"
+#include "include/search.h"
+#include "include/bitboard.h"
+#include "include/board.h"
+#include "include/moves.h"
+#include "include/evaluation.h"
+#include "include/hashing.h"
+#include "include/openings.h"
+#include "include/debugging.h"
+#include "include/attacks.h"
+#include "include/tt.h"
 
 #include <stddef.h>
 #include <stack>

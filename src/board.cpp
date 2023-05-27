@@ -3,13 +3,13 @@
 #include <iostream>
 #include <stack>
 
-#include "board.h"
-#include "bitboard.h"
-#include "pieces.h"
-#include "attacks.h"
-#include "evaluation.h"
-#include "hashing.h"
-#include "tt.h"
+#include "include/board.h"
+#include "include/bitboard.h"
+#include "include/pieces.h"
+#include "include/attacks.h"
+#include "include/evaluation.h"
+#include "include/hashing.h"
+#include "include/tt.h"
 
 board_t b;
 

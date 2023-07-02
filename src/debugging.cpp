@@ -9,22 +9,20 @@
 #include <iostream>
 #include <stdio.h>
 
-using namespace std;
-
-void print_moves(vector<move_t> moves) {
+void print_moves(std::vector<move_t> moves) {
   for(move_t move : moves) {
-    cout << notation_from_move(move) << ": ";
-    cout << SCORE(move) << endl;
+    std::cout << notation_from_move(move) << ": ";
+    std::cout << SCORE(move) << std::endl;
   }
 }
 
 void print_bitboard(bitboard b) {
-  bitset<64> bs(b);
+  std::bitset<64> bs(b);
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
       std::cout << bs[(7-i)*8 + j];
     }
-    std::cout << endl;
+    std::cout << std::endl;
   }
 }
 
@@ -77,9 +75,9 @@ void print_squarewise(piece sqs[64]) {
       }
       std::cout << c;
     }
-    std::cout << endl;
+    std::cout << std::endl;
   }
-  std::cout << endl;
+  std::cout << std::endl;
 }
 
 void print_board(board_t *board) {
@@ -100,52 +98,52 @@ void print_board(board_t *board) {
   bitboard white_kings = (board->piece_boards[10]);
   bitboard black_kings = (board->piece_boards[11]);
 
-  std::cout << "All Pieces" << endl;
+  std::cout << "All Pieces" << std::endl;
   print_bitboard(all_pieces);
 
-  std::cout << endl << "White Pieces" << endl;
+  std::cout << std::endl << "White Pieces" << std::endl;
   print_bitboard(white_pieces);
 
-  std::cout << endl <<  "Black Pieces" << endl;
+  std::cout << std::endl <<  "Black Pieces" << std::endl;
   print_bitboard(black_pieces);
 
-  std::cout << endl <<  "White Pawns" << endl;
+  std::cout << std::endl <<  "White Pawns" << std::endl;
   print_bitboard(white_pawns);
 
-  std::cout << endl <<  "Black Pawns" << endl;
+  std::cout << std::endl <<  "Black Pawns" << std::endl;
   print_bitboard(black_pawns);
 
-  std::cout << endl <<  "White Knights" << endl;
+  std::cout << std::endl <<  "White Knights" << std::endl;
   print_bitboard(white_knights);
 
-  std::cout << endl <<  "Black Knights" << endl;
+  std::cout << std::endl <<  "Black Knights" << std::endl;
   print_bitboard(black_knights);
 
-  std::cout << endl <<  "White Bishops" << endl;
+  std::cout << std::endl <<  "White Bishops" << std::endl;
   print_bitboard(white_bishops);
 
-  std::cout << endl <<  "Black Bishops" << endl;
+  std::cout << std::endl <<  "Black Bishops" << std::endl;
   print_bitboard(black_bishops);
 
-  std::cout << endl <<  "White Rooks" << endl;
+  std::cout << std::endl <<  "White Rooks" << std::endl;
   print_bitboard(white_rooks);
 
-  std::cout << endl <<  "Black Rooks" << endl;
+  std::cout << std::endl <<  "Black Rooks" << std::endl;
   print_bitboard(black_rooks);
 
-  std::cout << endl <<  "White Queens" << endl;
+  std::cout << std::endl <<  "White Queens" << std::endl;
   print_bitboard(white_queens);
 
-  std::cout << endl <<  "Black Queens" << endl;
+  std::cout << std::endl <<  "Black Queens" << std::endl;
   print_bitboard(black_queens);
 
-  std::cout << endl <<  "White Kings" << endl;
+  std::cout << std::endl <<  "White Kings" << std::endl;
   print_bitboard(white_kings);
 
-  std::cout << endl <<  "Black Kings" << endl;
+  std::cout << std::endl <<  "Black Kings" << std::endl;
   print_bitboard(black_kings);
 
-  std::cout << endl <<  "Square-wise" << endl;
+  std::cout << std::endl <<  "Square-wise" << std::endl;
   print_squarewise(board->sq_board);
   return;
 }

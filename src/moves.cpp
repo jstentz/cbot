@@ -218,7 +218,7 @@ move_t construct_move(int from, int to, int flags) {
   return (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12);
 }
 
-void generate_knight_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_knight_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
   int from;
   int to;
   int flags;
@@ -257,7 +257,7 @@ void generate_knight_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_
   return;
 }
 
-void generate_king_moves(vector<move_t> &curr_moves, bool captures_only) {
+void generate_king_moves(std::vector<move_t> &curr_moves, bool captures_only) {
   int from;
   int to;
   int flags;
@@ -298,7 +298,7 @@ void generate_king_moves(vector<move_t> &curr_moves, bool captures_only) {
   return;
 }
 
-void generate_pawn_moves(vector<move_t> &curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
+void generate_pawn_moves(std::vector<move_t> &curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
   state_t state = b.state_history.top();
   int from;
   int to;
@@ -367,7 +367,7 @@ void generate_pawn_moves(vector<move_t> &curr_moves, bitboard check_mask, bool p
   return;
 }
 
-void generate_rook_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_rook_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
   int from;
   int to;
   int flags;
@@ -406,7 +406,7 @@ void generate_rook_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t 
   return;
 }
 
-void generate_bishop_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_bishop_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
   int from;
   int to;
   int flags;
@@ -445,7 +445,7 @@ void generate_bishop_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_
   return;
 }
 
-void generate_queen_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void generate_queen_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
   int from;
   int to;
   int flags;
@@ -484,7 +484,7 @@ void generate_queen_moves(vector<move_t> &curr_moves, bitboard check_mask, pin_t
   return;
 }
 
-void generate_moves(vector<move_t> &curr_moves, bool captures_only) {
+void generate_moves(std::vector<move_t> &curr_moves, bool captures_only) {
   bitboard check_pieces = checking_pieces();
   bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
   bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
@@ -523,7 +523,7 @@ int see(int sq) {
     move_t capture = construct_move(attacker_sq, sq, NORMAL_CAPTURE); /* would this also work for promotions? */
     piece captured_piece = b.sq_board[sq];
     make_move(capture);
-    value = max(0, abs(piece_values[INDEX_FROM_PIECE(captured_piece)]) - see(sq));
+    value = std::max(0, abs(piece_values[INDEX_FROM_PIECE(captured_piece)]) - see(sq));
     unmake_move(capture);
   }
   return value;
@@ -564,7 +564,7 @@ bool pawn_promo_or_close_push(move_t move) {
 
 // thinking about adding en passant to the move
 // if you move to a square that is attacked by a lesser-valued piece, put it last
-void order_moves(vector<move_t> &moves, move_t tt_best_move) {
+void order_moves(std::vector<move_t> &moves, move_t tt_best_move) {
   state_t state = b.state_history.top();
   signed short int score;
   piece mv_piece;
@@ -588,7 +588,7 @@ void order_moves(vector<move_t> &moves, move_t tt_best_move) {
     score = 0;
     mv = moves[i];
     if(tt_best_move != NO_MOVE && mv == tt_best_move) {
-      // cout << "trying pv move" << endl;
+      // std::cout << "trying pv move" << endl;
       score += 10000; // idk try the PV node first
     }
     to = TO(mv);
@@ -641,7 +641,7 @@ void order_moves(vector<move_t> &moves, move_t tt_best_move) {
         
     moves[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
   }
-  std::sort(moves.begin(), moves.end(), greater<move_t>());
+  std::sort(moves.begin(), moves.end(), std::greater<move_t>());
   return;
 }
 
@@ -713,7 +713,7 @@ void make_move(move_t move) {
   piece promo_piece = EMPTY;
   bitboard *promo_board;
   int opponent_pawn_sq;
-  // std::cout << to << std::endl;
+  // std::std::cout << to << std::endl;
   hash_val to_zobrist = zobrist_table.table[to][INDEX_FROM_PIECE(moving_piece)];
   switch (flags) {
     case QUIET_MOVE:
@@ -1448,13 +1448,13 @@ void unmake_nullmove() {
  * Goes from a move struct to the correct notation, given a move, a list of 
  * legal moves in the position, and the state of the board.
  */
-string notation_from_move(move_t move) {
-  vector<move_t> all_moves;
+std::string notation_from_move(move_t move) {
+  std::vector<move_t> all_moves;
   generate_moves(all_moves);
   // conflicting doesn't work for knights right now
   // need to update for check (+) and checkmate (#)
   // need to add castling
-  vector<move_t> conflicting_moves;
+  std::vector<move_t> conflicting_moves;
   for (move_t single_move : all_moves) {
     if(TO(single_move) == TO(move) && 
        FROM(single_move) != FROM(move) && 
@@ -1462,10 +1462,10 @@ string notation_from_move(move_t move) {
        FLAGS(single_move) == FLAGS(move))
       conflicting_moves.push_back(single_move);
   }
-  const string files = "abcdefgh";
-  const string ranks = "12345678";
-  const string pieces = "PNBRQK";
-  string str_move;
+  const std::string files = "abcdefgh";
+  const std::string ranks = "12345678";
+  const std::string pieces = "PNBRQK";
+  std::string str_move;
   piece mv_piece = b.sq_board[FROM(move)];
   char piece_name = pieces[INDEX_FROM_PIECE(mv_piece) / 2];
   bool capture = IS_CAPTURE(move);
@@ -1532,9 +1532,9 @@ string notation_from_move(move_t move) {
 
 // this doesn't work for promotions yet, but that shouldn't be a problem in opening
 /* make sure that this is called before the move is played */
-move_t move_from_notation(string notation) {
-  // cout << notation << endl;
-  string notation_copy = notation;
+move_t move_from_notation(std::string notation) {
+  // std::cout << notation << endl;
+  std::string notation_copy = notation;
   if(notation.length() == 0) {
     std::cout << "Empty notation!\n";
     int y;
@@ -1542,7 +1542,7 @@ move_t move_from_notation(string notation) {
     std::exit(-1);
   }
   notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
-  vector<move_t> moves;
+  std::vector<move_t> moves;
   generate_moves(moves);
   // this is so ugly
   if(notation == "O-O") {
@@ -1565,11 +1565,11 @@ move_t move_from_notation(string notation) {
   if(b.t == W) mv_piece |= WHITE;
   else mv_piece |= BLACK;
 
-  string delimiter = "=";
+  std::string delimiter = "=";
 
   piece promotion_piece;
   size_t promotion_marker = notation.find(delimiter);
-  if(promotion_marker == string::npos) { // didn't find = 
+  if(promotion_marker == std::string::npos) { // didn't find = 
     promotion_piece = EMPTY;
   }
   else {
@@ -1581,8 +1581,8 @@ move_t move_from_notation(string notation) {
   else {mv_piece |= BLACK; promotion_piece |= BLACK;}
   
   notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
-  const string files = "abcdefgh";
-  const string ranks = "12345678";
+  const std::string files = "abcdefgh";
+  const std::string ranks = "12345678";
 
   int target_rank;
   int target_file;
@@ -1590,7 +1590,7 @@ move_t move_from_notation(string notation) {
   int start_file = -1;
   square target_square;
 
-  // cout << notation << endl;
+  // std::cout << notation << endl;
   if(notation.length() == 2) { // no move conflict
     target_rank = ranks.find(notation[1]);
     target_file = files.find(notation[0]);
@@ -1626,18 +1626,18 @@ move_t move_from_notation(string notation) {
       if(start_rank == RANK(FROM(move)) && start_file == FILE(FROM(move))) return move;
     }
   }
-  std::cout << "Move: " << notation_copy << endl;
+  std::cout << "Move: " << notation_copy << std::endl;
   print_squarewise(b.sq_board);
   int x;
-  std::cout << "No match found!" << endl;
+  std::cout << "No match found!" << std::endl;
   std::cin >> x;
   std::exit(-1); // should match to a move
 }
 
-string algebraic_notation(move_t move) {
-  string result = "";
-  string files = "abcdefgh";
-  string ranks = "12345678";
+std::string algebraic_notation(move_t move) {
+  std::string result = "";
+  std::string files = "abcdefgh";
+  std::string ranks = "12345678";
   
   int from_file = FILE(FROM(move));
   int from_rank = RANK(FROM(move));
@@ -1652,7 +1652,7 @@ string algebraic_notation(move_t move) {
   return result;
 }
 
-void sort_by_algebraic_notation(vector<move_t> &moves) {
+void sort_by_algebraic_notation(std::vector<move_t> &moves) {
   sort(moves.begin(), moves.end(), 
       [](move_t a, move_t b) {
         return algebraic_notation(a) < algebraic_notation(b);

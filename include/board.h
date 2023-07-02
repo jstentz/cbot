@@ -20,8 +20,6 @@
 #include "bitboard.h"
 #include "pieces.h"
 
-using namespace std;
-
 typedef bool turn;
 typedef signed int move_t;
 
@@ -153,12 +151,12 @@ typedef struct Board
 
   int total_material;
 
-  stack<state_t> state_history;
+  std::stack<state_t> state_history;
 
   /* for detecting repetition */
   /* I have to encode the ply of the last irreversible in the state */
   int ply;
-  vector<hash_val> board_history;
+  std::vector<hash_val> board_history;
 } board_t;
 
 extern board_t b;
@@ -187,7 +185,7 @@ void update_boards();
  * @param fen FEN-style string
  * @return Board represented by FEN string
  */
-void decode_fen(string fen);
+void decode_fen(std::string fen);
 
 /**
  * @brief Given a board state, gives back a FEN string representing

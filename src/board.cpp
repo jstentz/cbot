@@ -15,12 +15,12 @@ board_t b;
 
 void update_boards() {
   b.white_pieces = (b.piece_boards[WHITE_PAWNS_INDEX]   | b.piece_boards[WHITE_KNIGHTS_INDEX] | 
-            b.piece_boards[WHITE_BISHOPS_INDEX] | b.piece_boards[WHITE_ROOKS_INDEX]   |
-            b.piece_boards[WHITE_QUEENS_INDEX]  | b.piece_boards[WHITE_KINGS_INDEX]);
+                    b.piece_boards[WHITE_BISHOPS_INDEX] | b.piece_boards[WHITE_ROOKS_INDEX]   |
+                    b.piece_boards[WHITE_QUEENS_INDEX]  | b.piece_boards[WHITE_KINGS_INDEX]);
 
   b.black_pieces = (b.piece_boards[BLACK_PAWNS_INDEX]   | b.piece_boards[BLACK_KNIGHTS_INDEX] | 
-            b.piece_boards[BLACK_BISHOPS_INDEX] | b.piece_boards[BLACK_ROOKS_INDEX]   |
-            b.piece_boards[BLACK_QUEENS_INDEX]  | b.piece_boards[BLACK_KINGS_INDEX]);
+                    b.piece_boards[BLACK_BISHOPS_INDEX] | b.piece_boards[BLACK_ROOKS_INDEX]   |
+                    b.piece_boards[BLACK_QUEENS_INDEX]  | b.piece_boards[BLACK_KINGS_INDEX]);
 
   b.all_pieces = b.white_pieces | b.black_pieces;
   return;
@@ -57,7 +57,7 @@ board_t zero_board() {
   return board;
 }
 
-void decode_fen(string fen) {
+void decode_fen(std::string fen) {
   b = zero_board();
   bitboard *place_board;
   piece pc;
@@ -157,12 +157,12 @@ void decode_fen(string fen) {
 }
 
 // incomplete
-string encode_fen(board_t *board) {
+std::string encode_fen(board_t *board) {
   piece *sq_board = board->sq_board;
   int consecutive_empty = 0;
   piece pc;
-  string fen = "";
-  string pc_str;
+  std::string fen = "";
+  std::string pc_str;
   piece color;
   piece pc_type;
   int sq;
@@ -175,7 +175,7 @@ string encode_fen(board_t *board) {
         continue;
       }
       else if(consecutive_empty != 0) {
-        fen += to_string(consecutive_empty);
+        fen += std::to_string(consecutive_empty);
         consecutive_empty = 0;
       }
 
@@ -300,7 +300,7 @@ bitboard checking_pieces() {
   state_t state = b.state_history.top();
   move_t last_move = LAST_MOVE(state);
   if(last_move == NO_MOVE) {
-    // cout << "No previous move!" << endl;
+    // std::cout << "No previous move!" << endl;
     return attackers_from_square(friendly_king);
   }
   bool discovered_check = false;

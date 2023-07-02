@@ -1,10 +1,9 @@
-#include "include/attacks.h"
-#include "include/bitboard.h"
-#include "include/board.h"
-#include "include/pieces.h"
+#include "../include/attacks.h"
+#include "../include/bitboard.h"
+#include "../include/board.h"
+#include "../include/pieces.h"
 
 #include <stddef.h>
-
 
 lut_t init_LUT () {
   lut_t luts;

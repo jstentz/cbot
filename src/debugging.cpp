@@ -1,8 +1,8 @@
-#include "include/debugging.h"
-#include "include/bitboard.h"
-#include "include/board.h"
-#include "include/pieces.h"
-#include "include/moves.h"
+#include "../include/debugging.h"
+#include "../include/bitboard.h"
+#include "../include/board.h"
+#include "../include/pieces.h"
+#include "../include/moves.h"
 
 #include <bitset>
 #include <stddef.h>

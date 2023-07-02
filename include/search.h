@@ -23,7 +23,10 @@
 #define CAN_NULL 1
 #define NO_NULL 0
 
+typedef unsigned long uint64_t;
+
 extern size_t transpositions;
+
 
 typedef struct search_result_struct {
   move_t best_move;

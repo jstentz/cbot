@@ -14,14 +14,6 @@
 #include "../include/debugging.h"
 #include "../include/moves.h"
 
-/*
-Plan: make us able to play a full game of chess in this format (passing in the moves and such)
- * need to make printing the board better
- * need to make a notation to move function (* if this doesn't already exist *)
- * I really need to figure out how I am going to go about printing and getting the principle variation...
- * Oh maybe its just the best move after each depth? (oh no its not that will change upon each iteration)
-*/
-
 int main() {
   luts = init_LUT(); // must do this first
   zobrist_table = init_zobrist();

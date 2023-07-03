@@ -18,14 +18,14 @@ typedef unsigned long long int hash_val;
 
 /* this struct defines the random constants used to encode any given position */
 typedef struct zobrist_table {
-    hash_val table[64][12];
-    hash_val black_to_move;
-    hash_val white_king_side;
-    hash_val black_king_side;
-    hash_val white_queen_side;
-    hash_val black_queen_side;
+  hash_val table[64][12];
+  hash_val black_to_move;
+  hash_val white_king_side;
+  hash_val black_king_side;
+  hash_val white_queen_side;
+  hash_val black_queen_side;
 
-    hash_val en_passant_file[8];
+  hash_val en_passant_file[8];
 } zobrist_table_t;
 
 extern zobrist_table_t zobrist_table;

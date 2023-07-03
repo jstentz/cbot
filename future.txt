@@ -1,0 +1,12 @@
+Ideas for the future:
+* Use some tool to generate Cmake files to build the project in a much simpler way -- also could hopefully allow for cross-platform
+* SFML graphics package for C++
+* or just make them purely cmdline and do the graphics in python; then we can just send the data via web stuff (tcp)
+* make a way to have versions play each other
+* magic bitboards are lit asf, use them
+* fix all the bugs that are definitely there with the transposition table
+* refactor all of the code into better C++ style
+* Maybe its worth making the python side of things a whole different repo -> there might already be a python library to do all of this stuff
+* I really need to redo how I do the opening book (it takes so long to load)
+* not to mention my config file nonsense is so bad 
+* fix the fen string parsing and actually implement the remaining rules of chess lol

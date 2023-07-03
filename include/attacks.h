@@ -19,25 +19,25 @@
  * 
  */
 typedef struct LUTs {
-    bitboard clear_rank[8];
-    bitboard mask_rank[8];
-    bitboard clear_file[8];
-    bitboard mask_file[8];
-    bitboard mask_diagonal[15]; // only 15 diagonals, 8th is for alignment
-    bitboard mask_antidiagonal[15];
-    bitboard pieces[64];
+  bitboard clear_rank[8];
+  bitboard mask_rank[8];
+  bitboard clear_file[8];
+  bitboard mask_file[8];
+  bitboard mask_diagonal[15]; // only 15 diagonals, 8th is for alignment
+  bitboard mask_antidiagonal[15];
+  bitboard pieces[64];
 
-    bitboard king_attacks[64]; 
-    bitboard white_pawn_attacks[64];
-    bitboard black_pawn_attacks[64];
-    bitboard white_pawn_pushes[64];
-    bitboard black_pawn_pushes[64];
-    bitboard knight_attacks[64];
+  bitboard king_attacks[64]; 
+  bitboard white_pawn_attacks[64];
+  bitboard black_pawn_attacks[64];
+  bitboard white_pawn_pushes[64];
+  bitboard black_pawn_pushes[64];
+  bitboard knight_attacks[64];
 
-    bitboard rank_attacks[64][256]; 
-    bitboard file_attacks[64][256];
-    bitboard diagonal_attacks[64][256]; // a1 to h8 diagonal
-    bitboard antidiagonal_attacks[64][256]; // a8 to h1 diagonal
+  bitboard rank_attacks[64][256]; 
+  bitboard file_attacks[64][256];
+  bitboard diagonal_attacks[64][256]; // a1 to h8 diagonal
+  bitboard antidiagonal_attacks[64][256]; // a8 to h1 diagonal
 } lut_t;
 
 /**

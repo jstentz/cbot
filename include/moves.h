@@ -64,7 +64,7 @@ typedef signed int move_t;
  * @param curr_moves Place to store the moves
  * @param captures_only Whether to generate only captures or all legal moves
  */
-void generate_moves(vector<move_t> &curr_moves, bool captures_only = false);
+void generate_moves(std::vector<move_t> &curr_moves, bool captures_only = false);
 
 /**
  * @brief Given a list of moves, tries to order the moves from best to worse
@@ -72,7 +72,7 @@ void generate_moves(vector<move_t> &curr_moves, bool captures_only = false);
  * 
  * @param moves Vector of moves to reorder
  */
-void order_moves(vector<move_t> &moves, move_t tt_best_move);
+void order_moves(std::vector<move_t> &moves, move_t tt_best_move);
 
 /**
  * @brief Takes in a pointer to the current board state, along with a move
@@ -103,7 +103,7 @@ void unmake_move(move_t move);
  * @param board Current board state
  * @return Standard chess notation for input move. 
  */
-string notation_from_move(move_t move);
+std::string notation_from_move(move_t move);
 
 /**
  * @brief Given the notation for a move and the current position, returns the
@@ -113,7 +113,7 @@ string notation_from_move(move_t move);
  * @param board Current position
  * @return Move representing the notation
  */
-move_t move_from_notation(string notation);
+move_t move_from_notation(std::string notation);
 
 /**
  * @brief Builds the bit pattern to represent the move based on the inputs.
@@ -159,14 +159,14 @@ bool pawn_promo_or_close_push(move_t move);
  * @param move 
  * @return string 
  */
-string algebraic_notation(move_t move);
+std::string algebraic_notation(move_t move);
 
 /**
  * @brief Function to sort a list of moves by their algebraic notation.
  * 
  * @param moves 
  */
-void sort_by_algebraic_notation(vector<move_t> &moves);
+void sort_by_algebraic_notation(std::vector<move_t> &moves);
 
 /**
  * @brief Passes the move to the opponent without changing the board state. Used

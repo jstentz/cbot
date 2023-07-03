@@ -1,2 +1,4 @@
-While in the Cbot directory:
-        g++ -o Cbot src/*.cpp -static-libgcc -static-libstdc++ -lmingw32 -Ofast
+For Linux:
+        g++ -o Cbot -I ./ -pthread -Ofast src/*.cpp
+
+the -I ./ sets the include path

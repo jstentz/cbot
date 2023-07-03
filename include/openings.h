@@ -32,7 +32,7 @@ std::vector<std::string> split(const std::string &s, char delim);
  * 
  * @return unordered_map<hash_val, vector<move_t>> 
  */
-unordered_map<hash_val, vector<move_t>> create_opening_book();
+std::unordered_map<hash_val, std::vector<move_t>> create_opening_book();
 
 /**
  * @brief Searches the opening book for the current board state. Returns a move if
@@ -42,7 +42,7 @@ unordered_map<hash_val, vector<move_t>> create_opening_book();
  */
 move_t get_opening_move();
 
-extern unordered_map<hash_val, vector<move_t>> opening_book;
+extern std::unordered_map<hash_val, std::vector<move_t>> opening_book;
 
 /**
  * @brief Converts the opening book to binary for faster reading.
@@ -55,4 +55,4 @@ void generate_num_data();
  * 
  * @return unordered_map<hash_val, vector<move_t>> 
  */
-unordered_map<hash_val, vector<move_t>> populate_opening_book();
+std::unordered_map<hash_val, std::vector<move_t>> populate_opening_book();

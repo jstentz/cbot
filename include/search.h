@@ -17,20 +17,21 @@
 #include <stddef.h>
 #include <stack>
 
-typedef unsigned long long int uint64_t;
-
 #define IS_PV 1
 #define NO_PV 0
 
 #define CAN_NULL 1
 #define NO_NULL 0
 
+typedef unsigned long uint64_t;
+
 extern size_t transpositions;
 
+
 typedef struct search_result_struct {
-    move_t best_move;
-    move_t principal_variation[100]; /* just a placeholder value */
-    int score;
+  move_t best_move;
+  move_t principal_variation[100]; /* just a placeholder value */
+  int score;
 } search_t;
 
 /**

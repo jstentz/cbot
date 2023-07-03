@@ -13,6 +13,7 @@
 
 #include "hashing.h"
 #include "moves.h"
+#include "limits.h"
 
 #include <unordered_set>
 
@@ -32,11 +33,11 @@ typedef unsigned short int uint16_t;
  * 
  */
 typedef struct tt {
-    hash_val key;
-    uint16_t depth;
-    char flags;
-    int score;
-    move_t best_move;
+  hash_val key;
+  uint16_t depth;
+  char flags;
+  int score;
+  move_t best_move;
 } tt_entry;
 
 /**
@@ -44,8 +45,8 @@ typedef struct tt {
  * 
  */
 typedef struct tt_table {
-    tt_entry *table;
-    move_t best_move;
+  tt_entry *table;
+  move_t best_move;
 } tt_t;
 
 extern tt_t TT;

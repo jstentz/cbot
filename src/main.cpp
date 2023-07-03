@@ -102,19 +102,6 @@ int main() {
       std::cout << "Time elapsed: " << time_elapsed << std::endl;
       std::cout << "Nodes per second: " << ((double)total_nodes / time_elapsed) << std::endl << std::endl;
     }
-    else if(answer == 'm') {
-      std::cout << std::endl << "Enter fen to search: ";
-      std::cin >> fen;
-      std::cout << std::endl << "Enter time to search (in milliseconds): ";
-      std::cin >> search_time;
-      decode_fen(fen);
-      std::cout << std::endl;
-      print_squarewise(b.sq_board);
-      std::cout << std::endl;
-      move_t move = find_best_move(search_time);
-      std::cout << std::endl << "Best move: ";
-      std::cout << notation_from_move(move) << std::endl;
-    }
     else if(answer == 'q')
       break;
   }

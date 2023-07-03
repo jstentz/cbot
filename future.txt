@@ -9,3 +9,4 @@ Ideas for the future:
 * Maybe its worth making the python side of things a whole different repo -> there might already be a python library to do all of this stuff
 * I really need to redo how I do the opening book (it takes so long to load)
 * not to mention my config file nonsense is so bad 
+* fix the fen string parsing and actually implement the remaining rules of chess lol

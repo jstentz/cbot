@@ -68,14 +68,14 @@ uint64_t perft(size_t depth) {
   uint64_t nodes_from_move = 0;
   sort_by_algebraic_notation(moves);
   for(move_t move : moves) {
-    std::cout << algebraic_notation(move) << ": ";
+    // std::cout << algebraic_notation(move) << ": ";
     make_move(move);
     nodes_from_move = num_nodes_bulk(depth - 1);
     total_nodes += nodes_from_move;
     std::cout << nodes_from_move << endl;
     unmake_move(move);
   }
-  std::cout << "Nodes searched: " << total_nodes << endl;
+  // std::cout << "Nodes searched: " << total_nodes << endl;
   return total_nodes;
 }
 

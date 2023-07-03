@@ -25,7 +25,6 @@
 
 #define TABLE_SIZE 131072 /* 2^17 THIS MUST BE A POWER OF 2 */
 
-typedef unsigned short int uint16_t; 
 
 /**
  * @brief Holds all of the necessary info about an entry in the transposition

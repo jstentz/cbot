@@ -1,7 +1,7 @@
-#include "../include/openings.h"
-#include "../include/hashing.h"
-#include "../include/board.h"
-#include "../include/moves.h"
+#include "include/openings.h"
+#include "include/hashing.h"
+#include "include/board.h"
+#include "include/moves.h"
 
 #include <unordered_map>
 #include <vector>

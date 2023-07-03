@@ -1,7 +1,7 @@
-#include "../include/attacks.h"
-#include "../include/bitboard.h"
-#include "../include/board.h"
-#include "../include/pieces.h"
+#include "include/attacks.h"
+#include "include/bitboard.h"
+#include "include/board.h"
+#include "include/pieces.h"
 
 #include <stddef.h>
 

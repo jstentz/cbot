@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stddef.h>
-#include "../include/bitboard.h"
+#include "include/bitboard.h"
  
 bitboard flip_vertical(bitboard b) {
   return  ((b << 56)                               ) |

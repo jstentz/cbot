@@ -50,7 +50,7 @@ void uci::start_uci_communication()
     }
     else if (main_cmd == POSITION)
     {
-      handle_position(cmd_list);
+      handle_position(cmd_list, cmd);
     }
   }
 }
@@ -73,19 +73,44 @@ void uci::handle_new_game()
   /* do nothing for now */
 }
 
-void uci::handle_position(std::vector<std::string> cmd_list)
+void uci::handle_position(std::vector<std::string> parsed_cmd, std::string& cmd)
 {
-  /* need a better way to extract the fen here */
   std::string fen;
-  if (cmd_list[1] == STARTPOS)
+  if (parsed_cmd[1] == STARTPOS)
   {
-    fen = starting_fen;
+    fen = STARTFEN;
   }
-  else if (cmd_list[1] == FEN)
+  else
   {
-    for (std::string &tmp : cmd_list)
+    /* extract the input fen string */
+    for (size_t i = 0; i < parsed_cmd.size(); i++)
     {
-      std::cout << tmp << std::endl;
+      if (i < 2)
+        continue; /* ignore the "position fen" parts */
+
+      if (i > 7)
+      {
+        fen.pop_back(); /* remove final space */
+        break; /* everything past this is moves */
+      }
+      fen += parsed_cmd[i] + " ";
     }
   }
+
+  /* find the moves at the end */
+  std::vector<std::string> long_algebraic_moves;
+  auto it = std::find(parsed_cmd.begin(), parsed_cmd.end(), "moves");
+  while (it < parsed_cmd.end() - 1) /* making sure we don't include "moves" or dereference .end() */
+  {
+    it++;
+    long_algebraic_moves.push_back(*it);
+  }
+
+  /// TODO: call board_from_fen function
+  /// TODO: loop over algebraic moves and make them on the board
+  /// TODO: make the board_from_fen better (sscanf)
 }
+
+/* create a board from position and moves function elsewhere and call that */
+/* I should really be using std::sscanf in my fen to position function that would make things so much easier holy shit */
+/* position fen main turn castle en half full */

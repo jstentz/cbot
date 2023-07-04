@@ -17,6 +17,7 @@
 
 int main() 
 {
+  /// TODO: boot the engine here 
   /* begin UCI listening */
   uci::start_uci_communication();
   return 0;

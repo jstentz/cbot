@@ -65,8 +65,17 @@
     bestmove d7d5
 */
 
+#include <vector>
+#include <string>
 
 namespace uci
 {
+  /* COMMANDS */
+  static const std::string ISREADY = "isready";
+
+
+
+
   void start_uci_communication();
+  std::vector<std::string> split_cmd(std::string& cmd); 
 }

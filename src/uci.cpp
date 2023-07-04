@@ -110,7 +110,3 @@ void uci::handle_position(std::vector<std::string> parsed_cmd, std::string& cmd)
   /// TODO: loop over algebraic moves and make them on the board
   /// TODO: make the board_from_fen better (sscanf)
 }
-
-/* create a board from position and moves function elsewhere and call that */
-/* I should really be using std::sscanf in my fen to position function that would make things so much easier holy shit */
-/* position fen main turn castle en half full */

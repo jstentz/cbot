@@ -159,7 +159,10 @@ bool pawn_promo_or_close_push(move_t move);
  * @param move 
  * @return string 
  */
-std::string algebraic_notation(move_t move);
+std::string move_to_long_algebraic(move_t move);
+
+move_t long_algebraic_to_move(std::string notation);
+
 
 /**
  * @brief Function to sort a list of moves by their algebraic notation.

@@ -5,6 +5,9 @@
 
 #include "include/uci.h"
 #include "include/search.h"
+#include "include/debugging.h"
+#include "include/board.h"
+#include "include/moves.h"
 
 std::vector<std::string> uci::split_cmd(std::string& cmd)
 {
@@ -106,7 +109,14 @@ void uci::handle_position(std::vector<std::string> parsed_cmd, std::string& cmd)
     long_algebraic_moves.push_back(*it);
   }
 
-  /// TODO: call board_from_fen function
-  /// TODO: loop over algebraic moves and make them on the board
+  /* use this info to get to this position on the board */
+  decode_fen(fen);
+
+  for (std::string algebraic_move : long_algebraic_moves)
+  {
+    move_t move = long_algebraic_to_move(algebraic_move);
+    make_move(move);
+  }
+  
   /// TODO: make the board_from_fen better (sscanf)
 }

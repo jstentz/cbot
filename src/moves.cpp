@@ -1634,7 +1634,67 @@ move_t move_from_notation(std::string notation) {
   std::exit(-1); // should match to a move
 }
 
-std::string algebraic_notation(move_t move) {
+move_t long_algebraic_to_move(std::string notation)
+{
+  const std::string files = "abcdefgh";
+  const std::string ranks = "12345678";
+  int from_file = files.find(notation[0]);
+  int from_rank = ranks.find(notation[1]);
+  int to_file = files.find(notation[2]);
+  int to_rank = ranks.find(notation[3]);
+
+  bool is_promo = false;
+  int flags;
+  int flags_capture;
+  
+  /* check for promotion */
+  if (notation.size() > 4) 
+  {
+    is_promo = true;
+    switch (notation[4])
+    {
+      case 'q':
+        flags = QUEEN_PROMO;
+        flags_capture = QUEEN_PROMO_CAPTURE;
+        break;
+      case 'b':
+        flags = BISHOP_PROMO;
+        flags_capture = BISHOP_PROMO_CAPTURE;
+        break;
+      case 'n':
+        flags = KNIGHT_PROMO;
+        flags_capture = KNIGHT_PROMO_CAPTURE;
+        break;
+      case 'r':
+        flags = ROOK_PROMO;
+        flags_capture = ROOK_PROMO_CAPTURE;
+        break;
+      default:
+        exit(1);
+    }
+  }
+
+  std::vector<move_t> moves;
+  generate_moves(moves);
+
+  for (move_t move : moves)
+  {
+    /* check for correct starting and ending square and promotion */
+    if (
+        (FILE(FROM(move)) == from_file) &&
+        (RANK(FROM(move)) == from_rank) &&
+        (FILE(TO(move)) == to_file) &&
+        (RANK(TO(move)) == to_rank) &&
+        (!is_promo || FLAGS(move) == flags || FLAGS(move) == flags_capture)
+       )
+    {
+      return move;
+    }
+  }
+  return 0;
+}
+
+std::string move_to_long_algebraic(move_t move) {
   std::string result = "";
   std::string files = "abcdefgh";
   std::string ranks = "12345678";
@@ -1655,7 +1715,7 @@ std::string algebraic_notation(move_t move) {
 void sort_by_algebraic_notation(std::vector<move_t> &moves) {
   sort(moves.begin(), moves.end(), 
       [](move_t a, move_t b) {
-        return algebraic_notation(a) < algebraic_notation(b);
+        return move_to_long_algebraic(a) < move_to_long_algebraic(b);
       } 
   );
 }

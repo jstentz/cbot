@@ -70,40 +70,41 @@
 
 namespace uci
 {
-  /* GUI -> ENGINE COMMANDS */
-  static const std::string UCI = "uci";
-  static const std::string ISREADY = "isready";
-  static const std::string SETOPTION = "setoption";
-  static const std::string UCINEWGAME = "ucinewgame";
-  static const std::string POSITION = "position";
-  static const std::string QUIT = "quit";
 
-  /* ENGINE -> GUI COMMANDS */
-  static const std::string UCIOK = "uciok\n";
-  static const std::string READYOK = "readyok\n";
-  static const std::string ID_NAME = "id name cbot\n";
-  static const std::string ID_AUTHOR = "id author Jason Stentz\n";
+/* GUI -> ENGINE COMMANDS */
+static const std::string UCI = "uci";
+static const std::string ISREADY = "isready";
+static const std::string SETOPTION = "setoption";
+static const std::string UCINEWGAME = "ucinewgame";
+static const std::string POSITION = "position";
+static const std::string QUIT = "quit";
 
-  /* other constants */
-  static const std::string STARTPOS = "startpos";
-  static const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-  static const std::string FEN = "fen"; 
-  static const std::string VERIFY = "verify";
+/* ENGINE -> GUI COMMANDS */
+static const std::string UCIOK = "uciok\n";
+static const std::string READYOK = "readyok\n";
+static const std::string ID_NAME = "id name cbot\n";
+static const std::string ID_AUTHOR = "id author Jason Stentz\n";
 
-  /**
-   * @brief Splits a command by spaces 
-   * this should probably live in some other utils file
-  */
-  std::vector<std::string> split_cmd(std::string& cmd); 
+/* other constants */
+static const std::string STARTPOS = "startpos";
+static const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+static const std::string FEN = "fen"; 
+static const std::string VERIFY = "verify";
 
-  void start_uci_communication();
-  void handle_uci();
-  void handle_is_ready();
-  void handle_new_game();
-  void handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd);
+/**
+ * @brief Splits a command by spaces 
+ * this should probably live in some other utils file
+*/
+std::vector<std::string> split_cmd(std::string& cmd); 
 
-  void handle_quit();
+void start_uci_communication();
+void handle_uci();
+void handle_is_ready();
+void handle_new_game();
+void handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd);
 
-  /* My own commands */
-  void handle_verify(std::vector<std::string>& parsed_cmd); /* takes in a depth param */
+void handle_quit();
+
+/* My own commands */
+void handle_verify(std::vector<std::string>& parsed_cmd); /* takes in a depth param */
 }

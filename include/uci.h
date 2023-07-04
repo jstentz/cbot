@@ -70,9 +70,13 @@
 
 namespace uci
 {
-  /* COMMANDS */
+  /* GUI -> ENGINE COMMANDS */
+  static const std::string UCI = "uci";
   static const std::string ISREADY = "isready";
+  static const std::string SETOPTION = "setoption";
 
+  /* ENGINE -> GUI COMMANDS */
+  static const std::string UCIOK = "uciok";
 
 
 

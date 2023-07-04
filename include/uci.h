@@ -74,12 +74,28 @@ namespace uci
   static const std::string UCI = "uci";
   static const std::string ISREADY = "isready";
   static const std::string SETOPTION = "setoption";
+  static const std::string UCINEWGAME = "ucinewgame";
+  static const std::string POSITION = "position";
 
   /* ENGINE -> GUI COMMANDS */
-  static const std::string UCIOK = "uciok";
+  static const std::string UCIOK = "uciok\n";
+  static const std::string READYOK = "readyok\n";
+  static const std::string ID_NAME = "id name cbot\n";
+  static const std::string ID_AUTHOR = "id author Jason Stentz\n";
 
+  /* other constants */
+  static const std::string STARTPOS = "startpos";
+  static const std::string starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  static const std::string FEN = "fen"; 
 
+  /**
+   * @brief Splits a command by spaces 
+  */
+  std::vector<std::string> split_cmd(std::string& cmd); 
 
   void start_uci_communication();
-  std::vector<std::string> split_cmd(std::string& cmd); 
+  void handle_uci();
+  void handle_is_ready();
+  void handle_new_game();
+  void handle_position(std::vector<std::string> cmd_list);
 }

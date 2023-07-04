@@ -18,6 +18,13 @@
 int main() 
 {
   /// TODO: boot the engine here 
+  luts = init_LUT(); // must do this first
+  zobrist_table = init_zobrist();
+  // opening_book = create_opening_book(); // uncomment if you need to update opening_book
+  // generate_num_data(); // uncomment if you need to update opening_book
+  opening_book = populate_opening_book();
+  init_tt_table();
+  init_eval_table();
   /* begin UCI listening */
   uci::start_uci_communication();
   return 0;

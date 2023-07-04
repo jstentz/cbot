@@ -76,6 +76,7 @@ namespace uci
   static const std::string SETOPTION = "setoption";
   static const std::string UCINEWGAME = "ucinewgame";
   static const std::string POSITION = "position";
+  static const std::string QUIT = "quit";
 
   /* ENGINE -> GUI COMMANDS */
   static const std::string UCIOK = "uciok\n";
@@ -87,9 +88,11 @@ namespace uci
   static const std::string STARTPOS = "startpos";
   static const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   static const std::string FEN = "fen"; 
+  static const std::string VERIFY = "verify";
 
   /**
    * @brief Splits a command by spaces 
+   * this should probably live in some other utils file
   */
   std::vector<std::string> split_cmd(std::string& cmd); 
 
@@ -97,5 +100,10 @@ namespace uci
   void handle_uci();
   void handle_is_ready();
   void handle_new_game();
-  void handle_position(std::vector<std::string> parsed_cmd, std::string& cmd);
+  void handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd);
+
+  void handle_quit();
+
+  /* My own commands */
+  void handle_verify(std::vector<std::string>& parsed_cmd); /* takes in a depth param */
 }

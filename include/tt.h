@@ -11,10 +11,10 @@
  */
 #pragma once
 
-#include "hashing.h"
-#include "moves.h"
-#include "limits.h"
+#include "include/hashing.h"
+#include "include/moves.h"
 
+#include <climits>
 #include <unordered_set>
 
 #define EXACT 0

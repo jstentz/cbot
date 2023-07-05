@@ -16,10 +16,10 @@
 #include <string>
 #include <stack>
 #include <vector>
-#include <optional>
 
-#include "bitboard.h"
-#include "pieces.h"
+#include "include/bitboard.h"
+#include "include/pieces.h"
+#include "include/constants.h"
 
 typedef bool turn;
 typedef signed int move_t;
@@ -235,54 +235,56 @@ bool in_check();
 
 bool is_repetition();
 
-class Board
-{
-public:
-  Board();
-  Board(std::string fen);
-  ~Board();
+// class Board
+// {
+// public:
+//   Board();
+//   Board(std::string fen);
+//   ~Board();
 
-  /**
-   * @brief Resets to starting position 
-  */
-  void reset();
+//   /**
+//    * @brief Resets to starting position 
+//   */
+//   void reset();
 
-  /**
-   * @brief Resets to a given fen string 
-   * @param[in] fen position to reset to 
-  */
-  void reset(std::string fen);
+//   /**
+//    * @brief Resets to a given fen string 
+//    * @param[in] fen position to reset to 
+//   */
+//   void reset(std::string fen);
   
-  void make_move(move_t move);
-  void unmake_move(move_t move);
+//   void make_move(move_t move);
+//   void unmake_move(move_t move);
 
-  void make_moves(move_t move);
-  void unmake_moves(move_t move);
+//   void make_moves(move_t move);
+//   void unmake_moves(move_t move);
 
-  /**
-   * @brief Generates the legal moves for current state
-   * @param[out] moves vector of moves to populate
-  */
-  void generate_moves(std::vector<move_t> moves) const;
+//   /**
+//    * @brief Generates the legal moves for current state
+//    * @param[out] moves vector of moves to populate
+//   */
+//   void generate_moves(std::vector<move_t> moves) const;
 
-  std::optional<std::string> get_winner() const; /* consider enum */
-  bool is_checkmate() const;
+//   // constants::PlayerColor get_winner() const;
+//   // bool is_checkmate() const;
 
-  bool is_white_turn() const;
+//   bool is_white_turn() const;
 
-  std::string to_string() const;
-  std::string to_fen_string() const;
+//   std::string to_string() const;
+//   std::string to_fen_string() const;
 
-private:
-  /**
-   * @brief Updates the redudant boards
-  */
-  void update_redundant_boards();
+// private:
+//   /**
+//    * @brief Updates the redudant boards
+//   */
+//   void update_redundant_boards();
 
-  int check_type(bitboard attackers) const;
-  pin_t get_pinned_pieces(square friendly_king_loc) const;
-  bitboard checking_pieces();
-  int check_type(bitboard attackers);
-  bool in_check();
-  bool is_repetition();
-};
+//   int check_type(bitboard attackers) const;
+//   pin_t get_pinned_pieces(square friendly_king_loc) const;
+//   bitboard checking_pieces();
+//   int check_type(bitboard attackers);
+//   bool in_check();
+//   bool is_repetition();
+
+
+// };

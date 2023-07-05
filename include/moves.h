@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "board.h"
+#include "include/board.h"
 
 #include <vector>
 #include <stack>

@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "board.h"
+#include "include/board.h"
 
 /* defines the datatype we will use to hash the board states */
 typedef unsigned long long int hash_val;

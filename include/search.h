@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "board.h"
-#include "moves.h"
+#include "include/board.h"
+#include "include/moves.h"
 
 #include <stddef.h>
 #include <stack>

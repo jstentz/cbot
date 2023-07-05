@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "bitboard.h"
-#include "board.h"
+#include "include/bitboard.h"
+#include "include/board.h"
 
 /**
  * @brief Structure containing all precalculated data

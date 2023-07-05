@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "bitboard.h"
-#include "pieces.h"
-#include "board.h"
-#include "moves.h"
+#include "include/bitboard.h"
+#include "include/pieces.h"
+#include "include/board.h"
+#include "include/moves.h"
 
 void print_moves(std::vector<move_t> moves);
 

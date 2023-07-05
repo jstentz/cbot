@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "moves.h"
-#include "hashing.h"
+#include "include/moves.h"
+#include "include/hashing.h"
 
 #include <unordered_map>
 #include <vector>

@@ -10,3 +10,34 @@ Ideas for the future:
 * I really need to redo how I do the opening book (it takes so long to load)
 * not to mention my config file nonsense is so bad 
 * fix the fen string parsing and actually implement the remaining rules of chess lol
+
+
+General class structure:
+
+Board:
+  * Responsible for all things associated
+  * making moves 
+  * unmaking moves
+  * generating legal moves
+  * gives back a hash value of the board 
+  * overwrite object() https://en.cppreference.com/w/cpp/utility/hash/operator()
+  * overwrite == operator 
+  * look up custom class as key for unordered_map
+
+Piece:
+
+Search:
+  * takes in a board to search
+  * contains lots of functions used to search the board in many ways
+  * contains state information about the status of the search
+
+Evaluator:
+
+Move: 
+  * contains information encoding a move (not really sure if I should make it not a 32-bit integer... eh the underlying data doesn't matter as much as the interface)
+  * functions to turn move into strings
+  * sorting moves (this is probably static)
+
+TranspositionTable:
+
+OpeningBook:

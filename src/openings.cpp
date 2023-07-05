@@ -2,6 +2,8 @@
 #include "include/hashing.h"
 #include "include/board.h"
 #include "include/moves.h"
+#include "include/utils.h"
+#include "include/constants.h"
 
 #include <unordered_map>
 #include <vector>
@@ -31,8 +33,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
 std::unordered_map<hash_val, std::vector<move_t>> create_opening_book() {
   srand(clock());
-  std::string starting_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-  decode_fen(starting_FEN);
+  decode_fen(constants::STARTFEN);
 
   // board_t board;
 

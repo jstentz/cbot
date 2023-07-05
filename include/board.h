@@ -16,6 +16,7 @@
 #include <string>
 #include <stack>
 #include <vector>
+#include <memory>
 
 #include "include/bitboard.h"
 #include "include/pieces.h"
@@ -238,9 +239,35 @@ bool is_repetition();
 // class Board
 // {
 // public:
+//   using Ptr = std::shared_ptr<Board>;
+//   using ConstPtr = std::shared_ptr<const Board>;
+
 //   Board();
 //   Board(std::string fen);
 //   ~Board();
+  
+//   /* types */
+//   /// TODO: add other types of draws here (50 move rule)
+//   enum class BoardStatus 
+//   {
+//     ONGOING,
+//     WHITE_WIN,
+//     BLACK_WIN,
+//     STALEMATE,
+//     REPETITION
+//   };
+
+//   enum class Square { A1, B1, C1, D1, E1, F1, G1, H1,
+//                       A2, B2, C2, D2, E2, F2, G2, H2,
+//                       A3, B3, C3, D3, E3, F3, G3, H3,
+//                       A4, B4, C4, D4, E4, F4, G4, H4,
+//                       A5, B5, C5, D5, E5, F5, G5, H5,
+//                       A6, B6, C6, D6, E6, F6, G6, H6,
+//                       A7, B7, C7, D7, E7, F7, G7, H7,
+//                       A8, B8, C8, D8, E8, F8, G8, H8, NONE };
+
+//   enum class Rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
+//   enum class File { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
 //   /**
 //    * @brief Resets to starting position 
@@ -265,8 +292,7 @@ bool is_repetition();
 //   */
 //   void generate_moves(std::vector<move_t> moves) const;
 
-//   // constants::PlayerColor get_winner() const;
-//   // bool is_checkmate() const;
+//   BoardStatus get_game_status() const;
 
 //   bool is_white_turn() const;
 
@@ -274,6 +300,25 @@ bool is_repetition();
 //   std::string to_fen_string() const;
 
 // private:
+
+//   /* I need to rethink this a lot more */
+//   // /**
+//   //  * @brief Holds the irreversible state information 
+//   // */
+//   // class IrreversibleState
+//   // {
+//   // public:
+//   //   /* getters */
+//   //   bool can_white_castle() const;
+//   //   /* setters */
+    
+
+//   // private:
+//   //   using state_t = unsigned long long;
+//   //   state_t state = 0; /* default to empty */
+//   // };
+
+
 //   /**
 //    * @brief Updates the redudant boards
 //   */
@@ -288,3 +333,42 @@ bool is_repetition();
 
 
 // };
+
+/* defines all operations on the board state number */
+// #define WHITE_CASTLE(state)     (state & 0x000000000000000C)
+// #define WHITE_KING_SIDE(state)  (state & 0x0000000000000008)
+// #define WHITE_QUEEN_SIDE(state) (state & 0x0000000000000004)
+// #define BLACK_CASTLE(state)     (state & 0x0000000000000003)
+// #define BLACK_KING_SIDE(state)  (state & 0x0000000000000002)
+// #define BLACK_QUEEN_SIDE(state) (state & 0x0000000000000001)
+
+// #define SET_WHITE_KING_SIDE(state)  (state |= 0x0000000000000008)
+// #define SET_WHITE_QUEEN_SIDE(state) (state |= 0x0000000000000004)
+// #define SET_BLACK_KING_SIDE(state)  (state |= 0x0000000000000002)
+// #define SET_BLACK_QUEEN_SIDE(state) (state |= 0x0000000000000001)
+
+// #define REM_WHITE_KING_SIDE(state)  (state &= ~0x0000000000000008)
+// #define REM_WHITE_QUEEN_SIDE(state) (state &= ~0x0000000000000004)
+// #define REM_BLACK_KING_SIDE(state)  (state &= ~0x0000000000000002)
+// #define REM_BLACK_QUEEN_SIDE(state) (state &= ~0x0000000000000001)
+
+// #define EN_PASSANT_SQ(state)         ((state >> 4) & 0x000000000000007F)
+// #define CL_EN_PASSANT_SQ(state)      (state & 0xFFFFFFFFFFFFF80F)
+// #define SET_EN_PASSANT_SQ(state, sq) (state = CL_EN_PASSANT_SQ(state) | (((state_t)sq) << 4))
+
+// #define LAST_CAPTURE(state)         (((piece)(state >> 11)) & 0x000F)
+// #define CL_LAST_CAPTURE(state)      (state & 0xFFFFFFFFFFFF87FF)
+// #define SET_LAST_CAPTURE(state, pc) (state = CL_LAST_CAPTURE(state) | (((state_t)pc) << 11))
+
+// #define FIFTY_MOVE(state)            ((state >> 15) & 0x000000000000007F)
+// #define SET_FIFTY_MOVE(state, count) (state |= (((state_t)count) << 15))
+// #define INC_FIFTY_MOVE(state)        (SET_FIFTY_MOVE(state, FIFTY_MOVE(state) + 1))
+// #define CL_FIFTY_MOVE(state)         (state &= ~(0x000000000000007F << 15))
+
+// #define IRR_PLY(state)               ((state >> 22) & 0x00000000000003FF)
+// #define CL_IRR_PLY(state)            (state & 0xFFFFFFFF003FFFFF)
+// #define SET_IRR_PLY(state, ply)      (state = CL_IRR_PLY(state) | (((state_t)ply) << 22))
+
+// #define LAST_MOVE(state)         ((state >> 32) & 0x00000000FFFFFFFF)
+// #define CL_LAST_MOVE(state)      (state & 0x00000000FFFFFFFF)
+// #define SET_LAST_MOVE(state, mv) (state = CL_LAST_MOVE(state) | (((state_t)mv) << 32))

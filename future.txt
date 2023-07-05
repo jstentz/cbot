@@ -23,6 +23,10 @@ Board:
   * overwrite object() https://en.cppreference.com/w/cpp/utility/hash/operator()
   * overwrite == operator 
   * look up custom class as key for unordered_map
+  * need to include the irreversible state (seperate class, but have it be inside of the board?)
+  * ^ I could also have it be outside of the board and just have the board contain one... 
+  * I think it makes sense to have it inside of the board, since everything associated with it can be private (doesn't need to be exposed)
+  * just like the pin struct 
 
 Piece:
 

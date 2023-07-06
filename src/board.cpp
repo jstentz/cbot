@@ -398,3 +398,12 @@ bool is_repetition() {
   }
   return false;
 }
+
+
+/* new class definitions */
+
+// Board::IrreversibleState::IrreversibleState(bool white_ks, bool white_qs, bool black_ks, bool black_qs)
+// {
+//   m_state = 0;
+//   m_state |= (white_ks << 3) | (white_qs << 2) | (black_ks << 1) | (black_qs << 1); /* set castling */
+// }

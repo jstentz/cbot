@@ -301,22 +301,45 @@ bool is_repetition();
 
 // private:
 
-//   /* I need to rethink this a lot more */
-//   // /**
-//   //  * @brief Holds the irreversible state information 
-//   // */
-//   // class IrreversibleState
-//   // {
-//   // public:
-//   //   /* getters */
-//   //   bool can_white_castle() const;
-//   //   /* setters */
+//   /**
+//    * @brief Holds the irreversible state information 
+//    * TODO: Describe the layout of the state
+//   */
+//   class IrreversibleState
+//   {
+//   public:
+//     IrreversibleState() : m_state(0) {}
+//     IrreversibleState(bool white_ks, bool white_qs, bool black_ks, bool black_qs);
+//     /// TODO: create a constructor that takes in all of the aspects of the state and makes the underlying number
+//     /// ^ this will be useful for when a board is created from a fen string (easily create the state from there) 
+    
+//     /* getters */
+//     inline bool can_white_king_side_castle() const  { return m_state & (1 << 3); }
+//     inline bool can_white_queen_side_castle() const { return m_state & (1 << 2); }
+//     inline bool can_black_king_side_castle() const  { return m_state & (1 << 1); }
+//     inline bool can_black_queen_side_castle() const { return m_state & (1 << 0); }
+//     inline bool can_white_castle() const            { return can_white_king_side_castle() || can_white_queen_side_castle(); }
+//     inline bool can_black_castle() const            { return can_black_king_side_castle() || can_black_queen_side_castle(); }
+
+//     /* setters */
+//     // inline void set_white_king_side_castle()  { m_state |= (1 << 3); }
+//     // inline void set_white_queen_side_castle() { m_state |= (1 << 2); }
+//     // inline void set_black_king_side_castle()  { m_state |= (1 << 1); }
+//     // inline void set_black_queen_side_castle() { m_state |= (1 << 0); }
+
+//     inline void rem_white_king_side_castle()  { m_state &= ~(1 << 3); }
+//     inline void rem_white_queen_side_castle() { m_state &= ~(1 << 2); }
+//     inline void rem_black_king_side_castle()  { m_state &= ~(1 << 1); }
+//     inline void rem_black_queen_side_castle() { m_state &= ~(1 << 0); }
+//     inline void rem_white_castle()            { rem_white_king_side_castle(); rem_white_queen_side_castle(); }
+//     inline void rem_black_castle()            { rem_black_king_side_castle(); rem_black_queen_side_castle(); }
     
 
-//   // private:
-//   //   using state_t = unsigned long long;
-//   //   state_t state = 0; /* default to empty */
-//   // };
+//   private:
+//     unsigned long long m_state;
+//     // const static unsigned long long EN_PASSANT_SQ_MASK = 0b1111111
+
+//   };
 
 
 //   /**
@@ -335,22 +358,6 @@ bool is_repetition();
 // };
 
 /* defines all operations on the board state number */
-// #define WHITE_CASTLE(state)     (state & 0x000000000000000C)
-// #define WHITE_KING_SIDE(state)  (state & 0x0000000000000008)
-// #define WHITE_QUEEN_SIDE(state) (state & 0x0000000000000004)
-// #define BLACK_CASTLE(state)     (state & 0x0000000000000003)
-// #define BLACK_KING_SIDE(state)  (state & 0x0000000000000002)
-// #define BLACK_QUEEN_SIDE(state) (state & 0x0000000000000001)
-
-// #define SET_WHITE_KING_SIDE(state)  (state |= 0x0000000000000008)
-// #define SET_WHITE_QUEEN_SIDE(state) (state |= 0x0000000000000004)
-// #define SET_BLACK_KING_SIDE(state)  (state |= 0x0000000000000002)
-// #define SET_BLACK_QUEEN_SIDE(state) (state |= 0x0000000000000001)
-
-// #define REM_WHITE_KING_SIDE(state)  (state &= ~0x0000000000000008)
-// #define REM_WHITE_QUEEN_SIDE(state) (state &= ~0x0000000000000004)
-// #define REM_BLACK_KING_SIDE(state)  (state &= ~0x0000000000000002)
-// #define REM_BLACK_QUEEN_SIDE(state) (state &= ~0x0000000000000001)
 
 // #define EN_PASSANT_SQ(state)         ((state >> 4) & 0x000000000000007F)
 // #define CL_EN_PASSANT_SQ(state)      (state & 0xFFFFFFFFFFFFF80F)

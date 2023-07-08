@@ -11,7 +11,121 @@
 #include "include/hashing.h"
 #include "include/tt.h"
 
-board_t b;
+/* decodes fen string and constructs board */
+/// TODO: fix understanding of half-move and full-move clock 
+Board::Board(std::string fen)
+{
+  std::string layout;
+  std::string turn;
+  std::string castling_rights;
+  std::string en_passant_sq;
+  int half_move_clock;
+  int full_move_clock;
+
+  int num_read = std::sscanf(fen.c_str(), "%s %s %s %s %d %d", layout, turn, castling_rights, en_passant_sq, &half_move_clock, &full_move_clock);
+
+  for (char c : layout)
+  {
+    
+  }
+}
+
+  // bitboard *place_board;
+  // piece pc;
+  // int col = 0;
+  // int row = 7;
+  // int loc;
+  // size_t i = 0;
+  // char c = fen[i];
+  // while(c != ' ') {
+  //   pc = EMPTY;
+  //   loc = row * 8 + col;
+  //   if (isdigit(c)) {
+  //     col += c - '0'; // adds c onto loc
+  //   }
+  //   else if (c == '/') {
+  //     row--;
+  //     col = 0;
+  //   }
+  //   else {
+  //     if (isupper(c)) {
+  //       pc = pc | WHITE;
+  //     }
+  //     else {
+  //       pc = pc | BLACK;
+  //     }
+
+  //     if (c == 'p' || c == 'P') {
+  //       pc = pc | PAWN;
+  //     }
+  //     else if (c == 'n' || c == 'N') {
+  //       pc = pc | KNIGHT;
+  //     }
+  //     else if (c == 'b' || c == 'B') {
+  //       pc = pc | BISHOP;
+  //     }
+  //     else if (c == 'r' || c == 'R') {
+  //       pc = pc | ROOK;
+  //     }
+  //     else if (c == 'q' || c == 'Q') {
+  //       pc = pc | QUEEN;
+  //     }
+  //     else {
+  //       pc = pc | KING;
+  //       if(pc == (WHITE | KING)) b.white_king_loc = (square)loc;
+  //       else                     b.black_king_loc = (square)loc;
+  //     }
+
+  //     /* place the piece in its boards */
+  //     b.sq_board[loc] = pc;
+  //     place_board = &b.piece_boards[INDEX_FROM_PIECE(pc)];
+  //     PLACE_PIECE(*place_board, (square)loc);
+
+  //     /* eval stuff */
+  //     if(PIECE(pc) != KING && PIECE(pc) != EMPTY) {
+  //       b.material_score += piece_values[INDEX_FROM_PIECE(pc)];
+  //       b.positional_score += piece_scores[INDEX_FROM_PIECE(pc)][loc];
+  //       b.total_material += abs(piece_values[INDEX_FROM_PIECE(pc)]);
+  //     }
+      
+      
+  //     col += 1;
+  //   }
+  //   i++;
+  //   c = fen[i];
+  // }
+
+  // state_t state = 0;
+  // i++;
+  // if(fen[i] == 'w') b.t = W;
+  // else              b.t = B;
+  // i++;
+  // while(i < fen.size()) {
+  //   c = fen[i];
+  //   if(c == 'K') SET_WHITE_KING_SIDE(state);
+  //   if(c == 'Q') SET_WHITE_QUEEN_SIDE(state);
+  //   if(c == 'k') SET_BLACK_KING_SIDE(state);
+  //   if(c == 'q') SET_BLACK_QUEEN_SIDE(state);
+  //   i++;
+  // }
+  // SET_EN_PASSANT_SQ(state, NONE);
+  // SET_LAST_CAPTURE(state, EMPTY);
+  // CL_FIFTY_MOVE(state);
+  // SET_IRR_PLY(state, 0);
+  // b.state_history.push(state);
+  // update_boards();
+  // b.board_hash = zobrist_hash(); // hash the board initially
+  // b.piece_hash = hash_pieces(); // hash the pieces initially
+  // b.pawn_hash = hash_pawns(); // hash the pawns initially
+  // // game_history.insert(b.board_hash); // might not need this
+  // b.board_history.push_back(b.board_hash);
+
+  // /* more eval stuff */
+  // for(int i = 0; i < 10; i++) {
+  //   b.piece_counts[i] = pop_count(b.piece_boards[i]);
+  // }
+
+
 
 void update_boards() {
   b.white_pieces = (b.piece_boards[WHITE_PAWNS_INDEX]   | b.piece_boards[WHITE_KNIGHTS_INDEX] | 
@@ -55,105 +169,6 @@ board_t zero_board() {
 
   board.ply = 0;
   return board;
-}
-
-void decode_fen(std::string fen) {
-  b = zero_board();
-  bitboard *place_board;
-  piece pc;
-  int col = 0;
-  int row = 7;
-  int loc;
-  size_t i = 0;
-  char c = fen[i];
-  while(c != ' ') {
-    pc = EMPTY;
-    loc = row * 8 + col;
-    if (isdigit(c)) {
-      col += c - '0'; // adds c onto loc
-    }
-    else if (c == '/') {
-      row--;
-      col = 0;
-    }
-    else {
-      if (isupper(c)) {
-        pc = pc | WHITE;
-      }
-      else {
-        pc = pc | BLACK;
-      }
-
-      if (c == 'p' || c == 'P') {
-        pc = pc | PAWN;
-      }
-      else if (c == 'n' || c == 'N') {
-        pc = pc | KNIGHT;
-      }
-      else if (c == 'b' || c == 'B') {
-        pc = pc | BISHOP;
-      }
-      else if (c == 'r' || c == 'R') {
-        pc = pc | ROOK;
-      }
-      else if (c == 'q' || c == 'Q') {
-        pc = pc | QUEEN;
-      }
-      else {
-        pc = pc | KING;
-        if(pc == (WHITE | KING)) b.white_king_loc = (square)loc;
-        else                     b.black_king_loc = (square)loc;
-      }
-
-      /* place the piece in its boards */
-      b.sq_board[loc] = pc;
-      place_board = &b.piece_boards[INDEX_FROM_PIECE(pc)];
-      PLACE_PIECE(*place_board, (square)loc);
-
-      /* eval stuff */
-      if(PIECE(pc) != KING && PIECE(pc) != EMPTY) {
-        b.material_score += piece_values[INDEX_FROM_PIECE(pc)];
-        b.positional_score += piece_scores[INDEX_FROM_PIECE(pc)][loc];
-        b.total_material += abs(piece_values[INDEX_FROM_PIECE(pc)]);
-      }
-      
-      
-      col += 1;
-    }
-    i++;
-    c = fen[i];
-  }
-
-  state_t state = 0;
-  i++;
-  if(fen[i] == 'w') b.t = W;
-  else              b.t = B;
-  i++;
-  while(i < fen.size()) {
-    c = fen[i];
-    if(c == 'K') SET_WHITE_KING_SIDE(state);
-    if(c == 'Q') SET_WHITE_QUEEN_SIDE(state);
-    if(c == 'k') SET_BLACK_KING_SIDE(state);
-    if(c == 'q') SET_BLACK_QUEEN_SIDE(state);
-    i++;
-  }
-  SET_EN_PASSANT_SQ(state, NONE);
-  SET_LAST_CAPTURE(state, EMPTY);
-  CL_FIFTY_MOVE(state);
-  SET_IRR_PLY(state, 0);
-  b.state_history.push(state);
-  update_boards();
-  b.board_hash = zobrist_hash(); // hash the board initially
-  b.piece_hash = hash_pieces(); // hash the pieces initially
-  b.pawn_hash = hash_pawns(); // hash the pawns initially
-  // game_history.insert(b.board_hash); // might not need this
-  b.board_history.push_back(b.board_hash);
-
-  /* more eval stuff */
-  for(int i = 0; i < 10; i++) {
-    b.piece_counts[i] = pop_count(b.piece_boards[i]);
-  }
-  return;
 }
 
 // incomplete
@@ -386,8 +401,8 @@ bool in_check() {
   return check_type(checking_pieces()) != NO_CHECK;
 }
 
-bool is_repetition() {
-  hash_val curr_hash = b.board_hash;
+bool Board::is_repetition() {
+  uint64_t curr_hash = b.board_hash;
   int irr_ply = IRR_PLY(b.state_history.top());
   /* we start searching at the previous board state, and up to and including the board with 
      the most recent irreversible move played on the board. We decrement by two since we only need to check
@@ -412,7 +427,6 @@ Board::IrreversibleState::IrreversibleState(bool white_ks,
                                             uint32_t irr_ply,
                                             move_t last_move)
 {
-  m_state = 0;
   set_white_king_side_castle(white_ks);
   set_white_queen_side_castle(white_qs);
   set_black_king_side_castle(black_ks);

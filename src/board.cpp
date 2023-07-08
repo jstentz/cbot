@@ -95,15 +95,15 @@ Board::Board(std::string fen)
   Square en_passant = utils::sq_from_name(en_passant_sq);
 
   // add the state to the state history 
-  uint64_t start_state = IrreversibleState::construct_state(white_king_side,
-                                                            white_queen_side,
-                                                            black_king_side,
-                                                            black_queen_side,
-                                                            en_passant,
-                                                            EMPTY,
-                                                            half_move_clock,
-                                                            0,
-                                                            NO_MOVE);
+  IrreversibleState start_state{white_king_side,
+                                white_queen_side,
+                                black_king_side,
+                                black_queen_side,
+                                en_passant,
+                                EMPTY,
+                                half_move_clock,
+                                0,
+                                NO_MOVE};
   m_irr_state_history.push(start_state);
 
   m_board_hash = zobrist_hash(); /// TODO: these should all be a part of the board class 
@@ -277,8 +277,7 @@ Board::Pin Board::get_pinned_pieces(Square friendly_king_loc) const
 bitboard Board::checking_pieces() const 
 {
   Square friendly_king = (m_white_turn) ? m_white_king_loc : m_black_king_loc;
-  uint64_t irr_state = m_irr_state_history.top();
-  move_t last_move = IrreversibleState::get_last_move(irr_state);
+  move_t last_move = m_irr_state_history.top().get_last_move();
   if(last_move == NO_MOVE) {
     return attackers_from_square(friendly_king);
   }
@@ -369,7 +368,7 @@ bool Board::in_check() const
 
 bool Board::is_repetition() const 
 {
-  int irr_ply = IrreversibleState::get_irr_ply(m_irr_state_history.top());
+  int irr_ply = m_irr_state_history.top().get_irr_ply();
   /* we start searching at the previous board state, and up to and including the board with 
      the most recent irreversible move played on the board. We decrement by two since we only need to check
      board states where it was the current player's turn. */
@@ -383,25 +382,23 @@ bool Board::is_repetition() const
   return false;
 }
 
-uint64_t Board::IrreversibleState::construct_state(bool white_ks, 
-                                                   bool white_qs, 
-                                                   bool black_ks, 
-                                                   bool black_qs, 
-                                                   Square en_passant_sq, 
-                                                   piece last_capture, 
-                                                   uint16_t fifty_move_count,
-                                                   uint32_t irr_ply,
-                                                   move_t last_move)
+Board::IrreversibleState::IrreversibleState(bool white_ks, 
+                                            bool white_qs, 
+                                            bool black_ks, 
+                                            bool black_qs, 
+                                            Square en_passant_sq, 
+                                            piece last_capture, 
+                                            uint16_t fifty_move_count,
+                                            uint32_t irr_ply,
+                                            move_t last_move)
 {
-  uint64_t state{};
-  set_white_king_side_castle(state, white_ks);
-  set_white_queen_side_castle(state, white_qs);
-  set_black_king_side_castle(state, black_ks);
-  set_black_queen_side_castle(state, black_qs);
-  set_en_passant_sq(state, en_passant_sq);
-  set_last_capture(state, last_capture);
-  set_fifty_move(state, fifty_move_count);
-  set_irr_ply(state, irr_ply);
-  set_last_move(state, last_move);
-  return state;
+  set_white_king_side_castle(white_ks);
+  set_white_queen_side_castle(white_qs);
+  set_black_king_side_castle(black_ks);
+  set_black_queen_side_castle(black_qs);
+  set_en_passant_sq(en_passant_sq);
+  set_last_capture(last_capture);
+  set_fifty_move(fifty_move_count);
+  set_irr_ply(irr_ply);
+  set_last_move(last_move);
 }

@@ -112,55 +112,56 @@ private:
   class IrreversibleState
   {
   public:
-    static uint64_t construct_state (bool white_ks, 
-                              bool white_qs, 
-                              bool black_ks, 
-                              bool black_qs, 
-                              Square en_passant_sq, 
-                              piece last_capture, 
-                              uint16_t fifty_move_count,
-                              uint32_t irr_ply,
-                              move_t last_move);
+    IrreversibleState(bool white_ks, 
+                      bool white_qs, 
+                      bool black_ks, 
+                      bool black_qs, 
+                      Square en_passant_sq, 
+                      piece last_capture, 
+                      uint16_t fifty_move_count,
+                      uint32_t irr_ply,
+                      move_t last_move);
     
     /* getters */
-    inline static bool can_white_king_side_castle(uint64_t state)   { return state & (1 << 3); }
-    inline static bool can_white_queen_side_castle(uint64_t state)  { return state & (1 << 2); }
-    inline static bool can_black_king_side_castle(uint64_t state)   { return state & (1 << 1); }
-    inline static bool can_black_queen_side_castle(uint64_t state)  { return state & (1 << 0); }
-    inline static bool can_white_castle(uint64_t state)             { return can_white_king_side_castle(state) || can_white_queen_side_castle(state); }
-    inline static bool can_black_castle(uint64_t state)             { return can_black_king_side_castle(state) || can_black_queen_side_castle(state); }
+    inline bool can_white_king_side_castle() const  { return m_state & (1 << 3); }
+    inline bool can_white_queen_side_castle() const { return m_state & (1 << 2); }
+    inline bool can_black_king_side_castle() const  { return m_state & (1 << 1); }
+    inline bool can_black_queen_side_castle() const { return m_state & (1 << 0); }
+    inline bool can_white_castle() const            { return can_white_king_side_castle() || can_white_queen_side_castle(); }
+    inline bool can_black_castle() const            { return can_black_king_side_castle() || can_black_queen_side_castle(); }
 
-    inline static Square get_en_passant_sq(uint64_t state)  { return (Square)((state >> EN_PASSANT_OFFSET) & EN_PASSANT_SQ_MASK); }
-    inline static piece get_last_capture(uint64_t state)    { return (piece)((state >> PIECE_OFFSET) & PIECE_MASK); }
-    inline static uint16_t get_fifty_move(uint64_t state)   { return (state >> FIFTY_MOVE_OFFSET) & FIFTY_MOVE_MASK; }
-    inline static uint32_t get_irr_ply(uint64_t state)      { return (state >> IRR_PLY_OFFSET) & IRR_PLY_MASK; }
-    inline static move_t get_last_move(uint64_t state)      { return (state >> LAST_MOVE_OFFSET) & LAST_MOVE_MASK; }
+    inline Square get_en_passant_sq() const { return (Square)((m_state >> EN_PASSANT_OFFSET) & EN_PASSANT_SQ_MASK); }
+    inline piece get_last_capture() const   { return (piece)((m_state >> PIECE_OFFSET) & PIECE_MASK); }
+    inline uint16_t get_fifty_move() const  { return (m_state >> FIFTY_MOVE_OFFSET) & FIFTY_MOVE_MASK; }
+    inline uint32_t get_irr_ply() const     { return (m_state >> IRR_PLY_OFFSET) & IRR_PLY_MASK; }
+    inline move_t get_last_move() const     { return (m_state >> LAST_MOVE_OFFSET) & LAST_MOVE_MASK; }
 
     /* setters */
-    inline static void set_white_king_side_castle(uint64_t& state, bool can_castle)  { state &= ~(1 << 3); state |= can_castle << 3; }
-    inline static void set_white_queen_side_castle(uint64_t& state, bool can_castle) { state &= ~(1 << 2); state |= can_castle << 2; }
-    inline static void set_black_king_side_castle(uint64_t& state, bool can_castle)  { state &= ~(1 << 1); state |= can_castle << 1; }
-    inline static void set_black_queen_side_castle(uint64_t& state, bool can_castle) { state &= ~(1 << 0); state |= can_castle << 0; }
-    inline static void set_white_castle(uint64_t& state, bool can_castle)            { set_white_king_side_castle(state, can_castle); set_white_queen_side_castle(state, can_castle); }
-    inline static void set_black_castle(uint64_t& state, bool can_castle)            { set_black_king_side_castle(state, can_castle); set_black_queen_side_castle(state, can_castle); }
+    inline void set_white_king_side_castle(bool can_castle)  { m_state &= ~(1 << 3); m_state |= can_castle << 3; }
+    inline void set_white_queen_side_castle(bool can_castle) { m_state &= ~(1 << 2); m_state |= can_castle << 2; }
+    inline void set_black_king_side_castle(bool can_castle)  { m_state &= ~(1 << 1); m_state |= can_castle << 1; }
+    inline void set_black_queen_side_castle(bool can_castle) { m_state &= ~(1 << 0); m_state |= can_castle << 0; }
+    inline void set_white_castle(bool can_castle)            { set_white_king_side_castle(can_castle); set_white_queen_side_castle(can_castle); }
+    inline void set_black_castle(bool can_castle)            { set_black_king_side_castle(can_castle); set_black_queen_side_castle(can_castle); }
 
-    inline static void clr_en_passant_sq(uint64_t& state)             { state &= ~(EN_PASSANT_SQ_MASK << EN_PASSANT_OFFSET); }
-    inline static void set_en_passant_sq(uint64_t& state, Square sq)  { clr_en_passant_sq(state); state |= ((uint64_t) sq & EN_PASSANT_SQ_MASK) << EN_PASSANT_OFFSET; }
+    inline void clr_en_passant_sq()           { m_state &= ~(EN_PASSANT_SQ_MASK << EN_PASSANT_OFFSET); }
+    inline void set_en_passant_sq(Square sq)  { clr_en_passant_sq(); m_state |= ((uint64_t) sq & EN_PASSANT_SQ_MASK) << EN_PASSANT_OFFSET; }
 
-    inline static void clr_last_capture(uint64_t& state)          { state &= ~(PIECE_MASK << PIECE_OFFSET); }
-    inline static void set_last_capture(uint64_t& state, piece pc)  { clr_last_capture(state); state |= ((uint64_t) pc & PIECE_MASK) << PIECE_OFFSET; }
+    inline void clr_last_capture()          { m_state &= ~(PIECE_MASK << PIECE_OFFSET); }
+    inline void set_last_capture(piece pc)  { clr_last_capture(); m_state |= ((uint64_t) pc & PIECE_MASK) << PIECE_OFFSET; }
 
-    inline static void clr_fifty_move(uint64_t& state)                      { state &= ~(FIFTY_MOVE_MASK << FIFTY_MOVE_OFFSET); }
-    inline static void set_fifty_move(uint64_t& state, uint16_t move_count) { clr_fifty_move(state); state |= (move_count & FIFTY_MOVE_MASK) << FIFTY_MOVE_OFFSET; }
-    inline static void inc_fifty_move(uint64_t& state)                      { set_fifty_move(state, get_fifty_move(state) + 1); }
+    inline void clr_fifty_move()                    { m_state &= ~(FIFTY_MOVE_MASK << FIFTY_MOVE_OFFSET); }
+    inline void set_fifty_move(uint16_t move_count) { clr_fifty_move(); m_state |= (move_count & FIFTY_MOVE_MASK) << FIFTY_MOVE_OFFSET; }
+    inline void inc_fifty_move()                    { set_fifty_move(get_fifty_move() + 1); }
 
-    inline static void clr_irr_ply(uint64_t& state)               { state &= ~(IRR_PLY_MASK << IRR_PLY_OFFSET); }
-    inline static void set_irr_ply(uint64_t& state, uint32_t ply) { clr_irr_ply(state); state |= (ply & IRR_PLY_MASK) << IRR_PLY_OFFSET; }
+    inline void clr_irr_ply()             { m_state &= ~(IRR_PLY_MASK << IRR_PLY_OFFSET); }
+    inline void set_irr_ply(uint32_t ply) { clr_irr_ply(); m_state |= (ply & IRR_PLY_MASK) << IRR_PLY_OFFSET; }
 
-    inline static void clr_last_move(uint64_t& state)                   { state &= ~(LAST_MOVE_MASK << LAST_MOVE_OFFSET); }
-    inline static void set_last_move(uint64_t& state, move_t last_move) { clr_last_move(state); state |= (last_move & LAST_MOVE_MASK) << LAST_MOVE_OFFSET; }
+    inline void clr_last_move()                 { m_state &= ~(LAST_MOVE_MASK << LAST_MOVE_OFFSET); }
+    inline void set_last_move(move_t last_move) { clr_last_move(); m_state |= (last_move & LAST_MOVE_MASK) << LAST_MOVE_OFFSET; }
 
   private:
+    uint64_t m_state{};
     const static uint64_t EN_PASSANT_SQ_MASK = 0x7F;
     const static uint16_t EN_PASSANT_OFFSET = 4;
     const static uint64_t PIECE_MASK = 0xF;
@@ -232,7 +233,7 @@ private:
   int m_piece_counts[10];
   int m_total_material;
 
-  std::stack<uint64_t> m_irr_state_history;
+  std::stack<IrreversibleState> m_irr_state_history;
 
   /* for detecting repetition */
   /* I have to encode the ply of the last irreversible in the state */

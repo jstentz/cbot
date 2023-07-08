@@ -402,8 +402,24 @@ bool is_repetition() {
 
 /* new class definitions */
 
-// Board::IrreversibleState::IrreversibleState(bool white_ks, bool white_qs, bool black_ks, bool black_qs)
-// {
-//   m_state = 0;
-//   m_state |= (white_ks << 3) | (white_qs << 2) | (black_ks << 1) | (black_qs << 1); /* set castling */
-// }
+Board::IrreversibleState::IrreversibleState(bool white_ks, 
+                                            bool white_qs, 
+                                            bool black_ks, 
+                                            bool black_qs, 
+                                            Square en_passant_sq, 
+                                            piece last_capture, 
+                                            uint16_t fifty_move_count,
+                                            uint32_t irr_ply,
+                                            move_t last_move)
+{
+  m_state = 0;
+  set_white_king_side_castle(white_ks);
+  set_white_queen_side_castle(white_qs);
+  set_black_king_side_castle(black_ks);
+  set_black_queen_side_castle(black_qs);
+  set_en_passant_sq(en_passant_sq);
+  set_last_capture(last_capture);
+  set_fifty_move(fifty_move_count);
+  set_irr_ply(irr_ply);
+  set_last_move(last_move);
+}

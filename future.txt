@@ -15,20 +15,19 @@ Ideas for the future:
 General class structure:
 
 Board:
-  * Responsible for all things associated
   * making moves 
   * unmaking moves
-  * generating legal moves
-  * gives back a hash value of the board 
+  * everything to do with the state and history 
   * overwrite object() https://en.cppreference.com/w/cpp/utility/hash/operator()
   * overwrite == operator 
   * look up custom class as key for unordered_map
   * need to include the irreversible state (seperate class, but have it be inside of the board?)
-  * ^ I could also have it be outside of the board and just have the board contain one... 
-  * I think it makes sense to have it inside of the board, since everything associated with it can be private (doesn't need to be exposed)
-  * just like the pin struct 
+  * I think I want to move a lot of the random constants to constants.h, even if they shouldn't be exposed elsewhere
 
 Piece:
+ * should make this similar to the move class, where the underlying representation is just an integer, but 
+   it has a bunch of member functions to interact with it
+ * need to move the piece constants to be static members of the class (or put them in constants or something) 
 
 Search:
   * takes in a board to search
@@ -45,3 +44,15 @@ Move:
 TranspositionTable:
 
 OpeningBook:
+
+
+
+Design Ideas:
+* I think it makes the most sense to have the look-up table and the opening book be global structures, since otherwise I'd have to pass them around everywhere (still turn them into classes though)
+* There might be enough things going on in move generation to make that a class
+* Still should make a move class (but the underlying representation will just be a 32 bit integer)
+* The move generator and the searcher should just take in Board::Ptr in the constructor, so any changes to that specific board will be seen there and will only need to be initialized once.
+* The board doesn't need to see the move generator at all, it just needs to receive a move to make on the board
+* all of the attack getting stuff should be a part of the move generator class 
+* that means all of the get pinned pieces and stuff has to go too
+* I also think the transposition table should be its own class, but probably make it global and const, since there is only one of them

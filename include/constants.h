@@ -9,4 +9,6 @@ const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq
 const std::string RANKS = "12345678";
 const std::string FILES = "abcdefgh";
 
+const size_t NUM_PIECE_TYPES = 12; // white knight, black king, etc...
+
 }

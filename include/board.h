@@ -23,16 +23,6 @@
 
 typedef signed int move_t;
 
-// #define FILE(sq) (sq & 7)
-// #define RANK(sq) (sq >> 3)
-
-// #define DIAG(sq)        (7 + RANK(sq) - FILE(sq))
-// #define ANTI_DIAG(sq)   (RANK(sq) + FILE(sq))
-
-// #define PLACE_PIECE(bb, sq) (bb = (bb | (((bitboard)0x1) << sq)))
-// #define REM_PIECE(bb, sq) (bb = (bb & ~(((bitboard)0x1) << sq)))
-
-
 class Board
 {
 public:
@@ -50,7 +40,7 @@ public:
     REPETITION
   };
 
-  enum class Square : uint32_t { A1, B1, C1, D1, E1, F1, G1, H1,
+  enum Square : uint32_t { A1, B1, C1, D1, E1, F1, G1, H1,
                                  A2, B2, C2, D2, E2, F2, G2, H2,
                                  A3, B3, C3, D3, E3, F3, G3, H3,
                                  A4, B4, C4, D4, E4, F4, G4, H4,
@@ -59,10 +49,10 @@ public:
                                  A7, B7, C7, D7, E7, F7, G7, H7,
                                  A8, B8, C8, D8, E8, F8, G8, H8, NONE };
 
-  enum class Rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
-  enum class File { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
+  enum Rank : uint32_t { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
+  enum File : uint32_t { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
-  enum class CheckType { NONE, SINGLE, DOUBLE };
+  enum class CheckType { NO_CHECK, SINGLE, DOUBLE };
 
   Board();
   Board(std::string fen);
@@ -113,7 +103,7 @@ private:
                       bool white_qs, 
                       bool black_ks, 
                       bool black_qs, 
-                      Square en_passant_sq, 
+                      int en_passant_sq, 
                       piece last_capture, 
                       uint16_t fifty_move_count,
                       uint32_t irr_ply,
@@ -127,7 +117,7 @@ private:
     inline bool can_white_castle() const            { return can_white_king_side_castle() || can_white_queen_side_castle(); }
     inline bool can_black_castle() const            { return can_black_king_side_castle() || can_black_queen_side_castle(); }
 
-    inline Square get_en_passant_sq() const { return (Square)((m_state >> EN_PASSANT_OFFSET) & EN_PASSANT_SQ_MASK); }
+    inline int get_en_passant_sq() const    { return (m_state >> EN_PASSANT_OFFSET) & EN_PASSANT_SQ_MASK; }
     inline piece get_last_capture() const   { return (m_state >> PIECE_OFFSET) & PIECE_MASK; }
     inline uint16_t get_fifty_move() const  { return (m_state >> FIFTY_MOVE_OFFSET) & FIFTY_MOVE_MASK; }
     inline uint32_t get_irr_ply() const     { return (m_state >> IRR_PLY_OFFSET) & IRR_PLY_MASK; }
@@ -142,7 +132,7 @@ private:
     inline void set_black_castle(bool can_castle)            { set_black_king_side_castle(can_castle); set_black_queen_side_castle(can_castle); }
 
     inline void clr_en_passant_sq()           { m_state &= ~(EN_PASSANT_SQ_MASK << EN_PASSANT_OFFSET); }
-    inline void set_en_passant_sq(Square sq)  { clr_en_passant_sq(); m_state |= ((uint64_t) sq & EN_PASSANT_SQ_MASK) << EN_PASSANT_OFFSET; }
+    inline void set_en_passant_sq(int sq)  { clr_en_passant_sq(); m_state |= ((uint64_t) sq & EN_PASSANT_SQ_MASK) << EN_PASSANT_OFFSET; }
 
     inline void clr_last_capture()          { m_state &= ~(PIECE_MASK << PIECE_OFFSET); }
     inline void set_last_capture(piece pc)  { clr_last_capture(); m_state |= ((uint64_t) pc & PIECE_MASK) << PIECE_OFFSET; }
@@ -184,26 +174,26 @@ private:
   */
   void update_redundant_boards();
 
-  Pin get_pinned_pieces(Square friendly_king_loc) const;
+  Pin get_pinned_pieces(int friendly_king_loc) const;
   bitboard checking_pieces() const;
   CheckType check_type(bitboard attackers) const;
   bool in_check() const;
   bool is_repetition() const;
 
-  void place_piece_in_bb(piece pc, Square sq);
-  // void rem_piece_from_bb(piece pc, Square sq);
+  void place_piece_in_bb(piece pc, int sq);
+  void remove_piece_from_bb(piece pc, int sq);
 
   // bitboard bb_from_piece(piece pc) const;
 
-  void place_piece(piece pc, Square sq);
-  void remove_piece(piece pc, Square sq);
+  void place_piece(piece pc, int sq);
+  void remove_piece(piece pc, int sq);
 
   inline static int index_from_pc(piece pc);
 
-  inline static int file(Square sq);
-  inline static int rank(Square sq);
-  inline static int diag(Square sq);
-  inline static int anti_diag(Square sq);
+  inline static int file(int sq);
+  inline static int rank(int sq);
+  inline static int diag(int sq);
+  inline static int anti_diag(int sq);
 
   /* private members */
 
@@ -216,8 +206,8 @@ private:
 
   bool m_white_turn;
 
-  Square m_white_king_loc;
-  Square m_black_king_loc;
+  int m_white_king_loc;
+  int m_black_king_loc;
 
   /* hashing items */
   uint64_t m_board_hash;
@@ -261,4 +251,6 @@ private:
  * I still need to figure out when I should initialize the transposition table and the opening book (searcher) and the LUT (move generator)
  * Maybe have an init function for them?
  * They should definitely be classes over their own to interact with for sure 
+ * 
+ * I think I should never have functions actually return squares, and just use them for comparison
 */

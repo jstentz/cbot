@@ -14,7 +14,6 @@
 #include <iostream>
 #include <stdio.h>
 #include <string>
-#include <stack>
 #include <vector>
 #include <memory>
 
@@ -40,9 +39,7 @@ public:
   using Ptr = std::shared_ptr<Board>;
   using ConstPtr = std::shared_ptr<const Board>;
 
-  Board(std::string fen);
-  
-  /* types */
+   /* types */
   /// TODO: add other types of draws here (50 move rule)
   enum class BoardStatus 
   {
@@ -53,19 +50,22 @@ public:
     REPETITION
   };
 
-  enum class Square { A1, B1, C1, D1, E1, F1, G1, H1,
-                      A2, B2, C2, D2, E2, F2, G2, H2,
-                      A3, B3, C3, D3, E3, F3, G3, H3,
-                      A4, B4, C4, D4, E4, F4, G4, H4,
-                      A5, B5, C5, D5, E5, F5, G5, H5,
-                      A6, B6, C6, D6, E6, F6, G6, H6,
-                      A7, B7, C7, D7, E7, F7, G7, H7,
-                      A8, B8, C8, D8, E8, F8, G8, H8, NONE };
+  enum class Square : uint32_t { A1, B1, C1, D1, E1, F1, G1, H1,
+                                 A2, B2, C2, D2, E2, F2, G2, H2,
+                                 A3, B3, C3, D3, E3, F3, G3, H3,
+                                 A4, B4, C4, D4, E4, F4, G4, H4,
+                                 A5, B5, C5, D5, E5, F5, G5, H5,
+                                 A6, B6, C6, D6, E6, F6, G6, H6,
+                                 A7, B7, C7, D7, E7, F7, G7, H7,
+                                 A8, B8, C8, D8, E8, F8, G8, H8, NONE };
 
   enum class Rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
   enum class File { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
   enum class CheckType { NONE, SINGLE, DOUBLE };
+
+  Board();
+  Board(std::string fen);
 
   /**
    * @brief Resets to starting position 
@@ -77,18 +77,15 @@ public:
    * @param[in] fen position to reset to 
   */
   void reset(std::string fen);
+
+  void clear();
   
   void make_move(move_t move);
   void unmake_move(move_t move);
 
-  void make_moves(move_t move);
-  void unmake_moves(move_t move);
-
-  /**
-   * @brief Generates the legal moves for current state
-   * @param[out] moves vector of moves to populate
-  */
-  void generate_moves(std::vector<move_t> moves) const;
+  // useful for uci implementation 
+  void make_moves(std::vector<move_t> moves);
+  // void unmake_moves(std::vector<move_t> moves);
 
   BoardStatus get_game_status() const;
 
@@ -131,7 +128,7 @@ private:
     inline bool can_black_castle() const            { return can_black_king_side_castle() || can_black_queen_side_castle(); }
 
     inline Square get_en_passant_sq() const { return (Square)((m_state >> EN_PASSANT_OFFSET) & EN_PASSANT_SQ_MASK); }
-    inline piece get_last_capture() const   { return (piece)((m_state >> PIECE_OFFSET) & PIECE_MASK); }
+    inline piece get_last_capture() const   { return (m_state >> PIECE_OFFSET) & PIECE_MASK; }
     inline uint16_t get_fifty_move() const  { return (m_state >> FIFTY_MOVE_OFFSET) & FIFTY_MOVE_MASK; }
     inline uint32_t get_irr_ply() const     { return (m_state >> IRR_PLY_OFFSET) & IRR_PLY_MASK; }
     inline move_t get_last_move() const     { return (m_state >> LAST_MOVE_OFFSET) & LAST_MOVE_MASK; }
@@ -233,7 +230,7 @@ private:
   int m_piece_counts[10];
   int m_total_material;
 
-  std::stack<IrreversibleState> m_irr_state_history;
+  std::vector<IrreversibleState> m_irr_state_history;
 
   /* for detecting repetition */
   /* I have to encode the ply of the last irreversible in the state */
@@ -255,3 +252,13 @@ private:
   static const char BLACK_KINGS_INDEX = 11;
   
 };
+
+/**
+ * Quick todo:
+ * Move all necessary move functions into the board class
+ * put the transposition table as part of the searcher
+ * put the lookup table as part of the move generator (I don't think I'll need it for anything in the board class)
+ * I still need to figure out when I should initialize the transposition table and the opening book (searcher) and the LUT (move generator)
+ * Maybe have an init function for them?
+ * They should definitely be classes over their own to interact with for sure 
+*/

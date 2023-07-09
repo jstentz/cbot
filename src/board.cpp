@@ -12,10 +12,27 @@
 #include "include/tt.h"
 #include "include/utils.h"
 
-/// TODO: fix understanding of half-move and full-move clock 
-/// TODO: full-move is currently unused 
+///////////////////////////////////////////////// BOARD CREATION /////////////////////////////////////////////////
+
+Board::Board()
+{
+  reset();
+}
+
 Board::Board(std::string fen)
 {
+  reset(fen);
+}
+
+void Board::reset()
+{
+  reset(constants::STARTFEN);
+}
+
+void Board::reset(std::string fen)
+{
+  clear(); // clear the board
+  // decode the fen string 
   std::string layout;
   std::string turn;
   std::string castling_rights;
@@ -104,11 +121,13 @@ Board::Board(std::string fen)
                                 half_move_clock,
                                 0,
                                 NO_MOVE};
-  m_irr_state_history.push(start_state);
+  m_irr_state_history.clear();
+  m_irr_state_history.push_back(start_state);
 
   m_board_hash = zobrist_hash(); /// TODO: these should all be a part of the board class 
   m_piece_hash = hash_pieces(); // hash the pieces initially
   m_pawn_hash = hash_pawns(); // hash the pawns initially
+  m_board_hash_history.clear();
   m_board_hash_history.push_back(m_board_hash);
 
   /* more eval stuff */
@@ -116,6 +135,45 @@ Board::Board(std::string fen)
     m_piece_counts[i] = pop_count(m_piece_boards[i]);
   }
 }
+
+void Board::clear()
+{
+  // clear out all of the bitboards
+  for (size_t i = 0; i < constants::NUM_PIECE_TYPES; i++)
+  {
+    m_piece_boards[i] = 0;
+  }
+  m_white_pieces = 0;
+  m_black_pieces = 0;
+  m_all_pieces = 0;
+
+  for (size_t i = 0; i < 64; i++)
+  {
+    m_sq_board[i] = EMPTY;
+  }
+
+  m_white_king_loc = Square::NONE;
+  m_black_king_loc = Square::NONE;
+
+  m_board_hash = 0;
+  m_piece_hash = 0;
+  m_pawn_hash = 0;
+
+  m_material_score = 0;
+  m_positional_score = 0;
+  m_total_material = 0;
+
+  for (size_t i = 0; i < constants::NUM_PIECE_TYPES - 2; i++) // don't include kings here
+  {
+    m_piece_counts[i] = 0;
+  }
+
+  m_irr_state_history.clear();
+  m_ply = 0;
+  m_board_hash_history.clear();
+}
+
+///////////////////////////////////////////////// BOARD MANIPULATION /////////////////////////////////////////////////
 
 void Board::place_piece(piece pc, Square sq)
 {
@@ -152,27 +210,7 @@ void Board::update_redundant_boards()
   m_all_pieces = m_white_pieces | m_black_pieces;
 }
 
-int Board::file(Square sq)
-{
-  return (int)sq & 7;
-}
-
-int Board::rank(Square sq)
-{
-  return (int)sq >> 3;
-}
-
-int Board::diag(Square sq)
-{
-  return 7 + rank(sq) - file(sq);
-}
-
-int Board::anti_diag(Square sq)
-{
-  return (int)sq >> 3;
-}
-
-/// TODO: this is actually appauling please fix this function (might need to rework how I do pieces)
+/// TODO: this is actually appauling please fix this function (might need to rework how I do pins)
 Board::Pin Board::get_pinned_pieces(Square friendly_king_loc) const 
 {
   Pin pin;
@@ -277,7 +315,7 @@ Board::Pin Board::get_pinned_pieces(Square friendly_king_loc) const
 bitboard Board::checking_pieces() const 
 {
   Square friendly_king = (m_white_turn) ? m_white_king_loc : m_black_king_loc;
-  move_t last_move = m_irr_state_history.top().get_last_move();
+  move_t last_move = m_irr_state_history.back().get_last_move();
   if(last_move == NO_MOVE) {
     return attackers_from_square(friendly_king);
   }
@@ -368,7 +406,7 @@ bool Board::in_check() const
 
 bool Board::is_repetition() const 
 {
-  int irr_ply = m_irr_state_history.top().get_irr_ply();
+  int irr_ply = m_irr_state_history.back().get_irr_ply();
   /* we start searching at the previous board state, and up to and including the board with 
      the most recent irreversible move played on the board. We decrement by two since we only need to check
      board states where it was the current player's turn. */
@@ -401,4 +439,27 @@ Board::IrreversibleState::IrreversibleState(bool white_ks,
   set_fifty_move(fifty_move_count);
   set_irr_ply(irr_ply);
   set_last_move(last_move);
+}
+
+
+///////////////////////////////////////////////// HELPFUL BOARD FUNCTIONS /////////////////////////////////////////////////
+
+int Board::file(Square sq)
+{
+  return (int)sq & 7;
+}
+
+int Board::rank(Square sq)
+{
+  return (int)sq >> 3;
+}
+
+int Board::diag(Square sq)
+{
+  return 7 + rank(sq) - file(sq);
+}
+
+int Board::anti_diag(Square sq)
+{
+  return (int)sq >> 3;
 }

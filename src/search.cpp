@@ -1,11 +1,10 @@
 #include "include/search.h"
 #include "include/bitboard.h"
 #include "include/board.h"
-#include "include/moves.h"
+#include "include/move.h"
 #include "include/evaluation.h"
 #include "include/hashing.h"
 #include "include/openings.h"
-#include "include/debugging.h"
 #include "include/attacks.h"
 #include "include/tt.h"
 

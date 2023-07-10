@@ -20,7 +20,7 @@
 #include "include/bitboard.h"
 #include "include/pieces.h"
 #include "include/constants.h"
-#include "include/moves.h"
+#include "include/move.h"
 
 class Board
 {

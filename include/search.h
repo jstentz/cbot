@@ -12,7 +12,7 @@
 #pragma once
 
 #include "include/board.h"
-#include "include/moves.h"
+#include "include/move.h"
 
 #include <stddef.h>
 #include <stack>

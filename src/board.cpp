@@ -120,7 +120,7 @@ void Board::reset(std::string fen)
                                 EMPTY,
                                 half_move_clock,
                                 0,
-                                NO_MOVE};
+                                Move::NO_MOVE};
   m_irr_state_history.clear();
   m_irr_state_history.push_back(start_state);
 
@@ -175,7 +175,7 @@ void Board::clear()
 
 ///////////////////////////////////////////////// BOARD MANIPULATION /////////////////////////////////////////////////
 
-void Board::make_move(move_t move) 
+void Board::make_move(Move move) 
 {
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState prev_state = m_irr_state_history.back();
@@ -186,9 +186,9 @@ void Board::make_move(move_t move)
   hash_val piece_hash = m_piece_hash;
   hash_val pawn_hash = m_pawn_hash;
 
-  int from = FROM(move);
-  int to = TO(move);
-  int flags = FLAGS(move);
+  int from = move.from();
+  int to = move.to();
+  int type = move.type();
 
   /* 
     always have to remove the piece from its square...
@@ -240,15 +240,15 @@ void Board::make_move(move_t move)
   bitboard *promo_board;
   int opponent_pawn_sq;
   hash_val to_zobrist = zobrist_table.table[to][index_from_pc(moving_piece)];
-  switch (flags) {
-    case QUIET_MOVE:
+  switch (type) {
+    case Move::QUIET_MOVE:
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place moving piece in hash value
       piece_hash ^= to_zobrist;
       if(PIECE(moving_piece) == PAWN) 
         pawn_hash ^= to_zobrist;
       break;
-    case DOUBLE_PUSH:
+    case Move::DOUBLE_PUSH:
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place the pawn in hash value
       piece_hash ^= to_zobrist;
@@ -263,7 +263,7 @@ void Board::make_move(move_t move)
         state.set_en_passant_sq(from + 8);
       // hash value update for en passant Square happens later
       break;
-    case KING_SIDE_CASTLE:
+    case Move::KING_SIDE_CASTLE:
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place the king in hash value
       piece_hash ^= to_zobrist;
@@ -288,7 +288,7 @@ void Board::make_move(move_t move)
         m_positional_score += piece_scores[BLACK_ROOKS_INDEX][F8];
       }
       break;
-    case QUEEN_SIDE_CASTLE:
+    case Move::QUEEN_SIDE_CASTLE:
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place the king in hash value
       // piece_hash ^= to_zobrist;
@@ -313,7 +313,7 @@ void Board::make_move(move_t move)
         m_positional_score += piece_scores[BLACK_ROOKS_INDEX][D8];
       }
       break;
-    case NORMAL_CAPTURE:
+    case Move::NORMAL_CAPTURE:
       place_piece_in_bb(moving_piece, to); 
       board_hash ^= to_zobrist; // place the moving piece in hash value
       piece_hash ^= to_zobrist;
@@ -339,7 +339,7 @@ void Board::make_move(move_t move)
         else if (to == A8) state.set_black_queen_side_castle(false);
       }
       break;
-    case EN_PASSANT_CAPTURE:
+    case Move::EN_PASSANT_CAPTURE:
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place the pawn in hash value
       piece_hash ^= to_zobrist;
@@ -355,56 +355,56 @@ void Board::make_move(move_t move)
       piece_hash ^= zobrist_table.table[opponent_pawn_sq][index_from_pc(captured_piece)];
       pawn_hash ^= zobrist_table.table[opponent_pawn_sq][index_from_pc(captured_piece)];
       break;
-    case KNIGHT_PROMO_CAPTURE:
+    case Move::KNIGHT_PROMO_CAPTURE:
       /* remove the captured piece from it's bitboard */
       captured_piece = m_sq_board[to];
       remove_piece_from_bb(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; // remove the captured piece from hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case KNIGHT_PROMO:
+    case Move::KNIGHT_PROMO:
       if(m_white_turn) {promo_piece = WHITE | KNIGHT;}
       else             {promo_piece = BLACK | KNIGHT;}
       place_piece(promo_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(promo_piece)]; // place knight in hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(promo_piece)];
       break;
-    case BISHOP_PROMO_CAPTURE:
+    case Move::BISHOP_PROMO_CAPTURE:
       /* remove the captured piece from it's bitboard */
       captured_piece = m_sq_board[to];
       remove_piece_from_bb(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; // remove the captured piece from hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case BISHOP_PROMO:
+    case Move::BISHOP_PROMO:
       if(m_white_turn) {promo_piece = WHITE | BISHOP;}
       else             {promo_piece = BLACK | BISHOP;}
       place_piece(promo_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(promo_piece)]; // place bishop in hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(promo_piece)];
       break;
-    case ROOK_PROMO_CAPTURE:
+    case Move::ROOK_PROMO_CAPTURE:
       /* remove the captured piece from it's bitboard */
       captured_piece = m_sq_board[to];
       remove_piece_from_bb(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; // remove the captured piece from hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case ROOK_PROMO:
+    case Move::ROOK_PROMO:
       if(m_white_turn) {promo_piece = WHITE | ROOK;}
       else             {promo_piece = BLACK | ROOK;}
       place_piece(promo_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(promo_piece)]; // place rook in hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(promo_piece)];
       break;
-    case QUEEN_PROMO_CAPTURE:
+    case Move::QUEEN_PROMO_CAPTURE:
       /* remove the captured piece from it's bitboard */
       captured_piece = m_sq_board[to];
       remove_piece_from_bb(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; // remove the captured piece from hash value
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case QUEEN_PROMO:
+    case Move::QUEEN_PROMO:
       if(m_white_turn) {promo_piece = WHITE | QUEEN;}
       else             {promo_piece = BLACK | QUEEN;}
       place_piece(promo_piece, to);
@@ -441,7 +441,7 @@ void Board::make_move(move_t move)
 
   /* update evaluation items */
   if(captured_piece != EMPTY){
-    if(flags == EN_PASSANT_CAPTURE)
+    if(type == Move::EN_PASSANT_CAPTURE)
       m_positional_score -= piece_scores[index_from_pc(captured_piece)][opponent_pawn_sq];
     else
       m_positional_score -= piece_scores[index_from_pc(captured_piece)][to];
@@ -471,7 +471,7 @@ void Board::make_move(move_t move)
   }
 
   /* if we make an irreversible move, remember it! */
-  if(IS_CAPTURE(move) || IS_PROMO(move) || PIECE(moving_piece) == PAWN)
+  if(move.is_capture() || move.is_promo() || PIECE(moving_piece) == PAWN)
     state.set_irr_ply(m_ply);
   
   m_white_turn = !m_white_turn;
@@ -487,7 +487,7 @@ void Board::make_move(move_t move)
   m_board_hash_history.push_back(board_hash);
 }
 
-void Board::unmake_move(move_t move) {
+void Board::unmake_move(Move move) {
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState state = m_irr_state_history.back();
   m_ply--;
@@ -499,9 +499,9 @@ void Board::unmake_move(move_t move) {
 
   // game_history.erase(board_hash); /* remove the board hash from the game history */
 
-  int from = FROM(move);
-  int to = TO(move);
-  int flags = FLAGS(move);
+  int from = move.from();
+  int to = move.to();
+  int type = move.type();
 
   piece moving_piece = m_sq_board[to];
   piece captured_piece = EMPTY;
@@ -509,8 +509,8 @@ void Board::unmake_move(move_t move) {
   int opponent_pawn_sq;
   hash_val from_zobrist = zobrist_table.table[from][index_from_pc(moving_piece)];
   hash_val to_zobrist = zobrist_table.table[to][index_from_pc(moving_piece)];
-  switch (flags) {
-    case QUIET_MOVE:
+  switch (type) {
+    case Move::QUIET_MOVE:
       /* the moving piece will always be the same piece unless we are dealing with a promotion */
       moving_piece = m_sq_board[to];
       place_piece(moving_piece, from);
@@ -525,7 +525,7 @@ void Board::unmake_move(move_t move) {
         pawn_hash ^= to_zobrist;
       }
       break;
-    case DOUBLE_PUSH:
+    case Move::DOUBLE_PUSH:
       moving_piece = m_sq_board[to];
       place_piece(moving_piece, from);
       remove_piece(moving_piece, to);
@@ -537,7 +537,7 @@ void Board::unmake_move(move_t move) {
       pawn_hash ^= from_zobrist;
       pawn_hash ^= to_zobrist;
       break;
-    case KING_SIDE_CASTLE:
+    case Move::KING_SIDE_CASTLE:
       moving_piece = m_sq_board[to];
       place_piece(moving_piece, from);
       remove_piece(moving_piece, to);
@@ -568,7 +568,7 @@ void Board::unmake_move(move_t move) {
         m_positional_score += piece_scores[BLACK_ROOKS_INDEX][H8];
       }
       break;
-    case QUEEN_SIDE_CASTLE:
+    case Move::QUEEN_SIDE_CASTLE:
       moving_piece = m_sq_board[to];
       place_piece(moving_piece, from);
       remove_piece(moving_piece, to);
@@ -599,7 +599,7 @@ void Board::unmake_move(move_t move) {
         m_positional_score += piece_scores[BLACK_ROOKS_INDEX][A8];
       }
       break;
-    case NORMAL_CAPTURE:
+    case Move::NORMAL_CAPTURE:
       moving_piece = m_sq_board[to];
       place_piece(moving_piece, from);
       remove_piece(moving_piece, to);
@@ -622,7 +622,7 @@ void Board::unmake_move(move_t move) {
       if(PIECE(captured_piece) == PAWN)
         pawn_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       break;
-    case EN_PASSANT_CAPTURE:
+    case Move::EN_PASSANT_CAPTURE:
       moving_piece = m_sq_board[to];
       place_piece(moving_piece, from);
       remove_piece(moving_piece, to);
@@ -645,14 +645,14 @@ void Board::unmake_move(move_t move) {
       piece_hash ^= zobrist_table.table[opponent_pawn_sq][index_from_pc(captured_piece)];
       pawn_hash ^= zobrist_table.table[opponent_pawn_sq][index_from_pc(captured_piece)];
       break;
-    case KNIGHT_PROMO_CAPTURE:
+    case Move::KNIGHT_PROMO_CAPTURE:
       /* place the captured piece back */
       captured_piece = state.get_last_capture();
       place_piece(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; /* place captured piece back in hash value */
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case KNIGHT_PROMO:
+    case Move::KNIGHT_PROMO:
       /* if it is currently black's turn, then white must have been the one to promote */
       if(!m_white_turn) {
         moving_piece = WHITE | PAWN; 
@@ -671,17 +671,17 @@ void Board::unmake_move(move_t move) {
       pawn_hash ^= zobrist_table.table[from][index_from_pc(moving_piece)];
 
       remove_piece_from_bb(promo_piece, to);
-      if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
+      if(!move.is_capture()) /* if they aren't capturing anything, then make the promotion square empty */
         m_sq_board[to] = EMPTY;
       break;
-    case BISHOP_PROMO_CAPTURE:
+    case Move::BISHOP_PROMO_CAPTURE:
       /* place the captured piece back */
       captured_piece = state.get_last_capture();
       place_piece(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; /* place captured piece back in hash value */
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case BISHOP_PROMO:
+    case Move::BISHOP_PROMO:
       /* if it is currently black's turn, then white must have been the one to promote */
       if(!m_white_turn) {
         moving_piece = WHITE | PAWN; 
@@ -699,17 +699,17 @@ void Board::unmake_move(move_t move) {
       pawn_hash ^= zobrist_table.table[from][index_from_pc(moving_piece)];
 
       remove_piece_from_bb(promo_piece, to);
-      if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
+      if(!move.is_capture()) /* if they aren't capturing anything, then make the promotion square empty */
         m_sq_board[to] = EMPTY;
       break;
-    case ROOK_PROMO_CAPTURE:
+    case Move::ROOK_PROMO_CAPTURE:
       /* place the captured piece back */
       captured_piece = state.get_last_capture();
       place_piece(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; /* place captured piece back in hash value */
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case ROOK_PROMO:
+    case Move::ROOK_PROMO:
       /* if it is currently black's turn, then white must have been the one to promote */
       if(!m_white_turn) {
         moving_piece = WHITE | PAWN; 
@@ -727,17 +727,17 @@ void Board::unmake_move(move_t move) {
       pawn_hash ^= zobrist_table.table[from][index_from_pc(moving_piece)];
 
       remove_piece_from_bb(promo_piece, to);
-      if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
+      if(!move.is_capture()) /* if they aren't capturing anything, then make the promotion square empty */
         m_sq_board[to] = EMPTY;
       break;
-    case QUEEN_PROMO_CAPTURE:
+    case Move::QUEEN_PROMO_CAPTURE:
       /* place the captured piece back */
       captured_piece = state.get_last_capture();
       place_piece(captured_piece, to);
       board_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)]; /* place captured piece back in hash value */
       piece_hash ^= zobrist_table.table[to][index_from_pc(captured_piece)];
       /* fallthrough */
-    case QUEEN_PROMO:
+    case Move::QUEEN_PROMO:
       /* if it is currently black's turn, then white must have been the one to promote */
       if(!m_white_turn) {
         moving_piece = WHITE | PAWN; 
@@ -755,7 +755,7 @@ void Board::unmake_move(move_t move) {
       pawn_hash ^= zobrist_table.table[from][index_from_pc(moving_piece)];
 
       remove_piece_from_bb(promo_piece, to);
-      if(!IS_CAPTURE(move)) /* if they aren't capturing anything, then make the promotion square empty */
+      if(!move.is_capture()) /* if they aren't capturing anything, then make the promotion square empty */
         m_sq_board[to] = EMPTY;
       break;
   }
@@ -794,7 +794,7 @@ void Board::unmake_move(move_t move) {
 
   /* update evaluation items */
   if(captured_piece != EMPTY){
-    if(flags == EN_PASSANT_CAPTURE)
+    if(type == Move::EN_PASSANT_CAPTURE)
       m_positional_score += piece_scores[index_from_pc(captured_piece)][opponent_pawn_sq];
     else
       m_positional_score += piece_scores[index_from_pc(captured_piece)][to];
@@ -831,6 +831,37 @@ void Board::unmake_move(move_t move) {
   m_piece_hash = piece_hash;
   m_pawn_hash = pawn_hash;
   update_redundant_boards();
+}
+
+void Board::make_nullmove() {
+  IrreversibleState prev_state = m_irr_state_history.back();
+  IrreversibleState state = prev_state;
+  int prev_en_passant = prev_state.get_en_passant_sq();
+  if(prev_en_passant != NONE)
+    m_board_hash ^= zobrist_table.en_passant_file[file(prev_en_passant)];
+  state.set_en_passant_sq(NONE);
+  state.set_last_move(Move::NO_MOVE);
+  m_white_turn = !m_white_turn;
+  m_board_hash ^= zobrist_table.black_to_move;
+  m_irr_state_history.push_back(state);
+}
+
+void Board::unmake_nullmove() {
+  m_irr_state_history.pop_back();
+  IrreversibleState state = m_irr_state_history.back();
+  int en_passant_sq = state.get_en_passant_sq();
+  if(en_passant_sq != NONE)
+    m_board_hash ^= zobrist_table.en_passant_file[file(en_passant_sq)];
+  m_white_turn = !m_white_turn;
+  m_board_hash ^= zobrist_table.black_to_move;
+}
+
+void Board::make_moves(std::vector<Move> moves)
+{
+  for (auto move : moves)
+  {
+    make_move(move);
+  }
 }
 
 void Board::place_piece(piece pc, int sq)
@@ -991,15 +1022,15 @@ Board::Pin Board::get_pinned_pieces(int friendly_king_loc) const
 bitboard Board::checking_pieces() const 
 {
   int friendly_king = (m_white_turn) ? m_white_king_loc : m_black_king_loc;
-  move_t last_move = m_irr_state_history.back().get_last_move();
-  if(last_move == NO_MOVE) {
+  Move last_move = m_irr_state_history.back().get_last_move();
+  if(last_move.get_move() == Move::NO_MOVE) {
     return attackers_from_square(friendly_king);
   }
   bool discovered_check = false;
 
-  int to = TO(last_move);
-  int from = FROM(last_move);
-  int flags = FLAGS(last_move);
+  int to = last_move.to();
+  int from = last_move.from();
+  int type = last_move.type();
 
   bitboard checkers = 0;
 
@@ -1026,7 +1057,7 @@ bitboard Board::checking_pieces() const
   }
 
   /* there is no possibility for a discovered check here */
-  if(flags == QUIET_MOVE || flags == DOUBLE_PUSH || flags == NORMAL_CAPTURE) {
+  if(type == Move::QUIET_MOVE || type == Move::DOUBLE_PUSH || type == Move::NORMAL_CAPTURE) {
     if(rank(from) != rank(friendly_king) && file(from) != file(friendly_king) &&
        diag(from) != diag(friendly_king) && anti_diag(from) != anti_diag(friendly_king))
        return checkers;
@@ -1104,7 +1135,7 @@ Board::IrreversibleState::IrreversibleState(bool white_ks,
                                             piece last_capture, 
                                             uint16_t fifty_move_count,
                                             uint32_t irr_ply,
-                                            move_t last_move)
+                                            Move last_move)
 {
   set_white_king_side_castle(white_ks);
   set_white_queen_side_castle(white_qs);
@@ -1138,4 +1169,61 @@ int Board::diag(int sq)
 int Board::anti_diag(int sq)
 {
   return rank(sq) + file(sq);
+}
+
+std::string Board::to_string() const
+{
+  char c;
+  piece pc;
+  std::string str;
+  for (size_t i = 0; i < 8; i++) {
+    for (size_t j = 0; j < 8; j++) {
+      pc = m_sq_board[(7-i)*8 + j];
+      switch (pc) {
+        case (WHITE | PAWN) :
+          c = 'P';
+          break;
+        case (BLACK | PAWN) :
+          c = 'p';
+          break;
+        case (WHITE | KNIGHT) :
+          c = 'N';
+          break;
+        case (BLACK | KNIGHT) :
+          c = 'n';
+          break;
+        case (WHITE | BISHOP) :
+          c = 'B';
+          break;
+        case (BLACK | BISHOP) :
+          c = 'b';
+          break;
+        case (WHITE | ROOK) :
+          c = 'R';
+          break;
+        case (BLACK | ROOK) :
+          c = 'r';
+          break;
+        case (WHITE | QUEEN) :
+          c = 'Q';
+          break;
+        case (BLACK | QUEEN) :
+          c = 'q';
+          break;
+        case (WHITE | KING) :
+          c = 'K';
+          break;
+        case (BLACK | KING) :
+          c = 'k';
+          break;
+        default:
+          c = '*';
+          break;
+      }
+      str.push_back(c);
+    }
+    str.push_back('\n');
+  }
+  str.push_back('\n');
+  return str;
 }

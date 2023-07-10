@@ -20,8 +20,7 @@
 #include "include/bitboard.h"
 #include "include/pieces.h"
 #include "include/constants.h"
-
-typedef signed int move_t;
+#include "include/moves.h"
 
 class Board
 {
@@ -70,11 +69,14 @@ public:
 
   void clear();
   
-  void make_move(move_t move);
-  void unmake_move(move_t move);
+  void make_move(Move move);
+  void unmake_move(Move move);
+
+  void make_nullmove();
+  void unmake_nullmove();
 
   // useful for uci implementation 
-  void make_moves(std::vector<move_t> moves);
+  void make_moves(std::vector<Move> moves);
   // void unmake_moves(std::vector<move_t> moves);
 
   BoardStatus get_game_status() const;
@@ -107,7 +109,7 @@ private:
                       piece last_capture, 
                       uint16_t fifty_move_count,
                       uint32_t irr_ply,
-                      move_t last_move);
+                      Move last_move);
     
     /* getters */
     inline bool can_white_king_side_castle() const  { return m_state & (1 << 3); }
@@ -121,7 +123,7 @@ private:
     inline piece get_last_capture() const   { return (m_state >> PIECE_OFFSET) & PIECE_MASK; }
     inline uint16_t get_fifty_move() const  { return (m_state >> FIFTY_MOVE_OFFSET) & FIFTY_MOVE_MASK; }
     inline uint32_t get_irr_ply() const     { return (m_state >> IRR_PLY_OFFSET) & IRR_PLY_MASK; }
-    inline move_t get_last_move() const     { return (m_state >> LAST_MOVE_OFFSET) & LAST_MOVE_MASK; }
+    inline Move get_last_move() const       { return Move((m_state >> LAST_MOVE_OFFSET) & LAST_MOVE_MASK); }
 
     /* setters */
     inline void set_white_king_side_castle(bool can_castle)  { m_state &= ~(1 << 3); m_state |= can_castle << 3; }
@@ -131,7 +133,7 @@ private:
     inline void set_white_castle(bool can_castle)            { set_white_king_side_castle(can_castle); set_white_queen_side_castle(can_castle); }
     inline void set_black_castle(bool can_castle)            { set_black_king_side_castle(can_castle); set_black_queen_side_castle(can_castle); }
 
-    inline void clr_en_passant_sq()           { m_state &= ~(EN_PASSANT_SQ_MASK << EN_PASSANT_OFFSET); }
+    inline void clr_en_passant_sq()        { m_state &= ~(EN_PASSANT_SQ_MASK << EN_PASSANT_OFFSET); }
     inline void set_en_passant_sq(int sq)  { clr_en_passant_sq(); m_state |= ((uint64_t) sq & EN_PASSANT_SQ_MASK) << EN_PASSANT_OFFSET; }
 
     inline void clr_last_capture()          { m_state &= ~(PIECE_MASK << PIECE_OFFSET); }
@@ -144,8 +146,8 @@ private:
     inline void clr_irr_ply()             { m_state &= ~(IRR_PLY_MASK << IRR_PLY_OFFSET); }
     inline void set_irr_ply(uint32_t ply) { clr_irr_ply(); m_state |= (ply & IRR_PLY_MASK) << IRR_PLY_OFFSET; }
 
-    inline void clr_last_move()                 { m_state &= ~(LAST_MOVE_MASK << LAST_MOVE_OFFSET); }
-    inline void set_last_move(move_t last_move) { clr_last_move(); m_state |= (last_move & LAST_MOVE_MASK) << LAST_MOVE_OFFSET; }
+    inline void clr_last_move()               { m_state &= ~(LAST_MOVE_MASK << LAST_MOVE_OFFSET); }
+    inline void set_last_move(Move last_move) { clr_last_move(); m_state |= (last_move.get_move() & LAST_MOVE_MASK) << LAST_MOVE_OFFSET; }
 
   private:
     uint64_t m_state{};
@@ -182,8 +184,6 @@ private:
 
   void place_piece_in_bb(piece pc, int sq);
   void remove_piece_from_bb(piece pc, int sq);
-
-  // bitboard bb_from_piece(piece pc) const;
 
   void place_piece(piece pc, int sq);
   void remove_piece(piece pc, int sq);

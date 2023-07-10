@@ -16,36 +16,8 @@
 #include <iostream>
 #include <string>
 
-// defines the values in the flag of the move
-// #define QUIET_MOVE            0x0
-// #define DOUBLE_PUSH           0x1
-// #define KING_SIDE_CASTLE      0x2
-// #define QUEEN_SIDE_CASTLE     0x3
-// #define NORMAL_CAPTURE        0x4
-// #define EN_PASSANT_CAPTURE    0x5
-// #define KNIGHT_PROMO          0x8
-// #define BISHOP_PROMO          0x9
-// #define ROOK_PROMO            0xA
-// #define QUEEN_PROMO           0xB
-// #define KNIGHT_PROMO_CAPTURE  0xC
-// #define BISHOP_PROMO_CAPTURE  0xD
-// #define ROOK_PROMO_CAPTURE    0xE
-// #define QUEEN_PROMO_CAPTURE   0xF
-
-// #define FROM(move) (move & 0x3F)
-// #define TO(move) ((move >> 6) & 0x3F)
-// #define FLAGS(move) ((move >> 12) & 0xF)
-// #define IS_CAPTURE(move) (move & 0x4000)
-// #define IS_PROMO(move) (move & 0x8000)
-
-// #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
-// #define SCORE(move) (move >> 16)
-
-// #define NO_SCORE(move) (move & 0x0000FFFF)
-
-// #define NO_MOVE ((move_t)0x0)
-
-// get rid of the square enum its kinda dumb
+#include "include/move.h"
+#include "include/board.h"
 
 /**
  * @brief Given a board state, generates all legal moves in the position.
@@ -161,89 +133,18 @@ move_t long_algebraic_to_move(std::string notation);
  */
 void sort_by_algebraic_notation(std::vector<move_t> &moves);
 
-/**
- * @brief Passes the move to the opponent without changing the board state. Used
- * in null move pruning.
- * 
- */
-void make_nullmove();
 
-/**
- * @brief Undoes a nullmove. Again used in null move pruning.
- * 
- */
-void unmake_nullmove();
-
-// #define FROM(move) (move & 0x3F)
-// #define TO(move) ((move >> 6) & 0x3F)
-// #define FLAGS(move) ((move >> 12) & 0xF)
-// #define IS_CAPTURE(move) (move & 0x4000)
-// #define IS_PROMO(move) (move & 0x8000)
-
-// #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
-// #define SCORE(move) (move >> 16)
-
-// #define NO_SCORE(move) (move & 0x0000FFFF)
-
-// #define NO_MOVE ((move_t)0x0)
-
-// #define FROM(move) (move & 0x3F)
-// #define TO(move) ((move >> 6) & 0x3F)
-// #define FLAGS(move) ((move >> 12) & 0xF)
-// #define IS_CAPTURE(move) (move & 0x4000)
-// #define IS_PROMO(move) (move & 0x8000)
-
-// #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
-// #define SCORE(move) (move >> 16)
-
-
-
-/**
- * @brief Representation for a move. The first 16 bits hold the from square, 
- * the to square, and the move type. This is signed so the higher order bits can
- * give us moves with a negative score, therefore easier sorting.
- * 
- */
-class Move
+// make this take in a pointer to the board, so that the internal
+class MoveGenerator
 {
 public:
-  // move types, needs to be exposed so others can see
-  enum MoveType : int
-  {
-    QUIET_MOVE,
-    DOUBLE_PUSH,
-    KING_SIDE_CASTLE,
-    QUEEN_SIDE_CASTLE,
-    NORMAL_CAPTURE,
-    EN_PASSANT_CAPTURE,
-    KNIGHT_PROMO,
-    BISHOP_PROMO,
-    ROOK_PROMO,
-    QUEEN_PROMO,
-    KNIGHT_PROMO_CAPTURE,
-    BISHOP_PROMO_CAPTURE,
-    ROOK_PROMO_CAPTURE,
-    QUEEN_PROMO_CAPTURE
-  };
+  MoveGenerator(Board::Ptr board);
 
-  const static int NO_MOVE = 0;
 
-  Move();
-  Move(int from, int to, int flags);
-  Move(int from, int to, int flags, int score);
-  Move(int move);
-
-  int from() const;
-  int to() const;
-  int type() const;
-  bool is_capture() const;
-  bool is_promo() const;
-
-  int score() const;
-  void set_score(int score);
-
-  int get_move() const;
 
 private:
-  int m_move{};
+  Board::Ptr m_board;
+  // likely need the lookup table here for move generation 
+  // create it static so it calls constructor at runtime
+  // const static LUT lut;
 };

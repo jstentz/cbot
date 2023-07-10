@@ -5,9 +5,8 @@
 
 #include "include/uci.h"
 #include "include/search.h"
-#include "include/debugging.h"
 #include "include/board.h"
-#include "include/moves.h"
+#include "include/move.h"
 #include "include/tt.h"
 #include "include/evaluation.h"
 

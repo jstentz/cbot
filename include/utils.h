@@ -3,7 +3,7 @@
 #include <string>
 
 #include "include/pieces.h"
-#include "board.h"
+#include "include/board.h"
 
 namespace utils
 {

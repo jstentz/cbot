@@ -1,6 +1,6 @@
 #include "include/tt.h"
 #include "include/hashing.h"
-#include "include/moves.h"
+#include "include/move.h"
 #include "include/evaluation.h"
 
 #include <unordered_set>

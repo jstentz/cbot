@@ -11,8 +11,7 @@
 #include "include/hashing.h"
 #include "include/tt.h"
 #include "include/evaluation.h"
-#include "include/debugging.h"
-#include "include/moves.h"
+#include "include/move.h"
 #include "include/uci.h"
 
 int main() 

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "include/moves.h"
+#include "include/move.h"
 #include "include/hashing.h"
 
 #include <unordered_map>

@@ -11,51 +11,41 @@
 
 #pragma once
 
-#include "include/board.h"
-
 #include <vector>
 #include <stack>
 #include <iostream>
 #include <string>
 
 // defines the values in the flag of the move
-#define QUIET_MOVE            0x0
-#define DOUBLE_PUSH           0x1
-#define KING_SIDE_CASTLE      0x2
-#define QUEEN_SIDE_CASTLE     0x3
-#define NORMAL_CAPTURE        0x4
-#define EN_PASSANT_CAPTURE    0x5
-#define KNIGHT_PROMO          0x8
-#define BISHOP_PROMO          0x9
-#define ROOK_PROMO            0xA
-#define QUEEN_PROMO           0xB
-#define KNIGHT_PROMO_CAPTURE  0xC
-#define BISHOP_PROMO_CAPTURE  0xD
-#define ROOK_PROMO_CAPTURE    0xE
-#define QUEEN_PROMO_CAPTURE   0xF
+// #define QUIET_MOVE            0x0
+// #define DOUBLE_PUSH           0x1
+// #define KING_SIDE_CASTLE      0x2
+// #define QUEEN_SIDE_CASTLE     0x3
+// #define NORMAL_CAPTURE        0x4
+// #define EN_PASSANT_CAPTURE    0x5
+// #define KNIGHT_PROMO          0x8
+// #define BISHOP_PROMO          0x9
+// #define ROOK_PROMO            0xA
+// #define QUEEN_PROMO           0xB
+// #define KNIGHT_PROMO_CAPTURE  0xC
+// #define BISHOP_PROMO_CAPTURE  0xD
+// #define ROOK_PROMO_CAPTURE    0xE
+// #define QUEEN_PROMO_CAPTURE   0xF
 
-#define FROM(move) (move & 0x3F)
-#define TO(move) ((move >> 6) & 0x3F)
-#define FLAGS(move) ((move >> 12) & 0xF)
-#define IS_CAPTURE(move) (move & 0x4000)
-#define IS_PROMO(move) (move & 0x8000)
+// #define FROM(move) (move & 0x3F)
+// #define TO(move) ((move >> 6) & 0x3F)
+// #define FLAGS(move) ((move >> 12) & 0xF)
+// #define IS_CAPTURE(move) (move & 0x4000)
+// #define IS_PROMO(move) (move & 0x8000)
 
-#define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
-#define SCORE(move) (move >> 16)
+// #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
+// #define SCORE(move) (move >> 16)
 
-#define NO_SCORE(move) (move & 0x0000FFFF)
+// #define NO_SCORE(move) (move & 0x0000FFFF)
 
-#define NO_MOVE ((move_t)0x0)
+// #define NO_MOVE ((move_t)0x0)
 
 // get rid of the square enum its kinda dumb
-
-/**
- * @brief Representation for a move. The first 16 bits hold the from square, 
- * the to square, and the move type. This is signed so the higher order bits can
- * give us moves with a negative score, therefore easier sorting.
- * 
- */
-typedef signed int move_t;
 
 /**
  * @brief Given a board state, generates all legal moves in the position.
@@ -183,3 +173,77 @@ void make_nullmove();
  * 
  */
 void unmake_nullmove();
+
+// #define FROM(move) (move & 0x3F)
+// #define TO(move) ((move >> 6) & 0x3F)
+// #define FLAGS(move) ((move >> 12) & 0xF)
+// #define IS_CAPTURE(move) (move & 0x4000)
+// #define IS_PROMO(move) (move & 0x8000)
+
+// #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
+// #define SCORE(move) (move >> 16)
+
+// #define NO_SCORE(move) (move & 0x0000FFFF)
+
+// #define NO_MOVE ((move_t)0x0)
+
+// #define FROM(move) (move & 0x3F)
+// #define TO(move) ((move >> 6) & 0x3F)
+// #define FLAGS(move) ((move >> 12) & 0xF)
+// #define IS_CAPTURE(move) (move & 0x4000)
+// #define IS_PROMO(move) (move & 0x8000)
+
+// #define ADD_SCORE_TO_MOVE(move, score) ((score << 16) | move)
+// #define SCORE(move) (move >> 16)
+
+
+
+/**
+ * @brief Representation for a move. The first 16 bits hold the from square, 
+ * the to square, and the move type. This is signed so the higher order bits can
+ * give us moves with a negative score, therefore easier sorting.
+ * 
+ */
+class Move
+{
+public:
+  // move types, needs to be exposed so others can see
+  enum MoveType : int
+  {
+    QUIET_MOVE,
+    DOUBLE_PUSH,
+    KING_SIDE_CASTLE,
+    QUEEN_SIDE_CASTLE,
+    NORMAL_CAPTURE,
+    EN_PASSANT_CAPTURE,
+    KNIGHT_PROMO,
+    BISHOP_PROMO,
+    ROOK_PROMO,
+    QUEEN_PROMO,
+    KNIGHT_PROMO_CAPTURE,
+    BISHOP_PROMO_CAPTURE,
+    ROOK_PROMO_CAPTURE,
+    QUEEN_PROMO_CAPTURE
+  };
+
+  const static int NO_MOVE = 0;
+
+  Move();
+  Move(int from, int to, int flags);
+  Move(int from, int to, int flags, int score);
+  Move(int move);
+
+  int from() const;
+  int to() const;
+  int type() const;
+  bool is_capture() const;
+  bool is_promo() const;
+
+  int score() const;
+  void set_score(int score);
+
+  int get_move() const;
+
+private:
+  int m_move{};
+};

@@ -12,13 +12,25 @@
 #pragma once
 
 #include "include/bitboard.h"
-#include "include/board.h"
 
-/**
- * @brief Structure containing all precalculated data
- * 
- */
-typedef struct LUTs {
+class LookUpTable
+{
+public:
+  LookUpTable(); // construct the lut
+
+  bitboard get_knight_attacks(int sq);
+  bitboard get_king_attacks(int sq);
+  bitboard get_pawn_attacks(int sq, bool white_side);
+  bitboard get_rook_attacks(int sq, bitboard blockers);
+  bitboard get_bishop_attacks(int sq, bitboard blockers);
+  bitboard get_queen_attacks(int sq, bitboard blockers);
+
+  bitboard get_ray_from_bishop_to_king(int bishop_sq, int king_sq);
+  bitboard get_ray_from_rook_to_king(int rook_sq, int king_sq);
+  bitboard get_ray_from_queen_to_king(int queen_sq, int king_sq);
+  bitboard get_ray_from_sq_to_sq(int start_sq, int target_sq);
+
+private:
   bitboard clear_rank[8];
   bitboard mask_rank[8];
   bitboard clear_file[8];
@@ -38,172 +50,4 @@ typedef struct LUTs {
   bitboard file_attacks[64][256];
   bitboard diagonal_attacks[64][256]; // a1 to h8 diagonal
   bitboard antidiagonal_attacks[64][256]; // a8 to h1 diagonal
-} lut_t;
-
-/**
- * @brief Initializes all precalculated data.
- * 
- * @return Lookup table containing precalculated data
- */
-lut_t init_LUT ();
-
-/**
- * @brief Global structure containing all precalculated data
- * 
- */
-extern lut_t luts;
-
-/**
- * @brief Gives knight attacks from a knight's location.
- * 
- * @param knight location of knight
- * @return Bitboard containing squares attacked by knight
- */
-bitboard get_knight_attacks(square knight);
-
-/**
- * @brief Gives king attacks from a king's location.
- * 
- * @param king location of king
- * @return Bitboard containing squares attacked by king
- */
-bitboard get_king_attacks(square king);
-
-/**
- * @brief Gives pawn attacks from a pawn's location.
- * 
- * @param pawn location of pawn
- * @return Bitboard containing squares attacked by pawn
- */
-bitboard get_pawn_attacks(square pawn, turn side);
-
-/**
- * @brief Gives rook attacks from a rook's location.
- * 
- * @param rook location of rook
- * @return Bitboard containing squares attacked by rook
- */
-bitboard get_rook_attacks(square rook, bitboard all_pieces);
-
-/**
- * @brief Gives bishop attacks from a bishop's location.
- * 
- * @param bishop location of bishop
- * @return Bitboard containing squares attacked by bishop
- */
-bitboard get_bishop_attacks(square bishop, bitboard all_pieces);
-
-/**
- * @brief Gives queen attacks from a queen's location.
- * 
- * @param queen location of queen
- * @return Bitboard containing squares attacked by queen
- */
-bitboard get_queen_attacks(square queen, bitboard all_pieces);
-
-/**
- * @brief Generates an attack map from a side's perspective.
- * 
- * @param board board state
- * @param side side to get pieces attacks from
- * @return Bitboard containing attacked squares by side
- */
-bitboard generate_attack_map(turn side);
-
-/**
- * @brief Given the location of a bishop and a king, gives back the ray 
- * from the bishop to the king (including the bishop and king).
- * 
- * @param bishop location of bishop
- * @param king location of king
- * @return Bitboard containing the ray
- */
-bitboard get_ray_from_bishop_to_king(square bishop, square king);
-
-/**
- * @brief Given the location of a rook and a king, gives back the ray 
- * from the rook to the king (including the rook and king).
- * 
- * @param rook location of rook
- * @param king location of king
- * @return Bitboard containing the ray
- */
-bitboard get_ray_from_rook_to_king(square rook, square king);
-
-/**
- * @brief Given the location of a queen and a king, gives back the ray 
- * from the queen to the king (including the queen and king).
- * 
- * @param queen location of queen
- * @param king location of king
- * @return Bitboard containing the ray
- */
-bitboard get_ray_from_queen_to_king(square queen, square king);
-
-/**
- * @brief Given the two squares, gives back the ray between the two squares
- *  (including the two squares).
- * 
- * @param start start square location
- * @param target target square location
- * @return Bitboard containing the ray
- */
-bitboard get_ray_from_sq_to_sq(square start, square target);
-
-/**
- * @brief Given the board state and a square and the pieces on the board that
- * should be considered as blocking the attack.
- * 
- * @param board Current board state
- * @param sq Location of square
- * @param blocking_pieces All the pieces on the board to be considered as blocking the attack
- * @return Whether or not the square is attacked
- */
-bool is_attacked(square sq, bitboard blocking_pieces);
-
-/**
- * @brief Given the board state and a square, it returns a bitboard containing
- * the attackers of that square.
- * 
- * @param board Current board state
- * @param sq Location of square
- * @return Bitboard of all the attackers of the square
- */
-bitboard attackers_from_square(square sq);
-
-/**
- * @brief Given the board state and a square, it returns a bitboard containing
- * the opponent's sliding rays to that square.
- * 
- * @param board Current board state
- * @param sq Location of square
- * @return Bitboard containing all the rays
- */
-bitboard opponent_slider_rays_to_square(square sq);
-
-/**
- * @brief Given a square on the board, return if this square is attacked by an enemy pawn. If
- * it is white's turn, than black pawns are the enemy pawns and vice versa.
- * 
- * @param sq 
- * @return true if attacked by an enemy pawn
- * @return false if not attacked by an enemy pawn
- */
-bool is_attacked_by_pawn(square sq);
-
-/**
- * @brief Given a square on the board, return the least valued attacker of that square by the opponent.
- * 
- * @param sq 
- * @return piece attacking the square or EMPTY
- */
-piece least_valued_attacker(square sq);
-
-/**
- * @brief Given a square on the board, return the square of the least valued attacker of that square by the opponent.
- * 
- * @param sq 
- * @param side side the attackers are on
- * @return square of the attacking piece
- */
-square least_valued_attacker_sq(square sq, turn side);
+};

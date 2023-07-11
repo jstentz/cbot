@@ -33,7 +33,7 @@ piece utils::piece_from_fen_char(char c)
   return color | type;
 }
 
-Board::Square utils::sq_from_name(std::string name)
+int utils::sq_from_name(std::string name)
 {
   if (name.size() != 2)
   {
@@ -44,5 +44,25 @@ Board::Square utils::sq_from_name(std::string name)
   int file = constants::FILES.find(name[0]);
   int rank = constants::RANKS.find(name[1]);
 
-  return (Board::Square)(rank * 8 + file); 
+  return rank * 8 + file; 
+}
+
+int utils::file(int sq)
+{
+  return sq & 7;
+}
+
+int utils::rank(int sq)
+{
+  return sq >> 3;
+}
+
+int utils::diag(int sq)
+{
+  return 7 + rank(sq) - file(sq);
+}
+
+int utils::anti_diag(int sq)
+{
+  return rank(sq) + file(sq);
 }

@@ -152,8 +152,8 @@ void Board::clear()
     m_sq_board[i] = EMPTY;
   }
 
-  m_white_king_loc = NONE;
-  m_black_king_loc = NONE;
+  m_white_king_loc = constants::NONE;
+  m_black_king_loc = constants::NONE;
 
   m_board_hash = 0;
   m_piece_hash = 0;
@@ -217,21 +217,21 @@ void Board::make_move(Move move)
     m_black_king_loc = to;
     state.set_black_castle(false);
   }
-  else if(moving_piece == (WHITE | ROOK) && from == H1) {
+  else if(moving_piece == (WHITE | ROOK) && from == constants::H1) {
     state.set_white_king_side_castle(false);
   }
-  else if(moving_piece == (WHITE | ROOK) && from == A1) {
+  else if(moving_piece == (WHITE | ROOK) && from == constants::A1) {
     state.set_white_queen_side_castle(false);
   }
-  else if(moving_piece == (BLACK | ROOK) && from == H8) {
+  else if(moving_piece == (BLACK | ROOK) && from == constants::H8) {
     state.set_black_king_side_castle(false);
   }
-  else if(moving_piece == (BLACK | ROOK) && from == A8) {
+  else if(moving_piece == (BLACK | ROOK) && from == constants::A8) {
     state.set_black_queen_side_castle(false);
   }
 
   /* default there to be no en passant Square and set it if double pawn push */
-  state.set_en_passant_sq(NONE);
+  state.set_en_passant_sq(constants::NONE);
 
   bitboard *rook_board;
   piece captured_piece = EMPTY;
@@ -257,7 +257,7 @@ void Board::make_move(Move move)
         if it's a double pawn push and we are starting on rank 2, its white pushing
         otherwise it is black pushing the pawn
       */
-      if(rank(from) == Rank::RANK_2)
+      if(utils::rank(from) == constants::RANK_2)
         state.set_en_passant_sq(from + 8);
       else
         state.set_en_passant_sq(from + 8);
@@ -267,25 +267,25 @@ void Board::make_move(Move move)
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place the king in hash value
       piece_hash ^= to_zobrist;
-      if(from == E1) { // white king side
-        remove_piece(WHITE | ROOK, H1);
-        place_piece(WHITE | ROOK, F1);
-        board_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
-        board_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // place white rook on F1
-        piece_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
-        piece_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // place white rook on F1
-        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][H1];
-        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][F1];
+      if(from == constants::E1) { // white king side
+        remove_piece(WHITE | ROOK, constants::H1);
+        place_piece(WHITE | ROOK, constants::F1);
+        board_hash ^= zobrist_table.table[constants::H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
+        board_hash ^= zobrist_table.table[constants::F1][WHITE_ROOKS_INDEX]; // place white rook on F1
+        piece_hash ^= zobrist_table.table[constants::H1][WHITE_ROOKS_INDEX]; // remove white rook from H1
+        piece_hash ^= zobrist_table.table[constants::F1][WHITE_ROOKS_INDEX]; // place white rook on F1
+        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][constants::H1];
+        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][constants::F1];
       }
       else { // black king side
-        remove_piece(BLACK | ROOK, H8);
-        place_piece(BLACK | ROOK, F8);
-        board_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
-        board_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // place black rook on F8
-        piece_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
-        piece_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // place black rook on F8
-        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][H8];
-        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][F8];
+        remove_piece(BLACK | ROOK, constants::H8);
+        place_piece(BLACK | ROOK, constants::F8);
+        board_hash ^= zobrist_table.table[constants::H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
+        board_hash ^= zobrist_table.table[constants::F8][BLACK_ROOKS_INDEX]; // place black rook on F8
+        piece_hash ^= zobrist_table.table[constants::H8][BLACK_ROOKS_INDEX]; // remove black rook from H8
+        piece_hash ^= zobrist_table.table[constants::F8][BLACK_ROOKS_INDEX]; // place black rook on F8
+        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][constants::H8];
+        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][constants::F8];
       }
       break;
     case Move::QUEEN_SIDE_CASTLE:
@@ -293,24 +293,24 @@ void Board::make_move(Move move)
       board_hash ^= to_zobrist; // place the king in hash value
       // piece_hash ^= to_zobrist;
       if(from == E1) { // white queen side
-        remove_piece(WHITE | ROOK, A1);
-        place_piece(WHITE | ROOK, D1);
-        board_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
-        board_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // place white rook on D1
-        piece_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
-        piece_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // place white rook on D1
-        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][A1];
-        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][D1];
+        remove_piece(WHITE | ROOK, constants::A1);
+        place_piece(WHITE | ROOK, constants::D1);
+        board_hash ^= zobrist_table.table[constants::A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
+        board_hash ^= zobrist_table.table[constants::D1][WHITE_ROOKS_INDEX]; // place white rook on D1
+        piece_hash ^= zobrist_table.table[constants::A1][WHITE_ROOKS_INDEX]; // remove white rook from A1
+        piece_hash ^= zobrist_table.table[constants::D1][WHITE_ROOKS_INDEX]; // place white rook on D1
+        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][constants::A1];
+        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][constants::D1];
       }
       else { // black queen side
-        remove_piece(BLACK | ROOK, A8);
-        place_piece(BLACK | ROOK, D8);
-        board_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
-        board_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // place black rook on D8
-        piece_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
-        piece_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // place black rook on D8
-        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][A8];
-        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][D8];
+        remove_piece(BLACK | ROOK, constants::A8);
+        place_piece(BLACK | ROOK, constants::D8);
+        board_hash ^= zobrist_table.table[constants::A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
+        board_hash ^= zobrist_table.table[constants::D8][BLACK_ROOKS_INDEX]; // place black rook on D8
+        piece_hash ^= zobrist_table.table[constants::A8][BLACK_ROOKS_INDEX]; // remove black rook from A8
+        piece_hash ^= zobrist_table.table[constants::D8][BLACK_ROOKS_INDEX]; // place black rook on D8
+        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][constants::A8];
+        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][constants::D8];
       }
       break;
     case Move::NORMAL_CAPTURE:
@@ -333,10 +333,10 @@ void Board::make_move(Move move)
 
       /* remove castling rights if rook is captured in corner */
       if(PIECE(captured_piece) == ROOK) {
-        if      (to == H1) state.set_white_king_side_castle(false);
-        else if (to == A1) state.set_white_queen_side_castle(false);
-        else if (to == H8) state.set_black_king_side_castle(false);
-        else if (to == A8) state.set_black_queen_side_castle(false);
+        if      (to == constants::H1) state.set_white_king_side_castle(false);
+        else if (to == constants::A1) state.set_white_queen_side_castle(false);
+        else if (to == constants::H8) state.set_black_king_side_castle(false);
+        else if (to == constants::A8) state.set_black_queen_side_castle(false);
       }
       break;
     case Move::EN_PASSANT_CAPTURE:
@@ -346,7 +346,7 @@ void Board::make_move(Move move)
       pawn_hash ^= to_zobrist;
 
       /* distinguish between white and black en passant */
-      opponent_pawn_sq = (rank(to) == Rank::RANK_6) ? (to - 8) : (to + 8);
+      opponent_pawn_sq = (utils::rank(to) == constants::RANK_6) ? (to - 8) : (to + 8);
 
       /* remove the captured pawn */
       captured_piece = m_sq_board[opponent_pawn_sq];
@@ -430,11 +430,11 @@ void Board::make_move(Move move)
   /* update en passant file in hash value */
   int prev_en_passant_sq = prev_state.get_en_passant_sq();
   int curr_en_passant_sq = state.get_en_passant_sq();
-  if(prev_en_passant_sq != NONE)
-    board_hash ^= zobrist_table.en_passant_file[file(prev_en_passant_sq)]; // remove the last board's en passant from hash value
+  if(prev_en_passant_sq != constants::NONE)
+    board_hash ^= zobrist_table.en_passant_file[utils::file(prev_en_passant_sq)]; // remove the last board's en passant from hash value
   
-  if(curr_en_passant_sq != NONE)
-    board_hash ^= zobrist_table.en_passant_file[file(curr_en_passant_sq)]; // place the current en passant file in hash value
+  if(curr_en_passant_sq != constants::NONE)
+    board_hash ^= zobrist_table.en_passant_file[utils::file(curr_en_passant_sq)]; // place the current en passant file in hash value
 
   /* add the last captured piece to the state */
   state.set_last_capture(captured_piece);
@@ -547,25 +547,25 @@ void Board::unmake_move(Move move) {
       piece_hash ^= from_zobrist;
       piece_hash ^= to_zobrist;
 
-      if(from == E1) { // white king side
-        remove_piece(WHITE | ROOK, F1);
-        place_piece(WHITE | ROOK, H1);
-        board_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
-        board_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // place white rook on H1
-        piece_hash ^= zobrist_table.table[F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
-        piece_hash ^= zobrist_table.table[H1][WHITE_ROOKS_INDEX]; // place white rook on H1
-        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][F1];
-        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][H1];
+      if(from == constants::E1) { // white king side
+        remove_piece(WHITE | ROOK, constants::F1);
+        place_piece(WHITE | ROOK, constants::H1);
+        board_hash ^= zobrist_table.table[constants::F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
+        board_hash ^= zobrist_table.table[constants::H1][WHITE_ROOKS_INDEX]; // place white rook on H1
+        piece_hash ^= zobrist_table.table[constants::F1][WHITE_ROOKS_INDEX]; // remove white rook from F1
+        piece_hash ^= zobrist_table.table[constants::H1][WHITE_ROOKS_INDEX]; // place white rook on H1
+        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][constants::F1];
+        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][constants::H1];
       }
       else { // black king side
-        remove_piece(BLACK | ROOK, F8);
-        place_piece(BLACK | ROOK, H8);
-        board_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
-        board_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // place black rook on H8
-        piece_hash ^= zobrist_table.table[F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
-        piece_hash ^= zobrist_table.table[H8][BLACK_ROOKS_INDEX]; // place black rook on H8
-        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][F8];
-        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][H8];
+        remove_piece(BLACK | ROOK, constants::F8);
+        place_piece(BLACK | ROOK, constants::H8);
+        board_hash ^= zobrist_table.table[constants::F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
+        board_hash ^= zobrist_table.table[constants::H8][BLACK_ROOKS_INDEX]; // place black rook on H8
+        piece_hash ^= zobrist_table.table[constants::F8][BLACK_ROOKS_INDEX]; // remove black rook from F8
+        piece_hash ^= zobrist_table.table[constants::H8][BLACK_ROOKS_INDEX]; // place black rook on H8
+        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][constants::F8];
+        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][constants::H8];
       }
       break;
     case Move::QUEEN_SIDE_CASTLE:
@@ -578,25 +578,25 @@ void Board::unmake_move(Move move) {
       piece_hash ^= from_zobrist;
       piece_hash ^= to_zobrist;
 
-      if(from == E1) { // white queen side
-        remove_piece(WHITE | ROOK, D1);
-        place_piece(WHITE | ROOK, A1);
-        board_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
-        board_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // place white rook on A1
-        piece_hash ^= zobrist_table.table[D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
-        piece_hash ^= zobrist_table.table[A1][WHITE_ROOKS_INDEX]; // place white rook on A1
-        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][D1];
-        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][A1];
+      if(from == constants::E1) { // white queen side
+        remove_piece(WHITE | ROOK, constants::D1);
+        place_piece(WHITE | ROOK, constants::A1);
+        board_hash ^= zobrist_table.table[constants::D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
+        board_hash ^= zobrist_table.table[constants::A1][WHITE_ROOKS_INDEX]; // place white rook on A1
+        piece_hash ^= zobrist_table.table[constants::D1][WHITE_ROOKS_INDEX]; // remove white rook from D1
+        piece_hash ^= zobrist_table.table[constants::A1][WHITE_ROOKS_INDEX]; // place white rook on A1
+        m_positional_score -= piece_scores[WHITE_ROOKS_INDEX][constants::D1];
+        m_positional_score += piece_scores[WHITE_ROOKS_INDEX][constants::A1];
       }
       else { // black queen side
-        remove_piece(BLACK | ROOK, D8);
-        place_piece(BLACK | ROOK, A8);
-        board_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
-        board_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // place black rook on A8
-        piece_hash ^= zobrist_table.table[D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
-        piece_hash ^= zobrist_table.table[A8][BLACK_ROOKS_INDEX]; // place black rook on A8
-        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][D8];
-        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][A8];
+        remove_piece(BLACK | ROOK, constants::D8);
+        place_piece(BLACK | ROOK, constants::A8);
+        board_hash ^= zobrist_table.table[constants::D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
+        board_hash ^= zobrist_table.table[constants::A8][BLACK_ROOKS_INDEX]; // place black rook on A8
+        piece_hash ^= zobrist_table.table[constants::D8][BLACK_ROOKS_INDEX]; // remove black rook from D8
+        piece_hash ^= zobrist_table.table[constants::A8][BLACK_ROOKS_INDEX]; // place black rook on A8
+        m_positional_score -= piece_scores[BLACK_ROOKS_INDEX][constants::D8];
+        m_positional_score += piece_scores[BLACK_ROOKS_INDEX][constants::A8];
       }
       break;
     case Move::NORMAL_CAPTURE:
@@ -635,7 +635,7 @@ void Board::unmake_move(Move move) {
       pawn_hash ^= to_zobrist;
 
       /* distinguish between white and black en passant */
-      opponent_pawn_sq = (rank(to) == RANK_6) ? (to - 8) : (to + 8);
+      opponent_pawn_sq = (utils::rank(to) == constants::RANK_6) ? (to - 8) : (to + 8);
 
       /* place the captured pawn */
       captured_piece = state.get_last_capture();
@@ -787,10 +787,10 @@ void Board::unmake_move(Move move) {
   /* update en passant file in hash value */
   int prev_en_passant_sq = prev_state.get_en_passant_sq();
   int curr_en_passant_sq = state.get_en_passant_sq();
-  if(prev_en_passant_sq != NONE)
-    board_hash ^= zobrist_table.en_passant_file[file(prev_en_passant_sq)]; // remove the last board's en passant from hash value
-  if(curr_en_passant_sq != NONE)
-    board_hash ^= zobrist_table.en_passant_file[file(curr_en_passant_sq)]; // place the current en passant file in hash value
+  if(prev_en_passant_sq != constants::NONE)
+    board_hash ^= zobrist_table.en_passant_file[utils::file(prev_en_passant_sq)]; // remove the last board's en passant from hash value
+  if(curr_en_passant_sq != constants::NONE)
+    board_hash ^= zobrist_table.en_passant_file[utils::file(curr_en_passant_sq)]; // place the current en passant file in hash value
 
   /* update evaluation items */
   if(captured_piece != EMPTY){
@@ -837,9 +837,9 @@ void Board::make_nullmove() {
   IrreversibleState prev_state = m_irr_state_history.back();
   IrreversibleState state = prev_state;
   int prev_en_passant = prev_state.get_en_passant_sq();
-  if(prev_en_passant != NONE)
-    m_board_hash ^= zobrist_table.en_passant_file[file(prev_en_passant)];
-  state.set_en_passant_sq(NONE);
+  if(prev_en_passant != constants::NONE)
+    m_board_hash ^= zobrist_table.en_passant_file[utils::file(prev_en_passant)];
+  state.set_en_passant_sq(constants::NONE);
   state.set_last_move(Move::NO_MOVE);
   m_white_turn = !m_white_turn;
   m_board_hash ^= zobrist_table.black_to_move;
@@ -850,8 +850,8 @@ void Board::unmake_nullmove() {
   m_irr_state_history.pop_back();
   IrreversibleState state = m_irr_state_history.back();
   int en_passant_sq = state.get_en_passant_sq();
-  if(en_passant_sq != NONE)
-    m_board_hash ^= zobrist_table.en_passant_file[file(en_passant_sq)];
+  if(en_passant_sq != constants::NONE)
+    m_board_hash ^= zobrist_table.en_passant_file[utils::file(en_passant_sq)];
   m_white_turn = !m_white_turn;
   m_board_hash ^= zobrist_table.black_to_move;
 }
@@ -866,7 +866,7 @@ void Board::make_moves(std::vector<Move> moves)
 
 void Board::place_piece(piece pc, int sq)
 {
-  if (sq == NONE)
+  if (sq == constants::NONE)
   {
     std::cerr << "Attempting to place piece on NONE square" << std::endl;
   }
@@ -883,7 +883,7 @@ void Board::place_piece_in_bb(piece pc, int sq)
 
 void Board::remove_piece(piece pc, int sq)
 {
-  if (sq == NONE)
+  if (sq == constants::NONE)
   {
     std::cerr << "Attempting to remove piece from NONE square" << std::endl;
   }
@@ -914,201 +914,6 @@ void Board::update_redundant_boards()
                     m_piece_boards[BLACK_QUEENS_INDEX]  | m_piece_boards[BLACK_KINGS_INDEX]);
 
   m_all_pieces = m_white_pieces | m_black_pieces;
-}
-
-/// TODO: this is actually appauling please fix this function (might need to rework how I do pins)
-/// TODO: move this function into the move generator and out of the board
-Board::Pin Board::get_pinned_pieces(int friendly_king_loc) const 
-{
-  Pin pin;
-  pin.pinned_pieces = 0;
-  bitboard curr_pin;
-  int pinned_piece_loc;
-  bitboard opponent_rooks;
-  bitboard opponent_bishops;
-  bitboard opponent_queens;
-  bitboard friendly_pieces;
-  if(m_white_turn) {
-    opponent_rooks = m_piece_boards[BLACK_ROOKS_INDEX];
-    opponent_bishops = m_piece_boards[BLACK_BISHOPS_INDEX];
-    opponent_queens = m_piece_boards[BLACK_QUEENS_INDEX];
-    friendly_pieces = m_white_pieces;
-  }
-  else {
-    opponent_rooks = m_piece_boards[WHITE_ROOKS_INDEX];
-    opponent_bishops = m_piece_boards[WHITE_BISHOPS_INDEX];
-    opponent_queens = m_piece_boards[WHITE_QUEENS_INDEX];
-    friendly_pieces = m_black_pieces;
-  }
-  bitboard king_rook_attacks = get_rook_attacks(friendly_king_loc, m_all_pieces);
-  bitboard king_bishop_attacks = get_bishop_attacks(friendly_king_loc, m_all_pieces);
-  bitboard rook_attacks;
-  bitboard bishop_attacks;
-  bitboard queen_attacks;
-  int pc_loc;
-  int pc_rank;
-  int pc_file;
-  int pc_diag;
-  int pc_antidiag;
-  int king_rank = rank(friendly_king_loc);
-  int king_file = file(friendly_king_loc);
-  int king_diag = king_rank - king_file;
-  int king_antidiag = king_rank + king_file;
-  while(opponent_rooks) {
-    pc_loc = first_set_bit(opponent_rooks);
-    pc_rank = rank(pc_loc);
-    pc_file = file(pc_loc);
-    if(!(pc_rank == king_rank || pc_file == king_file)) {
-      REMOVE_FIRST(opponent_rooks);
-      continue;
-    }
-    rook_attacks = get_rook_attacks(pc_loc, m_all_pieces);
-    curr_pin = rook_attacks & king_rook_attacks & friendly_pieces;
-    if(curr_pin){
-      pin.pinned_pieces |= curr_pin;
-      pinned_piece_loc = first_set_bit(curr_pin);
-      pin.ray_at_sq[pinned_piece_loc] = get_ray_from_rook_to_king(pc_loc, friendly_king_loc);
-    }
-    REMOVE_FIRST(opponent_rooks);
-  }
-  while(opponent_bishops) {
-    pc_loc = first_set_bit(opponent_bishops);
-    pc_rank = rank(pc_loc);
-    pc_file = file(pc_loc);
-    pc_diag = pc_rank - pc_file;
-    pc_antidiag = pc_rank + pc_file;
-    if(!(pc_diag == king_diag || pc_antidiag == king_antidiag)) {
-      REMOVE_FIRST(opponent_bishops);
-      continue;
-    }
-    bishop_attacks = get_bishop_attacks(pc_loc, m_all_pieces);
-    curr_pin = bishop_attacks & king_bishop_attacks & friendly_pieces;
-    if(curr_pin){
-      pin.pinned_pieces |= curr_pin;
-      pinned_piece_loc = first_set_bit(curr_pin);
-      pin.ray_at_sq[pinned_piece_loc] = get_ray_from_bishop_to_king(pc_loc, friendly_king_loc);
-    }
-    REMOVE_FIRST(opponent_bishops);
-  }
-  while(opponent_queens) {
-    pc_loc = first_set_bit(opponent_queens);
-    pc_rank = rank(pc_loc);
-    pc_file = file(pc_loc);
-    pc_diag = pc_rank - pc_file;
-    pc_antidiag = pc_rank + pc_file;
-    if(pc_rank == king_rank || pc_file == king_file) {
-      queen_attacks = get_rook_attacks(pc_loc, m_all_pieces);
-      curr_pin = queen_attacks & king_rook_attacks & friendly_pieces;
-      if(curr_pin){
-        pin.pinned_pieces |= curr_pin;
-        pinned_piece_loc = first_set_bit(curr_pin);
-        pin.ray_at_sq[pinned_piece_loc] = get_ray_from_rook_to_king(pc_loc, friendly_king_loc);
-      }
-    }
-    else if(pc_diag == king_diag || pc_antidiag == king_antidiag){
-      queen_attacks = get_bishop_attacks(pc_loc, m_all_pieces);
-      curr_pin = queen_attacks & king_bishop_attacks & friendly_pieces;
-      if(curr_pin){
-        pin.pinned_pieces |= curr_pin;
-        pinned_piece_loc = first_set_bit(curr_pin);
-        pin.ray_at_sq[pinned_piece_loc] = get_ray_from_bishop_to_king(pc_loc, friendly_king_loc);
-      }
-    }
-    REMOVE_FIRST(opponent_queens);
-  }
-  return pin;
-}
-
-bitboard Board::checking_pieces() const 
-{
-  int friendly_king = (m_white_turn) ? m_white_king_loc : m_black_king_loc;
-  Move last_move = m_irr_state_history.back().get_last_move();
-  if(last_move.get_move() == Move::NO_MOVE) {
-    return attackers_from_square(friendly_king);
-  }
-  bool discovered_check = false;
-
-  int to = last_move.to();
-  int from = last_move.from();
-  int type = last_move.type();
-
-  bitboard checkers = 0;
-
-  piece moved_piece = m_sq_board[to];
-  bitboard piece_bit = BIT_FROM_SQ(to);
-  switch (PIECE(moved_piece)) {
-    case PAWN:
-      checkers = get_pawn_attacks(friendly_king, m_white_turn) & piece_bit;
-      break;
-    case KNIGHT:
-      checkers = get_knight_attacks(friendly_king) & piece_bit;
-      break;
-    case BISHOP:
-      checkers = get_bishop_attacks(friendly_king, m_all_pieces) & piece_bit;
-      break;
-    case ROOK:
-      checkers = get_rook_attacks(friendly_king, m_all_pieces) & piece_bit;
-      break;
-    case QUEEN:
-      checkers = get_queen_attacks(friendly_king, m_all_pieces) & piece_bit;
-      break;
-    case KING:
-      break; /* the king can never move to check the other king */
-  }
-
-  /* there is no possibility for a discovered check here */
-  if(type == Move::QUIET_MOVE || type == Move::DOUBLE_PUSH || type == Move::NORMAL_CAPTURE) {
-    if(rank(from) != rank(friendly_king) && file(from) != file(friendly_king) &&
-       diag(from) != diag(friendly_king) && anti_diag(from) != anti_diag(friendly_king))
-       return checkers;
-  }
-
-
-  bitboard opponent_bishops;
-  bitboard opponent_rooks;
-  bitboard opponent_queens;
-
-  if(m_white_turn) {
-    opponent_bishops = m_piece_boards[BLACK_BISHOPS_INDEX];
-    opponent_rooks = m_piece_boards[BLACK_ROOKS_INDEX];
-    opponent_queens = m_piece_boards[BLACK_QUEENS_INDEX];
-  }
-  else {
-    opponent_bishops = m_piece_boards[WHITE_BISHOPS_INDEX];
-    opponent_rooks = m_piece_boards[WHITE_ROOKS_INDEX];
-    opponent_queens = m_piece_boards[WHITE_QUEENS_INDEX];
-  }
-  bitboard diagonal_sliders = opponent_bishops | opponent_queens;
-  bitboard cardinal_sliders = opponent_rooks | opponent_queens;
-
-  /* remove the piece that was moved to not double check it */
-  diagonal_sliders &= ~BIT_FROM_SQ(to);
-  cardinal_sliders &= ~BIT_FROM_SQ(to);
-
-  bitboard bishop_from_king = get_bishop_attacks(friendly_king, m_all_pieces);
-  bitboard attacking_diagonal = bishop_from_king & diagonal_sliders;
-  checkers |= attacking_diagonal;
-  if(attacking_diagonal)
-    discovered_check = true;
-
-  if(!discovered_check){
-    bitboard rook_from_king = get_rook_attacks(friendly_king, m_all_pieces);
-    checkers |= rook_from_king & cardinal_sliders;
-  }
-  return checkers;
-}
-
-Board::CheckType Board::check_type(bitboard checkers) const
-{
-  if(!checkers) return CheckType::NO_CHECK;
-  REMOVE_FIRST(checkers);
-  if(!checkers) return CheckType::SINGLE;
-  return CheckType::DOUBLE;
-}
-
-bool Board::in_check() const
-{
-  return check_type(checking_pieces()) != CheckType::NO_CHECK;
 }
 
 bool Board::is_repetition() const 
@@ -1148,28 +953,10 @@ Board::IrreversibleState::IrreversibleState(bool white_ks,
   set_last_move(last_move);
 }
 
+///////////////////////////////////////////////// GETTER FUNCTIONS /////////////////////////////////////////////////
+
 
 ///////////////////////////////////////////////// HELPFUL BOARD FUNCTIONS /////////////////////////////////////////////////
-
-int Board::file(int sq)
-{
-  return sq & 7;
-}
-
-int Board::rank(int sq)
-{
-  return sq >> 3;
-}
-
-int Board::diag(int sq)
-{
-  return 7 + rank(sq) - file(sq);
-}
-
-int Board::anti_diag(int sq)
-{
-  return rank(sq) + file(sq);
-}
 
 std::string Board::to_string() const
 {

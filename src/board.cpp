@@ -292,7 +292,7 @@ void Board::make_move(Move move)
       place_piece(moving_piece, to);
       board_hash ^= to_zobrist; // place the king in hash value
       // piece_hash ^= to_zobrist;
-      if(from == E1) { // white queen side
+      if(from == constants::E1) { // white queen side
         remove_piece(WHITE | ROOK, constants::A1);
         place_piece(WHITE | ROOK, constants::D1);
         board_hash ^= zobrist_table.table[constants::A1][WHITE_ROOKS_INDEX]; // remove white rook from A1

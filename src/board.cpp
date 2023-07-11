@@ -916,22 +916,6 @@ void Board::update_redundant_boards()
   m_all_pieces = m_white_pieces | m_black_pieces;
 }
 
-bool Board::is_repetition() const 
-{
-  int irr_ply = m_irr_state_history.back().get_irr_ply();
-  /* we start searching at the previous board state, and up to and including the board with 
-     the most recent irreversible move played on the board. We decrement by two since we only need to check
-     board states where it was the current player's turn. */
-  for(int i = m_ply - 2; i >= irr_ply; i = i - 2) 
-  {
-    if(m_board_hash_history[i] == m_board_hash)
-    {
-      return true;
-    }
-  }
-  return false;
-}
-
 Board::IrreversibleState::IrreversibleState(bool white_ks, 
                                             bool white_qs, 
                                             bool black_ks, 
@@ -955,6 +939,106 @@ Board::IrreversibleState::IrreversibleState(bool white_ks,
 
 ///////////////////////////////////////////////// GETTER FUNCTIONS /////////////////////////////////////////////////
 
+piece Board::operator[](int sq) const
+{
+  return m_sq_board[sq];
+}
+
+int Board::get_piece_count(piece pc) const
+{
+  return m_piece_counts[index_from_pc(pc)];
+}
+
+int Board::get_material_score() const
+{
+  return m_material_score;
+}
+
+int Board::get_positional_score() const
+{
+  return m_positional_score;
+}
+
+int Board::get_total_material() const
+{
+  return m_total_material;
+}
+
+uint64_t Board::get_hash() const
+{
+  return m_board_hash;
+}
+
+uint64_t Board::get_piece_hash() const
+{
+  return m_piece_hash;
+}
+
+uint64_t Board::get_pawn_hash() const
+{
+  return m_pawn_hash;
+}
+
+bool Board::is_repetition() const 
+{
+  int irr_ply = m_irr_state_history.back().get_irr_ply();
+  /* we start searching at the previous board state, and up to and including the board with 
+     the most recent irreversible move played on the board. We decrement by two since we only need to check
+     board states where it was the current player's turn. */
+  for(int i = m_ply - 2; i >= irr_ply; i = i - 2) 
+  {
+    if(m_board_hash_history[i] == m_board_hash)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+bitboard Board::get_piece_bitboard(piece pc) const
+{
+  return m_piece_boards[index_from_pc(pc)];
+}
+
+int Board::get_white_king_loc() const
+{
+  return m_white_king_loc;
+}
+
+int Board::get_black_king_loc() const
+{
+  return m_black_king_loc;
+}
+
+bool Board::can_white_king_side_castle() const
+{
+  return m_irr_state_history.back().can_white_king_side_castle();
+}
+
+bool Board::can_white_queen_side_castle() const
+{
+  return m_irr_state_history.back().can_white_queen_side_castle();
+}
+
+bool Board::can_black_king_side_castle() const
+{
+  return m_irr_state_history.back().can_black_king_side_castle();
+}
+
+bool Board::can_black_queen_side_castle() const
+{
+  return m_irr_state_history.back().can_black_queen_side_castle();
+}
+
+int Board::get_en_passant_sq() const
+{
+  return m_irr_state_history.back().get_en_passant_sq();
+}
+
+Move Board::get_last_move() const
+{
+  return m_irr_state_history.back().get_last_move();
+}
 
 ///////////////////////////////////////////////// HELPFUL BOARD FUNCTIONS /////////////////////////////////////////////////
 

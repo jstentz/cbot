@@ -39,18 +39,6 @@ public:
     REPETITION
   };
 
-  enum Square : uint32_t { A1, B1, C1, D1, E1, F1, G1, H1,
-                                 A2, B2, C2, D2, E2, F2, G2, H2,
-                                 A3, B3, C3, D3, E3, F3, G3, H3,
-                                 A4, B4, C4, D4, E4, F4, G4, H4,
-                                 A5, B5, C5, D5, E5, F5, G5, H5,
-                                 A6, B6, C6, D6, E6, F6, G6, H6,
-                                 A7, B7, C7, D7, E7, F7, G7, H7,
-                                 A8, B8, C8, D8, E8, F8, G8, H8, NONE };
-
-  enum Rank : uint32_t { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
-  enum File : uint32_t { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
-
   enum class CheckType { NO_CHECK, SINGLE, DOUBLE };
 
   Board();
@@ -82,6 +70,31 @@ public:
   BoardStatus get_game_status() const;
 
   bool is_white_turn() const;
+
+  // *IMPORTANT* for all of these getters, consider using a const reference for speed reasons...
+
+  // indexing into the square board
+  piece operator[](int sq) const;
+
+  int get_piece_count(piece pc) const;
+  int get_material_score() const;
+  int get_positional_score() const;
+  int get_total_material() const;
+
+  uint64_t get_hash() const;
+  uint64_t get_piece_hash() const;
+  uint64_t get_pawn_hash() const;
+  bool is_repetition() const;
+
+  bitboard get_piece_bitboard(piece pc) const;
+  int get_white_king_loc() const;
+  int get_black_king_loc() const;
+  bool can_white_king_side_castle() const;
+  bool can_white_queen_side_castle() const;
+  bool can_black_king_side_castle() const;
+  bool can_black_queen_side_castle() const;
+  int get_en_passant_sq() const;
+  Move get_last_move() const;
 
   std::string to_string() const;
   std::string to_fen_string() const;
@@ -164,23 +177,9 @@ private:
   };
 
   /**
-   * @brief Holds information regarding a pin
-  */
-  struct Pin {
-    bitboard ray_at_sq[64];
-    bitboard pinned_pieces{};
-  };
-
-  /**
    * @brief Updates the redudant board representations
   */
   void update_redundant_boards();
-
-  Pin get_pinned_pieces(int friendly_king_loc) const;
-  bitboard checking_pieces() const;
-  CheckType check_type(bitboard attackers) const;
-  bool in_check() const;
-  bool is_repetition() const;
 
   void place_piece_in_bb(piece pc, int sq);
   void remove_piece_from_bb(piece pc, int sq);
@@ -189,11 +188,6 @@ private:
   void remove_piece(piece pc, int sq);
 
   inline static int index_from_pc(piece pc);
-
-  inline static int file(int sq);
-  inline static int rank(int sq);
-  inline static int diag(int sq);
-  inline static int anti_diag(int sq);
 
   /* private members */
 
@@ -242,15 +236,3 @@ private:
   static const char BLACK_KINGS_INDEX = 11;
   
 };
-
-/**
- * Quick todo:
- * Move all necessary move functions into the board class
- * put the transposition table as part of the searcher
- * put the lookup table as part of the move generator (I don't think I'll need it for anything in the board class)
- * I still need to figure out when I should initialize the transposition table and the opening book (searcher) and the LUT (move generator)
- * Maybe have an init function for them?
- * They should definitely be classes over their own to interact with for sure 
- * 
- * I think I should never have functions actually return squares, and just use them for comparison
-*/

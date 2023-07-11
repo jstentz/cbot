@@ -56,3 +56,18 @@ Design Ideas:
 * all of the attack getting stuff should be a part of the move generator class 
 * that means all of the get pinned pieces and stuff has to go too
 * I also think the transposition table should be its own class, but probably make it global and const, since there is only one of them
+* consider using more std::array instead of pure c arrays
+
+
+/**
+* All main classes
+*  Board
+*  LookUpTable
+*  MoveGenerator
+*  Searcher
+*  Evaluator
+*  OpeningBook
+*  TranspositionTable 
+*  Hasher
+*  
+*/

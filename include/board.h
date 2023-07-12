@@ -83,6 +83,10 @@ public:
   bool is_repetition() const;
 
   bitboard get_piece_bitboard(piece pc) const;
+  bitboard get_white_pieces() const;
+  bitboard get_black_pieces() const;
+  bitboard get_all_pieces() const;
+
   int get_white_king_loc() const;
   int get_black_king_loc() const;
   bool can_white_king_side_castle() const;
@@ -183,8 +187,6 @@ private:
   void place_piece(piece pc, int sq);
   void remove_piece(piece pc, int sq);
 
-  inline static int index_from_pc(piece pc);
-
   /* private members */
 
   bitboard m_piece_boards[12];
@@ -217,18 +219,5 @@ private:
   int m_ply;
   std::vector<uint64_t> m_board_hash_history;
 
-  /* internal constants */
-  static const char WHITE_PAWNS_INDEX = 0;
-  static const char BLACK_PAWNS_INDEX = 1;
-  static const char WHITE_KNIGHTS_INDEX = 2;
-  static const char BLACK_KNIGHTS_INDEX = 3;
-  static const char WHITE_BISHOPS_INDEX = 4;
-  static const char BLACK_BISHOPS_INDEX = 5;
-  static const char WHITE_ROOKS_INDEX = 6;
-  static const char BLACK_ROOKS_INDEX = 7;
-  static const char WHITE_QUEENS_INDEX = 8;
-  static const char BLACK_QUEENS_INDEX = 9;
-  static const char WHITE_KINGS_INDEX = 10;
-  static const char BLACK_KINGS_INDEX = 11;
   
 };

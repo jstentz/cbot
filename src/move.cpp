@@ -57,3 +57,13 @@ int Move::get_move() const
 {
   return m_move;
 }
+
+bool Move::is_no_move() const
+{
+  return m_move == NO_MOVE;
+}
+
+bool Move::operator==(Move other_move) const
+{
+  return (to() == other_move.to()) && (from() == other_move.from()) && (type() == other_move.type());
+}

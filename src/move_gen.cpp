@@ -6,12 +6,328 @@
 #include "include/evaluation.h"
 #include "include/hashing.h"
 #include "include/tt.h"
+#include "include/move_gen.h"
+#include "include/utils.h"
 
 #include <vector>
-#include <stack>
 #include <iostream>
 #include <string>
 #include <algorithm>
+
+MoveGenerator::MoveGenerator(const Board& board) : m_board(board) {}
+
+void MoveGenerator::generate_moves(std::vector<Move> &curr_moves, bool captures_only) const
+{
+  bitboard check_pieces = checking_pieces();
+  bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
+  bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
+  int friendly_king_loc = (m_board.is_white_turn()) ? m_board.get_white_king_loc() : m_board.get_black_king_loc();
+  CheckType check = check_type(check_pieces);
+  if (check == CheckType::DOUBLE) 
+  {
+    generate_king_moves(curr_moves, captures_only);
+    return;
+  }
+  else if (check == CheckType::SINGLE) {
+    capture_mask = check_pieces;
+    int sq = first_set_bit(check_pieces);
+    if (is_sliding_piece(m_board[sq])) 
+    {
+      push_mask = opponent_slider_rays_to_square(friendly_king_loc);
+    }
+    else 
+    {
+      push_mask = 0;
+    }
+  }
+  bool pawn_check = (check_pieces & (m_board.get_piece_bitboard(WHITE | PAWN) | m_board.get_piece_bitboard(BLACK | PAWN))) != 0;
+  bitboard check_mask = push_mask | capture_mask;
+  Pin pin = get_pinned_pieces(friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
+  generate_pawn_moves(curr_moves, check_mask, pawn_check, pin, captures_only);
+  generate_knight_moves(curr_moves, check_mask, pin, captures_only);
+  generate_bishop_moves(curr_moves, check_mask, pin, captures_only);
+  generate_rook_moves(curr_moves, check_mask, pin, captures_only);
+  generate_queen_moves(curr_moves, check_mask, pin, captures_only);
+  generate_king_moves(curr_moves, captures_only);
+}
+
+void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move) const
+{
+  signed short int score;
+  piece mv_piece;
+  piece tar_piece;
+  int to;
+  int from;
+  Move mv;
+  int flags;
+  int perspective = m_board.is_white_turn() ? 1 : -1;
+  // maybe add a bonus for castling moves
+  // add recapturing the piece that was last captured as a good bonus to check first
+  // bigger bonus for the higher value piece being captured
+  // just have the board store the move that was made to get to that position
+  // still need to add the least_valued_attacker logic, not exactly sure how to implement
+  Move last_move = m_board.get_last_move();
+  int recapture_square = -1;
+  if (!last_move.is_no_move() && last_move.is_capture()) 
+  {
+    recapture_square = last_move.to();
+  }
+  for (Move& mv : moves) 
+  {
+    score = 0;
+    if (!tt_best_move.is_no_move() && mv == tt_best_move) 
+    {
+      score += 10000; // idk try the PV node first
+    }
+    to = mv.to();
+    from = mv.from();
+    flags = mv.type();
+    mv_piece = m_board[from];
+    if (mv.is_promo()) 
+    {
+      if (flags == Move::KNIGHT_PROMO || flags == Move::KNIGHT_PROMO_CAPTURE) {
+        score += piece_values[constants::WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
+      }
+      else if (flags == Move::BISHOP_PROMO || flags == Move::BISHOP_PROMO_CAPTURE) {
+        score += piece_values[constants::WHITE_BISHOPS_INDEX];
+      }
+      else if (flags == Move::ROOK_PROMO || flags == Move::ROOK_PROMO_CAPTURE) {
+        score += piece_values[constants::WHITE_ROOKS_INDEX];
+      }
+      else {
+        score += piece_values[constants::WHITE_QUEENS_INDEX];
+      }
+    }
+    /* check recapturing moves */
+    if (to == recapture_square) 
+    {
+      score += 5 * abs(piece_values[utils::index_from_pc(mv_piece)]); // arbitrary multiplication
+    }
+    else if (mv.is_capture()) {
+      // score += see_capture(mv); /* this function isn't fast enough I need incrementally updated attack tables */
+      tar_piece = m_board[to];
+      if (!is_attacked(to, m_board.get_all_pieces())) 
+      {
+        score += 5 * abs(piece_values[utils::index_from_pc(tar_piece)]);
+      }
+      else 
+      {
+        score += abs(piece_values[utils::index_from_pc(tar_piece)]) - abs(piece_values[utils::index_from_pc(mv_piece)]);    
+      }
+    }
+    /* score moves to squares attacked by pawns */
+    else if(PIECE(mv_piece) != PAWN && is_attacked_by_pawn(to)) 
+      score -= abs(piece_values[utils::index_from_pc(mv_piece)]); // can play around with this
+    
+    // done for better endgame move ordering of king moves
+    if (PIECE(mv_piece) == KING && m_board.get_piece_bitboard(WHITE | QUEEN) == 0 && m_board.get_piece_bitboard(BLACK | QUEEN) == 0)
+    {
+      score += perspective * (piece_scores[utils::index_from_pc(mv_piece) + 2][to] - piece_scores[utils::index_from_pc(mv_piece) + 2][from]);
+    }
+    else 
+    {
+      score += perspective * (piece_scores[utils::index_from_pc(mv_piece)][to] - piece_scores[utils::index_from_pc(mv_piece)][from]);
+    }
+
+    // if(flags == QUIET_MOVE) {
+    //     score -= 1000; /* try quiet moves last even behind bad captures */
+    // }     
+    mv.set_score(score);
+  }
+  std::sort(moves.begin(), moves.end(), [](Move mv1, Move mv2) { return mv1.score() > mv2.score(); });
+}
+
+std::string MoveGenerator::notation_from_move(Move move) const
+{
+  std::vector<Move> all_moves;
+  generate_moves(all_moves);
+  // conflicting doesn't work for knights right now
+  // need to update for check (+) and checkmate (#)
+  // need to add castling
+  std::vector<Move> conflicting_moves;
+  for (Move single_move : all_moves) 
+  {
+    if (single_move.to() == move.to() && 
+       single_move.from() != move.from() && 
+       m_board[single_move.from()] == m_board[move.from()] &&
+       single_move.type() == move.type())
+    {
+      conflicting_moves.push_back(single_move);
+    }
+  }
+
+  std::string str_move;
+  piece mv_piece = m_board[move.from()];
+  char piece_name = constants::PIECES[utils::index_from_pc(mv_piece) / 2];
+  bool capture = move.is_capture();
+  bool promotion = move.is_promo();
+  size_t start_file_num = utils::file(move.from());
+  size_t start_rank_num = utils::rank(move.from());
+  size_t tar_file_num = utils::file(move.to());
+  size_t tar_rank_num = utils::rank(move.to());
+  char start_file = constants::FILES[start_file_num];
+  char start_rank = constants::RANKS[start_rank_num];
+  char tar_file = constants::FILES[tar_file_num];
+  char tar_rank = constants::RANKS[tar_rank_num];
+  bool file_conflict = false;
+  bool rank_conflict = false;
+  size_t conflict_file_num;
+  size_t conflict_rank_num;
+  int start = move.from();
+  int target = move.to();
+
+  if(piece_name == 'P' && capture) {
+    str_move.push_back(start_file);
+  }
+  else if (piece_name == 'K' && 
+      (start == constants::E1 && target == constants::G1 || 
+       start == constants::E8 && target == constants::G8)) {
+    return "O-O"; // this won't quite work for adding check and checkmate
+  }
+  else if (piece_name == 'K' && 
+      (start == constants::E1 && target == constants::C1 || 
+       start == constants::E8 && target == constants::C8)) {
+    return "O-O-O"; // this won't quite work for adding check and checkmate
+  }
+  else if(piece_name != 'P') {
+    str_move.push_back(piece_name);
+    for(Move single_move : conflicting_moves) {
+      conflict_file_num = utils::file(single_move.from());
+      conflict_rank_num = utils::rank(single_move.from());
+      if(conflict_file_num == start_file_num) file_conflict = true;
+      else if(conflict_rank_num == start_rank_num) rank_conflict = true;
+    }
+    if(file_conflict) str_move.push_back(start_rank);
+    if(rank_conflict) str_move.push_back(start_file);
+    if(!file_conflict && !rank_conflict && 
+       conflicting_moves.size() > 0 && piece_name == 'N') {
+      str_move.push_back(start_file);
+    }
+  }
+
+  if(capture) str_move.push_back('x');
+  str_move.push_back(tar_file);
+  str_move.push_back(tar_rank);
+  if(promotion) {
+    str_move.push_back('=');
+    int flags = move.type();
+    char promo_piece_c;
+    if(flags == Move::KNIGHT_PROMO || flags == Move::KNIGHT_PROMO_CAPTURE) promo_piece_c = 'N';
+    else if(flags == Move::BISHOP_PROMO || flags == Move::BISHOP_PROMO_CAPTURE) promo_piece_c = 'B';
+    else if(flags == Move::ROOK_PROMO || flags == Move::ROOK_PROMO_CAPTURE) promo_piece_c = 'R';
+    else promo_piece_c = 'Q';
+    str_move.push_back(promo_piece_c);
+  }
+  return str_move;
+}
+
+/// TODO: doesn't work for promotions, also this is so bad 
+Move MoveGenerator::move_from_notation(std::string notation) const
+{
+  // std::cout << notation << endl;
+  std::string notation_copy = notation;
+  if(notation.length() == 0) {
+    std::cout << "Empty notation!\n";
+    int y;
+    std::cin >> y;
+    std::exit(-1);
+  }
+  notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
+  std::vector<move_t> moves;
+  generate_moves(moves);
+  // this is so ugly
+  if(notation == "O-O") {
+    for (move_t move : moves) {
+      if(FLAGS(move) == KING_SIDE_CASTLE) return move;
+    }
+  }
+  else if(notation == "O-O-O") {
+    for (move_t move : moves) {
+      if(FLAGS(move) == QUEEN_SIDE_CASTLE) return move;
+    }
+  }
+  piece mv_piece;
+  char c = notation[0];
+  if(isupper(c)) {
+    mv_piece = piece_from_move_char(c);
+    notation = notation.substr(1, notation.length() - 1);
+  }
+  else mv_piece = PAWN;
+  if(b.t == W) mv_piece |= WHITE;
+  else mv_piece |= BLACK;
+
+  std::string delimiter = "=";
+
+  piece promotion_piece;
+  size_t promotion_marker = notation.find(delimiter);
+  if(promotion_marker == std::string::npos) { // didn't find = 
+    promotion_piece = EMPTY;
+  }
+  else {
+    promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
+    notation = notation.substr(0, promotion_marker);
+  }
+
+  if(b.t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
+  else {mv_piece |= BLACK; promotion_piece |= BLACK;}
+  
+  notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
+  const std::string files = "abcdefgh";
+  const std::string ranks = "12345678";
+
+  int target_rank;
+  int target_file;
+  int start_rank = -1;
+  int start_file = -1;
+  square target_square;
+
+  // std::cout << notation << endl;
+  if(notation.length() == 2) { // no move conflict
+    target_rank = ranks.find(notation[1]);
+    target_file = files.find(notation[0]);
+  }
+  else if(notation.length() == 3) { // some conflict
+    target_rank = ranks.find(notation[2]);
+    target_file = files.find(notation[1]);
+
+    if(isalpha(notation[0])) {
+      start_file = files.find(notation[0]);
+    }
+    else {
+      start_rank = ranks.find(notation[0]);
+    }
+  }
+  else {
+    target_rank = ranks.find(notation[3]);
+    target_file = files.find(notation[2]);
+    
+    start_file = files.find(notation[0]);
+    start_rank = ranks.find(notation[1]);
+  }
+  target_square = (square)(target_rank * 8 + target_file);
+  // if(start_rank != -1) start_rank++;
+  // if(start_file != -1) start_file++;
+  // int x;
+  // cin >> x;
+  for (move_t move : moves) {
+    if(TO(move) == target_square && b.sq_board[FROM(move)] == mv_piece) {
+      if(start_rank == -1 && start_file == -1) return move;
+      if(start_rank == -1 && start_file == FILE(FROM(move))) return move;
+      if(start_rank == RANK(FROM(move)) && start_file == -1) return move;
+      if(start_rank == RANK(FROM(move)) && start_file == FILE(FROM(move))) return move;
+    }
+  }
+  std::cout << "Move: " << notation_copy << std::endl;
+  print_squarewise(b.sq_board);
+  int x;
+  std::cout << "No match found!" << std::endl;
+  std::cin >> x;
+  std::exit(-1); // should match to a move
+}
+
+
+
+// end new class structure 
 
 bitboard generate_knight_move_bitboard(square knight, bool captures_only) {
   bitboard knight_attacks = luts.knight_attacks[knight];
@@ -483,38 +799,6 @@ void generate_queen_moves(std::vector<move_t> &curr_moves, bitboard check_mask, 
   return;
 }
 
-void generate_moves(std::vector<move_t> &curr_moves, bool captures_only) {
-  bitboard check_pieces = checking_pieces();
-  bitboard capture_mask = 0xFFFFFFFFFFFFFFFF;
-  bitboard push_mask = 0xFFFFFFFFFFFFFFFF;
-  square friendly_king_loc = (b.t == W) ? b.white_king_loc : b.black_king_loc;
-  int check = check_type(check_pieces);
-  if(check == DOUBLE_CHECK) {
-    generate_king_moves(curr_moves, captures_only);
-    return;
-  }
-  else if (check == SINGLE_CHECK) {
-    capture_mask = check_pieces;
-    square sq = (square)first_set_bit(check_pieces);
-    if(is_sliding_piece(b.sq_board[sq])) {
-      push_mask = opponent_slider_rays_to_square(friendly_king_loc);
-    }
-    else {
-      push_mask = 0;
-    }
-  }
-  bool pawn_check = (check_pieces & (b.piece_boards[WHITE_PAWNS_INDEX] | b.piece_boards[BLACK_PAWNS_INDEX])) != 0;
-  bitboard check_mask = push_mask | capture_mask;
-  pin_t pin = get_pinned_pieces(friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
-  generate_pawn_moves(curr_moves, check_mask, pawn_check, &pin, captures_only);
-  generate_knight_moves(curr_moves, check_mask, &pin, captures_only);
-  generate_bishop_moves(curr_moves, check_mask, &pin, captures_only);
-  generate_rook_moves(curr_moves, check_mask, &pin, captures_only);
-  generate_queen_moves(curr_moves, check_mask, &pin, captures_only);
-  generate_king_moves(curr_moves, captures_only);
-  return;
-}
-
 int see(int sq) {
   int value = 0;
   square attacker_sq = least_valued_attacker_sq((square)sq, !b.t);
@@ -522,7 +806,7 @@ int see(int sq) {
     move_t capture = construct_move(attacker_sq, sq, NORMAL_CAPTURE); /* would this also work for promotions? */
     piece captured_piece = b.sq_board[sq];
     make_move(capture);
-    value = std::max(0, abs(piece_values[INDEX_FROM_PIECE(captured_piece)]) - see(sq));
+    value = std::max(0, abs(piece_values[utils::index_from_pc(captured_piece)]) - see(sq));
     unmake_move(capture);
   }
   return value;
@@ -533,7 +817,7 @@ int see_capture(move_t capture) {
   int to = TO(capture);
   piece cap_piece = b.sq_board[to];
   make_move(capture);
-  value = abs(piece_values[INDEX_FROM_PIECE(cap_piece)]) - see(to);
+  value = abs(piece_values[utils::index_from_pc(cap_piece)]) - see(to);
   unmake_move(capture);
   return value;
 }
@@ -542,8 +826,8 @@ bool is_bad_capture(move_t capture) {
   piece mv_piece = b.sq_board[FROM(capture)];
   piece cap_piece = b.sq_board[TO(capture)];
   /* if we are capturing a piece of higher material, its probably good */
-  if(abs(piece_values[INDEX_FROM_PIECE(cap_piece)]) 
-     - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]) > 50) {
+  if(abs(piece_values[utils::index_from_pc(cap_piece)]) 
+     - abs(piece_values[utils::index_from_pc(mv_piece)]) > 50) {
     return false;
   }
 
@@ -559,279 +843,6 @@ bool pawn_promo_or_close_push(move_t move) {
   if(RANK(to) == RANK_7 && COLOR(moving_piece) == WHITE) return true;
   if(RANK(to) == RANK_2 && COLOR(moving_piece) == BLACK) return true;
   return false;
-}
-
-// thinking about adding en passant to the move
-// if you move to a square that is attacked by a lesser-valued piece, put it last
-void order_moves(std::vector<move_t> &moves, move_t tt_best_move) {
-  state_t state = b.state_history.top();
-  signed short int score;
-  piece mv_piece;
-  piece tar_piece;
-  int to;
-  int from;
-  move_t mv;
-  int flags;
-  int perspective = (b.t == W) ? 1 : -1;
-  // maybe add a bonus for castling moves
-  // add recapturing the piece that was last captured as a good bonus to check first
-  // bigger bonus for the higher value piece being captured
-  // just have the board store the move that was made to get to that position
-  // still need to add the least_valued_attacker logic, not exactly sure how to implement
-  move_t last_move = LAST_MOVE(state);
-  int recapture_square = -1;
-  if(last_move != NO_MOVE && IS_CAPTURE(last_move)) {
-    recapture_square = TO(last_move);
-  }
-  for(int i = 0; i < moves.size(); i++) {
-    score = 0;
-    mv = moves[i];
-    if(tt_best_move != NO_MOVE && mv == tt_best_move) {
-      // std::cout << "trying pv move" << endl;
-      score += 10000; // idk try the PV node first
-    }
-    to = TO(mv);
-    from = FROM(mv);
-    flags = FLAGS(mv);
-    mv_piece = b.sq_board[from];
-    if(IS_PROMO(mv)) {
-      if(flags == KNIGHT_PROMO || flags == KNIGHT_PROMO_CAPTURE) {
-        score += piece_values[WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
-      }
-      else if(flags == BISHOP_PROMO || flags == BISHOP_PROMO_CAPTURE) {
-        score += piece_values[WHITE_BISHOPS_INDEX];
-      }
-      else if(flags == ROOK_PROMO || flags == ROOK_PROMO_CAPTURE) {
-        score += piece_values[WHITE_ROOKS_INDEX];
-      }
-      else {
-        score += piece_values[WHITE_QUEENS_INDEX];
-      }
-    }
-    /* check recapturing moves */
-    if(to == recapture_square) {
-      score += 5 * abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // arbitrary multiplication
-    }
-    else if(IS_CAPTURE(mv)) {
-      // score += see_capture(mv); /* this function isn't fast enough I need incrementally updated attack tables */
-      tar_piece = b.sq_board[to];
-      if(!is_attacked((square)to, b.all_pieces)) {
-        score += 5 * abs(piece_values[INDEX_FROM_PIECE(tar_piece)]);
-      }
-      else {
-        score += abs(piece_values[INDEX_FROM_PIECE(tar_piece)]) - abs(piece_values[INDEX_FROM_PIECE(mv_piece)]);    
-      }
-    }
-    /* score moves to squares attacked by pawns */
-    else if(PIECE(mv_piece) != PAWN && is_attacked_by_pawn((square)to)) 
-      score -= abs(piece_values[INDEX_FROM_PIECE(mv_piece)]); // can play around with this
-    
-    // done for better endgame move ordering of king moves
-    if(PIECE(mv_piece) == KING && b.piece_boards[WHITE_QUEENS_INDEX] == 0 && b.piece_boards[BLACK_QUEENS_INDEX] == 0){
-      score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][to] - piece_scores[INDEX_FROM_PIECE(mv_piece) + 2][from]);
-    }
-    else {
-      score += perspective * (piece_scores[INDEX_FROM_PIECE(mv_piece)][to] - piece_scores[INDEX_FROM_PIECE(mv_piece)][from]);
-    }
-
-    // if(flags == QUIET_MOVE) {
-    //     score -= 1000; /* try quiet moves last even behind bad captures */
-    // }
-        
-    moves[i] = ADD_SCORE_TO_MOVE(mv, (signed int)score); // convert to signed int to sign extend to 32 bits
-  }
-  std::sort(moves.begin(), moves.end(), std::greater<move_t>());
-  return;
-}
-
-/*
- * Goes from a move struct to the correct notation, given a move, a list of 
- * legal moves in the position, and the state of the board.
- */
-std::string notation_from_move(move_t move) {
-  std::vector<move_t> all_moves;
-  generate_moves(all_moves);
-  // conflicting doesn't work for knights right now
-  // need to update for check (+) and checkmate (#)
-  // need to add castling
-  std::vector<move_t> conflicting_moves;
-  for (move_t single_move : all_moves) {
-    if(TO(single_move) == TO(move) && 
-       FROM(single_move) != FROM(move) && 
-       b.sq_board[FROM(single_move)] == b.sq_board[FROM(move)] &&
-       FLAGS(single_move) == FLAGS(move))
-      conflicting_moves.push_back(single_move);
-  }
-  const std::string files = "abcdefgh";
-  const std::string ranks = "12345678";
-  const std::string pieces = "PNBRQK";
-  std::string str_move;
-  piece mv_piece = b.sq_board[FROM(move)];
-  char piece_name = pieces[INDEX_FROM_PIECE(mv_piece) / 2];
-  bool capture = IS_CAPTURE(move);
-  bool promotion = IS_PROMO(move);
-  size_t start_file_num = FILE(FROM(move));
-  size_t start_rank_num = RANK(FROM(move));
-  size_t tar_file_num = FILE(TO(move));
-  size_t tar_rank_num = RANK(TO(move));
-  char start_file = files[start_file_num];
-  char start_rank = ranks[start_rank_num];
-  char tar_file = files[tar_file_num];
-  char tar_rank = ranks[tar_rank_num];
-  bool file_conflict = false;
-  bool rank_conflict = false;
-  size_t conflict_file_num;
-  size_t conflict_rank_num;
-  square start = (square)FROM(move);
-  square target = (square)TO(move);
-
-  if(piece_name == 'P' && capture) {
-    str_move.push_back(start_file);
-  }
-  else if (piece_name == 'K' && 
-      (start == E1 && target == G1 || 
-       start == E8 && target == G8)) {
-    return "O-O"; // this won't quite work for adding check and checkmate
-  }
-  else if (piece_name == 'K' && 
-      (start == E1 && target == C1 || 
-       start == E8 && target == C8)) {
-    return "O-O-O"; // this won't quite work for adding check and checkmate
-  }
-  else if(piece_name != 'P') {
-    str_move.push_back(piece_name);
-    for(move_t single_move : conflicting_moves) {
-      conflict_file_num = FILE(FROM(single_move));
-      conflict_rank_num = RANK(FROM(single_move));
-      if(conflict_file_num == start_file_num) file_conflict = true;
-      else if(conflict_rank_num == start_rank_num) rank_conflict = true;
-    }
-    if(file_conflict) str_move.push_back(start_rank);
-    if(rank_conflict) str_move.push_back(start_file);
-    if(!file_conflict && !rank_conflict && 
-       conflicting_moves.size() > 0 && piece_name == 'N') {
-      str_move.push_back(start_file);
-    }
-  }
-
-  if(capture) str_move.push_back('x');
-  str_move.push_back(tar_file);
-  str_move.push_back(tar_rank);
-  if(promotion) {
-    str_move.push_back('=');
-    int flags = FLAGS(move);
-    char promo_piece_c;
-    if(flags == KNIGHT_PROMO || flags == KNIGHT_PROMO_CAPTURE) promo_piece_c = 'N';
-    else if(flags == BISHOP_PROMO || flags == BISHOP_PROMO_CAPTURE) promo_piece_c = 'B';
-    else if(flags == ROOK_PROMO || flags == ROOK_PROMO_CAPTURE) promo_piece_c = 'R';
-    else promo_piece_c = 'Q';
-    str_move.push_back(promo_piece_c);
-  }
-  return str_move;
-}
-
-// this doesn't work for promotions yet, but that shouldn't be a problem in opening
-/* make sure that this is called before the move is played */
-move_t move_from_notation(std::string notation) {
-  // std::cout << notation << endl;
-  std::string notation_copy = notation;
-  if(notation.length() == 0) {
-    std::cout << "Empty notation!\n";
-    int y;
-    std::cin >> y;
-    std::exit(-1);
-  }
-  notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
-  std::vector<move_t> moves;
-  generate_moves(moves);
-  // this is so ugly
-  if(notation == "O-O") {
-    for (move_t move : moves) {
-      if(FLAGS(move) == KING_SIDE_CASTLE) return move;
-    }
-  }
-  else if(notation == "O-O-O") {
-    for (move_t move : moves) {
-      if(FLAGS(move) == QUEEN_SIDE_CASTLE) return move;
-    }
-  }
-  piece mv_piece;
-  char c = notation[0];
-  if(isupper(c)) {
-    mv_piece = piece_from_move_char(c);
-    notation = notation.substr(1, notation.length() - 1);
-  }
-  else mv_piece = PAWN;
-  if(b.t == W) mv_piece |= WHITE;
-  else mv_piece |= BLACK;
-
-  std::string delimiter = "=";
-
-  piece promotion_piece;
-  size_t promotion_marker = notation.find(delimiter);
-  if(promotion_marker == std::string::npos) { // didn't find = 
-    promotion_piece = EMPTY;
-  }
-  else {
-    promotion_piece = piece_from_move_char(notation.substr(promotion_marker + 1, notation.length() - promotion_marker)[0]);
-    notation = notation.substr(0, promotion_marker);
-  }
-
-  if(b.t == W) {mv_piece |= WHITE; promotion_piece |= WHITE;}
-  else {mv_piece |= BLACK; promotion_piece |= BLACK;}
-  
-  notation.erase(remove(notation.begin(), notation.end(), 'x'), notation.end());
-  const std::string files = "abcdefgh";
-  const std::string ranks = "12345678";
-
-  int target_rank;
-  int target_file;
-  int start_rank = -1;
-  int start_file = -1;
-  square target_square;
-
-  // std::cout << notation << endl;
-  if(notation.length() == 2) { // no move conflict
-    target_rank = ranks.find(notation[1]);
-    target_file = files.find(notation[0]);
-  }
-  else if(notation.length() == 3) { // some conflict
-    target_rank = ranks.find(notation[2]);
-    target_file = files.find(notation[1]);
-
-    if(isalpha(notation[0])) {
-      start_file = files.find(notation[0]);
-    }
-    else {
-      start_rank = ranks.find(notation[0]);
-    }
-  }
-  else {
-    target_rank = ranks.find(notation[3]);
-    target_file = files.find(notation[2]);
-    
-    start_file = files.find(notation[0]);
-    start_rank = ranks.find(notation[1]);
-  }
-  target_square = (square)(target_rank * 8 + target_file);
-  // if(start_rank != -1) start_rank++;
-  // if(start_file != -1) start_file++;
-  // int x;
-  // cin >> x;
-  for (move_t move : moves) {
-    if(TO(move) == target_square && b.sq_board[FROM(move)] == mv_piece) {
-      if(start_rank == -1 && start_file == -1) return move;
-      if(start_rank == -1 && start_file == FILE(FROM(move))) return move;
-      if(start_rank == RANK(FROM(move)) && start_file == -1) return move;
-      if(start_rank == RANK(FROM(move)) && start_file == FILE(FROM(move))) return move;
-    }
-  }
-  std::cout << "Move: " << notation_copy << std::endl;
-  print_squarewise(b.sq_board);
-  int x;
-  std::cout << "No match found!" << std::endl;
-  std::cin >> x;
-  std::exit(-1); // should match to a move
 }
 
 move_t long_algebraic_to_move(std::string notation)

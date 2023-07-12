@@ -66,3 +66,8 @@ int utils::anti_diag(int sq)
 {
   return rank(sq) + file(sq);
 }
+
+int utils::index_from_pc(piece pc)
+{
+  return pc - 2; /// TODO: make a comment on why this works
+}

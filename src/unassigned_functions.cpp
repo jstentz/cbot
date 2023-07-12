@@ -229,10 +229,6 @@ bitboard opponent_slider_rays_to_square(square sq) {
   return res;
 }
 
-struct Pin {
-  bitboard ray_at_sq[64];
-  bitboard pinned_pieces{};
-};
 
 /// TODO: this is actually appauling please fix this function (might need to rework how I do pins)
 /// TODO: move this function into the move generator and out of the board

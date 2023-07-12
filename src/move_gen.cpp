@@ -227,17 +227,15 @@ Move MoveGenerator::move_from_notation(std::string notation) const
   // std::cout << notation << endl;
   std::string notation_copy = notation;
   if(notation.length() == 0) {
-    std::cout << "Empty notation!\n";
-    int y;
-    std::cin >> y;
+    std::cerr << "Empty notation!\n";
     std::exit(-1);
   }
   notation.erase(remove(notation.begin(), notation.end(), '+'), notation.end());
-  std::vector<move_t> moves;
+  std::vector<Move> moves;
   generate_moves(moves);
   // this is so ugly
   if(notation == "O-O") {
-    for (move_t move : moves) {
+    for (Move move : moves) {
       if(FLAGS(move) == KING_SIDE_CASTLE) return move;
     }
   }

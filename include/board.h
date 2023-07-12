@@ -37,8 +37,6 @@ public:
     REPETITION
   };
 
-  enum class CheckType { NO_CHECK, SINGLE, DOUBLE };
-
   Board();
   Board(std::string fen);
 

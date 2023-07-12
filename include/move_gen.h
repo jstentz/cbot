@@ -21,7 +21,7 @@
 class MoveGenerator
 {
 public:
-  MoveGenerator(Board::Ptr board);
+  MoveGenerator(const Board& board);
 
   void generate_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
   void order_moves(std::vector<Move> &moves, Move tt_best_move) const;
@@ -34,7 +34,7 @@ public:
   void sort_by_long_algebraic_notation(std::vector<Move> &moves) const;
 
 private:
-  Board::ConstPtr m_board;
+  const Board& m_board;
   const static LookUpTable lut; // initialized on program start
 
   struct Pin {
@@ -42,7 +42,7 @@ private:
     bitboard pinned_pieces{};
   };
 
-  enum class CheckType { NO_CHECK, SINGLE, DOUBLE };
+  enum class CheckType { NONE, SINGLE, DOUBLE };
 
   Pin get_pinned_pieces(int friendly_king_loc) const;
 
@@ -63,6 +63,7 @@ private:
   bitboard generate_queen_move_bitboard(int queen_sq, bool captures_only = false) const;
 
   void generate_king_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
+  void generate_knight_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only = false) const;
   void generate_pawn_moves(std::vector<Move> &curr_moves, bitboard check_mask, bool pawn_check, Pin &pin, bool captures_only = false) const;
   void generate_rook_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only = false) const;
   void generate_bishop_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only = false) const;

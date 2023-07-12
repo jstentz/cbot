@@ -44,7 +44,11 @@ public:
   int score() const;
   void set_score(int score);
 
+  bool is_no_move() const;
+
   int get_move() const;
+
+  bool operator==(Move other_move) const;
 
 private:
   int m_move{};

@@ -21,6 +21,7 @@ public:
   bitboard get_knight_attacks(int sq) const;
   bitboard get_king_attacks(int sq) const;
   bitboard get_pawn_attacks(int sq, bool white_side) const;
+  bitboard get_pawn_pushes(int sq, bool white) const;
   bitboard get_rook_attacks(int sq, bitboard blockers) const;
   bitboard get_bishop_attacks(int sq, bitboard blockers) const;
   bitboard get_queen_attacks(int sq, bitboard blockers) const;
@@ -31,8 +32,7 @@ public:
   bitboard get_ray_from_sq_to_sq(int start_sq, int target_sq) const;
 
   bitboard get_rank_mask(int rank) const;
-  bitboard get_pawn_pushes(int sq, bool white) const;
-  bitboard get_pawn_attacks(int sq, bool white) const;
+  
 
 private:
   bitboard clear_rank[8];

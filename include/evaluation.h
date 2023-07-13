@@ -12,6 +12,7 @@
 #pragma once
 
 #include "include/board.h"
+#include "include/hashing.h"
 #include <climits>
 
 #define EVAL_SIZE 131072 /* 2^17 THIS MUST BE A POWER OF 2 */

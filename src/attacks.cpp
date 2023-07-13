@@ -353,8 +353,3 @@ bitboard LookUpTable::get_pawn_pushes(int sq, bool white) const
 {
   return white ? white_pawn_pushes[sq] : black_pawn_pushes[sq];
 }
-
-bitboard LookUpTable::get_pawn_attacks(int sq, bool white) const
-{
-  return white ? white_pawn_attacks[sq] : black_pawn_attacks[sq];
-}

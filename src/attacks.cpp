@@ -248,26 +248,26 @@ LookUpTable::LookUpTable()
   }
 }
 
-bitboard LookUpTable::get_knight_attacks(int sq) 
+bitboard LookUpTable::get_knight_attacks(int sq) const
 {
   // doesn't depend on the current position
   return knight_attacks[sq];
 }
 
-bitboard LookUpTable::get_king_attacks(int sq) 
+bitboard LookUpTable::get_king_attacks(int sq) const
 {
   // doesn't depend on the current position
   return king_attacks[sq];
 }
 
-bitboard LookUpTable::get_pawn_attacks(int sq, bool white_side) 
+bitboard LookUpTable::get_pawn_attacks(int sq, bool white_side) const
 {
   // depends on who's turn it is to move
   if(white_side) return white_pawn_attacks[sq];
   return black_pawn_attacks[sq];
 }
 
-bitboard LookUpTable::get_rook_attacks(int rook_sq, bitboard blockers) 
+bitboard LookUpTable::get_rook_attacks(int rook_sq, bitboard blockers) const
 {
   // depends on the placement of blockers on the board
   // could leave out the white king when calculating blacks attack maps
@@ -279,7 +279,7 @@ bitboard LookUpTable::get_rook_attacks(int rook_sq, bitboard blockers)
        file_attacks[rook_sq][file_pattern];
 }
 
-bitboard LookUpTable::get_bishop_attacks(int bishop_sq, bitboard blockers) 
+bitboard LookUpTable::get_bishop_attacks(int bishop_sq, bitboard blockers) const
 {
   // depends on the placement of blockers on the board
   // could leave out the white king when calculating blacks attack maps
@@ -308,13 +308,13 @@ bitboard LookUpTable::get_bishop_attacks(int bishop_sq, bitboard blockers)
          antidiagonal_attacks[bishop_sq][antidiag_pattern];
 }
 
-bitboard LookUpTable::get_queen_attacks(int queen_sq, bitboard blockers) 
+bitboard LookUpTable::get_queen_attacks(int queen_sq, bitboard blockers) const 
 {
   return get_bishop_attacks(queen_sq, blockers) |
          get_rook_attacks(queen_sq, blockers);
 }
 
-bitboard LookUpTable::get_ray_from_bishop_to_king(int bishop_sq, int king_sq) 
+bitboard LookUpTable::get_ray_from_bishop_to_king(int bishop_sq, int king_sq) const
 {
   bitboard board = pieces[bishop_sq] | pieces[king_sq];
   bitboard bishop_attacks_from_bishop = get_bishop_attacks(bishop_sq, board);
@@ -322,7 +322,7 @@ bitboard LookUpTable::get_ray_from_bishop_to_king(int bishop_sq, int king_sq)
   return (bishop_attacks_from_bishop & bishop_attacks_from_king) | board;
 }
 
-bitboard LookUpTable::get_ray_from_rook_to_king(int rook_sq, int king_sq) 
+bitboard LookUpTable::get_ray_from_rook_to_king(int rook_sq, int king_sq) const
 {
   // assume the board is empty for calculating the rays
   bitboard board = pieces[rook_sq] | pieces[king_sq];
@@ -331,7 +331,7 @@ bitboard LookUpTable::get_ray_from_rook_to_king(int rook_sq, int king_sq)
   return (rook_attacks_from_rook & rook_attacks_from_king) | board;
 }
 
-bitboard LookUpTable::get_ray_from_queen_to_king(int queen_sq, int king_sq) 
+bitboard LookUpTable::get_ray_from_queen_to_king(int queen_sq, int king_sq) const
 {
   if((utils::file(queen_sq) == utils::file(king_sq)) || (utils::rank(queen_sq) == utils::rank(king_sq))) {
     return get_ray_from_rook_to_king(queen_sq, king_sq); // if on the same rank or file, treat the queen as a rook
@@ -339,7 +339,22 @@ bitboard LookUpTable::get_ray_from_queen_to_king(int queen_sq, int king_sq)
   return get_ray_from_bishop_to_king(queen_sq, king_sq); // if on the same diagonal, treat the queen as a bishop
 }
 
-bitboard LookUpTable::get_ray_from_sq_to_sq(int start, int target) 
+bitboard LookUpTable::get_ray_from_sq_to_sq(int start, int target) const
 {
   return get_ray_from_queen_to_king(start, target);
+}
+
+bitboard LookUpTable::get_rank_mask(int rank) const
+{
+  return mask_rank[rank];
+}
+
+bitboard LookUpTable::get_pawn_pushes(int sq, bool white) const
+{
+  return white ? white_pawn_pushes[sq] : black_pawn_pushes[sq];
+}
+
+bitboard LookUpTable::get_pawn_attacks(int sq, bool white) const
+{
+  return white ? white_pawn_attacks[sq] : black_pawn_attacks[sq];
 }

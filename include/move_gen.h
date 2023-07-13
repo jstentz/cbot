@@ -21,7 +21,7 @@
 class MoveGenerator
 {
 public:
-  MoveGenerator(const Board& board);
+  MoveGenerator(Board& board);
 
   void generate_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
   void order_moves(std::vector<Move> &moves, Move tt_best_move) const;
@@ -30,12 +30,13 @@ public:
   std::string notation_from_move(Move move) const;
   Move move_from_notation(std::string notation) const;
   std::string move_to_long_algebraic(Move move) const;
-  Move long_algebraic_to_move(std::string notation) const;
-  void sort_by_long_algebraic_notation(std::vector<Move> &moves) const;
+  Move move_from_long_algebraic(std::string notation) const;
+  void sort_by_long_algebraic_notation(std::vector<Move>& moves) const;
 
 private:
-  const Board& m_board;
-  const static LookUpTable lut; // initialized on program start
+  Board& m_board;
+  static LookUpTable lut; // initialized on program start
+
 
   struct Pin {
     bitboard ray_at_sq[64];

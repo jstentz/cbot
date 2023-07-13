@@ -18,17 +18,21 @@ class LookUpTable
 public:
   LookUpTable(); // construct the lut
 
-  bitboard get_knight_attacks(int sq);
-  bitboard get_king_attacks(int sq);
-  bitboard get_pawn_attacks(int sq, bool white_side);
-  bitboard get_rook_attacks(int sq, bitboard blockers);
-  bitboard get_bishop_attacks(int sq, bitboard blockers);
-  bitboard get_queen_attacks(int sq, bitboard blockers);
+  bitboard get_knight_attacks(int sq) const;
+  bitboard get_king_attacks(int sq) const;
+  bitboard get_pawn_attacks(int sq, bool white_side) const;
+  bitboard get_rook_attacks(int sq, bitboard blockers) const;
+  bitboard get_bishop_attacks(int sq, bitboard blockers) const;
+  bitboard get_queen_attacks(int sq, bitboard blockers) const;
 
-  bitboard get_ray_from_bishop_to_king(int bishop_sq, int king_sq);
-  bitboard get_ray_from_rook_to_king(int rook_sq, int king_sq);
-  bitboard get_ray_from_queen_to_king(int queen_sq, int king_sq);
-  bitboard get_ray_from_sq_to_sq(int start_sq, int target_sq);
+  bitboard get_ray_from_bishop_to_king(int bishop_sq, int king_sq) const;
+  bitboard get_ray_from_rook_to_king(int rook_sq, int king_sq) const;
+  bitboard get_ray_from_queen_to_king(int queen_sq, int king_sq) const;
+  bitboard get_ray_from_sq_to_sq(int start_sq, int target_sq) const;
+
+  bitboard get_rank_mask(int rank) const;
+  bitboard get_pawn_pushes(int sq, bool white) const;
+  bitboard get_pawn_attacks(int sq, bool white) const;
 
 private:
   bitboard clear_rank[8];

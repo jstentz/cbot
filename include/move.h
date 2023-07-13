@@ -31,8 +31,8 @@ public:
   const static int NO_MOVE = 0;
 
   Move();
-  Move(int from, int to, int flags);
-  Move(int from, int to, int flags, int score);
+  Move(int from, int to, int type);
+  Move(int from, int to, int type, int score);
   Move(int move);
 
   int from() const;

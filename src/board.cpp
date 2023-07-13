@@ -177,6 +177,11 @@ void Board::clear()
 
 void Board::make_move(Move move) 
 {
+  if (move.is_no_move())
+  {
+    std::cerr << "Attempting to make no_move!\n";
+    return;
+  }
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState prev_state = m_irr_state_history.back();
   IrreversibleState state = prev_state; // make a copy 
@@ -488,6 +493,11 @@ void Board::make_move(Move move)
 }
 
 void Board::unmake_move(Move move) {
+  if (move.is_no_move())
+  {
+    std::cerr << "Attempting to unmake no_move!\n";
+    return;
+  }
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState state = m_irr_state_history.back();
   m_ply--;

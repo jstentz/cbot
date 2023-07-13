@@ -37,8 +37,8 @@ void Board::reset(std::string fen)
   std::string turn;
   std::string castling_rights;
   std::string en_passant_sq;
-  int half_move_clock;
-  int full_move_clock;
+  uint16_t half_move_clock;
+  uint16_t full_move_clock;
 
   int num_read = std::sscanf(fen.c_str(), "%s %s %s %s %d %d", layout, turn, castling_rights, en_passant_sq, &half_move_clock, &full_move_clock);
   if (num_read != 6)

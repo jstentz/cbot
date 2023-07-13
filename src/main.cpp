@@ -1,31 +1,26 @@
 #include <stdio.h>
 #include <iostream>
-#include <algorithm>
 
 #include "include/search.h"
-#include "include/pieces.h"
 #include "include/board.h"
-#include "include/hashing.h"
-#include "include/openings.h"
-#include "include/attacks.h"
-#include "include/hashing.h"
-#include "include/tt.h"
-#include "include/evaluation.h"
-#include "include/move.h"
-#include "include/uci.h"
+// #include "include/uci.h"
 
 int main() 
 {
   /// TODO: boot the engine here 
-  luts = init_LUT(); // must do this first
-  zobrist_table = init_zobrist();
-  // opening_book = create_opening_book(); // uncomment if you need to update opening_book
-  // generate_num_data(); // uncomment if you need to update opening_book
-  opening_book = populate_opening_book();
-  init_tt_table();
-  init_eval_table();
+  // luts = init_LUT(); // must do this first
+  // zobrist_table = init_zobrist();
+  // // opening_book = create_opening_book(); // uncomment if you need to update opening_book
+  // // generate_num_data(); // uncomment if you need to update opening_book
+  // opening_book = populate_opening_book();
+  // init_tt_table();
+  // init_eval_table();
   /* begin UCI listening */
-  uci::start_uci_communication();
+
+  Board board{}; // starting position
+  Searcher searcher{board};
+  std::cout << searcher.perft(4) << std::endl;
+  // uci::start_uci_communication();
   return 0;
 }
 

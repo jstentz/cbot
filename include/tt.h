@@ -36,7 +36,7 @@ typedef struct tt {
   uint16_t depth;
   char flags;
   int score;
-  move_t best_move;
+  Move best_move;
 } tt_entry;
 
 /**
@@ -45,7 +45,7 @@ typedef struct tt {
  */
 typedef struct tt_table {
   tt_entry *table;
-  move_t best_move;
+  Move best_move;
 } tt_t;
 
 extern tt_t TT;
@@ -89,7 +89,7 @@ int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta)
  * @param score 
  * @param best_move 
  */
-void store_entry(hash_val key, int depth, int ply_searched, int flags, int score, move_t best_move);
+void store_entry(hash_val key, int depth, int ply_searched, int flags, int score, Move best_move);
 
 /**
  * @brief Clears the transposition table.

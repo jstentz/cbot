@@ -3,10 +3,8 @@
 #include "include/board.h"
 #include "include/attacks.h"
 #include "include/pieces.h"
-#include "include/evaluation.h"
-#include "include/hashing.h"
-#include "include/tt.h"
 #include "include/move_gen.h"
+#include "include/evaluation.h"
 #include "include/utils.h"
 
 #include <vector>
@@ -614,42 +612,42 @@ bool MoveGenerator::in_check() const
   return check_type(checking_pieces()) != CheckType::NONE;
 }
 
-int MoveGenerator::see(int sq) const
-{
-  int value = 0;
-  int attacker_sq = least_valued_attacker_sq(sq, !m_board.is_white_turn());
-  if(attacker_sq != constants::NONE) {
-    Move capture{attacker_sq, sq, Move::NORMAL_CAPTURE}; /* would this also work for promotions? */
-    piece captured_piece = m_board[sq];
-    m_board.make_move(capture);
-    value = std::max(0, abs(piece_values[utils::index_from_pc(captured_piece)]) - see(sq));
-    m_board.unmake_move(capture);
-  }
-  return value;
-}
+// int MoveGenerator::see(int sq) const
+// {
+//   int value = 0;
+//   int attacker_sq = least_valued_attacker_sq(sq, !m_board.is_white_turn());
+//   if(attacker_sq != constants::NONE) {
+//     Move capture{attacker_sq, sq, Move::NORMAL_CAPTURE}; /* would this also work for promotions? */
+//     piece captured_piece = m_board[sq];
+//     m_board.make_move(capture);
+//     value = std::max(0, abs(piece_values[utils::index_from_pc(captured_piece)]) - see(sq));
+//     m_board.unmake_move(capture);
+//   }
+//   return value;
+// }
 
-int MoveGenerator::see_capture(Move capture) const
-{
-  int value = 0;
-  int to = capture.to();
-  piece cap_piece = m_board[to];
-  m_board.make_move(capture);
-  value = abs(piece_values[utils::index_from_pc(cap_piece)]) - see(to);
-  m_board.unmake_move(capture);
-  return value;
-}
+// int MoveGenerator::see_capture(Move capture) const
+// {
+//   int value = 0;
+//   int to = capture.to();
+//   piece cap_piece = m_board[to];
+//   m_board.make_move(capture);
+//   value = std::abs(piece_values[utils::index_from_pc(cap_piece)]) - see(to);
+//   m_board.unmake_move(capture);
+//   return value;
+// }
 
-bool MoveGenerator::is_bad_capture(Move capture) const
-{
-  piece mv_piece = m_board[capture.from()];
-  piece cap_piece = m_board[capture.to()];
-  /* if we are capturing a piece of higher material, its probably good */
-  if(abs(piece_values[utils::index_from_pc(cap_piece)]) 
-     - abs(piece_values[utils::index_from_pc(mv_piece)]) > 50) {
-    return false;
-  }
-  return see_capture(capture) < -50;
-}
+// bool MoveGenerator::is_bad_capture(Move capture) const
+// {
+//   piece mv_piece = m_board[capture.from()];
+//   piece cap_piece = m_board[capture.to()];
+//   /* if we are capturing a piece of higher material, its probably good */
+//   if(abs(piece_values[utils::index_from_pc(cap_piece)]) 
+//      - abs(piece_values[utils::index_from_pc(mv_piece)]) > 50) {
+//     return false;
+//   }
+//   return see_capture(capture) < -50;
+// }
 
 bool MoveGenerator::pawn_promo_or_close_push(Move move) const
 {
@@ -877,30 +875,30 @@ void MoveGenerator::generate_king_moves(std::vector<Move> &curr_moves, bool capt
   bitboard kings;
   bitboard opponent_pieces;
   if (m_board.is_white_turn()) {
-    kings = b.piece_boards[WHITE_KINGS_INDEX];
+    kings = m_board.get_piece_bitboard(WHITE | KING);
     opponent_pieces = m_board.get_black_pieces();
   }
   else {
-    kings = b.piece_boards[BLACK_KINGS_INDEX];
+    kings = m_board.get_piece_bitboard(BLACK | KING);
     opponent_pieces = m_board.get_white_pieces();
   }
   bitboard king_moves;
   while(kings) {
     from = first_set_bit(kings);
-    king_moves = generate_king_move_bitboard((square)from, captures_only);
+    king_moves = generate_king_move_bitboard(from, captures_only);
     while(king_moves) {
       to = first_set_bit(king_moves);
       to_bit = BIT_FROM_SQ(to);
       if(to - from == 2) { // king side castle
-        curr_moves.push_back(construct_move(from, to, KING_SIDE_CASTLE));
+        curr_moves.push_back(Move{from, to, Move::KING_SIDE_CASTLE});
       }
       else if (to - from == -2) { // queen side castle
-        curr_moves.push_back(construct_move(from, to, QUEEN_SIDE_CASTLE));
+        curr_moves.push_back(Move{from, to, Move::QUEEN_SIDE_CASTLE});
       } 
       else{
-        if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
-        else                         flags = QUIET_MOVE;
-        curr_moves.push_back(construct_move(from, to, flags));
+        if(to_bit & opponent_pieces) flags = Move::NORMAL_CAPTURE;
+        else                         flags = Move::QUIET_MOVE;
+        curr_moves.push_back(Move{from, to, flags});
       }
       
       REMOVE_FIRST(king_moves);
@@ -930,18 +928,18 @@ void MoveGenerator::generate_knight_moves(std::vector<Move> &curr_moves, bitboar
   while(knights) {
     from = first_set_bit(knights);
     knight_bit = BIT_FROM_SQ(from);
-    if(knight_bit & pin->pinned_pieces) {
+    if(knight_bit & pin.pinned_pieces) {
       REMOVE_FIRST(knights);
       continue;
     } // pinned knights cannot move at all
-    knight_moves = generate_knight_move_bitboard((square)from, captures_only) & check_mask;
+    knight_moves = generate_knight_move_bitboard(from, captures_only) & check_mask;
     
     while(knight_moves) {
       to = first_set_bit(knight_moves);
       to_bit = BIT_FROM_SQ(to);
-      if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
-      else                         flags = QUIET_MOVE;
-      curr_moves.push_back(construct_move(from, to, flags));
+      if(to_bit & opponent_pieces) flags = Move::NORMAL_CAPTURE;
+      else                         flags = Move::QUIET_MOVE;
+      curr_moves.push_back(Move{from, to, flags});
       REMOVE_FIRST(knight_moves);
     }
     REMOVE_FIRST(knights);
@@ -950,26 +948,6 @@ void MoveGenerator::generate_knight_moves(std::vector<Move> &curr_moves, bitboar
 
 void MoveGenerator::generate_pawn_moves(std::vector<Move> &curr_moves, bitboard check_mask, bool pawn_check, Pin &pin, bool captures_only) const
 {
-
-}
-
-void MoveGenerator::generate_rook_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only) const
-{
-
-}
-
-void MoveGenerator::generate_bishop_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only) const
-{
-
-}
-
-void MoveGenerator::generate_queen_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only) const
-{
-  
-}
-
-void generate_pawn_moves(std::vector<move_t> &curr_moves, bitboard check_mask, bool pawn_check, pin_t *pin, bool captures_only) {
-  state_t state = b.state_history.top();
   int from;
   int to;
   int flags;
@@ -978,19 +956,19 @@ void generate_pawn_moves(std::vector<move_t> &curr_moves, bitboard check_mask, b
   bitboard pawns;
   bitboard opponent_pieces; // used for captures only
   if (m_board.is_white_turn()) {
-    pawns = b.piece_boards[WHITE_PAWNS_INDEX];
+    pawns = m_board.get_piece_bitboard(WHITE | PAWN);
     opponent_pieces = m_board.get_black_pieces();
   }
   else {
-    pawns = b.piece_boards[BLACK_PAWNS_INDEX];
+    pawns = m_board.get_piece_bitboard(BLACK | PAWN);
     opponent_pieces = m_board.get_white_pieces();
   }
 
   bitboard pawn_moves;
   bitboard pawn_bit;
   bitboard en_passant_bit = 0;
-  if(EN_PASSANT_SQ(state) != NONE) {
-    en_passant_bit = BIT_FROM_SQ(EN_PASSANT_SQ(state));
+  if(m_board.get_en_passant_sq() != constants::NONE) {
+    en_passant_bit = BIT_FROM_SQ(m_board.get_en_passant_sq());
     if(pawn_check) {
       check_mask |= en_passant_bit;
     }
@@ -999,45 +977,45 @@ void generate_pawn_moves(std::vector<move_t> &curr_moves, bitboard check_mask, b
     from = first_set_bit(pawns);
     pawn_bit = BIT_FROM_SQ(from);
     pin_mask = 0xFFFFFFFFFFFFFFFF;
-    if(pawn_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-    pawn_moves = generate_pawn_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+    if(pawn_bit & pin.pinned_pieces) pin_mask = pin.ray_at_sq[from];
+    pawn_moves = generate_pawn_move_bitboard(from, captures_only) & check_mask & pin_mask;
     
     while(pawn_moves) {
       to = first_set_bit(pawn_moves);
       to_bit = BIT_FROM_SQ(to);
-      if(to_bit & en_passant_bit)         flags = EN_PASSANT_CAPTURE;
-      else if(to_bit & opponent_pieces)   flags = NORMAL_CAPTURE;
-      else                                flags = QUIET_MOVE;
-      int to_rank = RANK(to);
-      if(to_rank == RANK_8 || to_rank == RANK_1) {
-        if(FILE(to) != FILE(from)) {
-          curr_moves.push_back(construct_move(from, to, KNIGHT_PROMO_CAPTURE)); // or this on to flag because we check for captures prior to this
-          curr_moves.push_back(construct_move(from, to, BISHOP_PROMO_CAPTURE));
-          curr_moves.push_back(construct_move(from, to, ROOK_PROMO_CAPTURE));
-          curr_moves.push_back(construct_move(from, to, QUEEN_PROMO_CAPTURE));
+      if(to_bit & en_passant_bit)         flags = Move::EN_PASSANT_CAPTURE;
+      else if(to_bit & opponent_pieces)   flags = Move::NORMAL_CAPTURE;
+      else                                flags = Move::QUIET_MOVE;
+      int to_rank = utils::rank(to);
+      if(to_rank == constants::RANK_8 || to_rank == constants::RANK_1) {
+        if(utils::file(to) != utils::file(from)) {
+          curr_moves.push_back(Move{from, to, Move::KNIGHT_PROMO_CAPTURE}); // or this on to flag because we check for captures prior to this
+          curr_moves.push_back(Move{from, to, Move::BISHOP_PROMO_CAPTURE});
+          curr_moves.push_back(Move{from, to, Move::ROOK_PROMO_CAPTURE});
+          curr_moves.push_back(Move{from, to, Move::QUEEN_PROMO_CAPTURE});
         }
         else {
-          curr_moves.push_back(construct_move(from, to, KNIGHT_PROMO));
-          curr_moves.push_back(construct_move(from, to, BISHOP_PROMO));
-          curr_moves.push_back(construct_move(from, to, ROOK_PROMO));
-          curr_moves.push_back(construct_move(from, to, QUEEN_PROMO));
+          curr_moves.push_back(Move{from, to, Move::KNIGHT_PROMO});
+          curr_moves.push_back(Move{from, to, Move::BISHOP_PROMO});
+          curr_moves.push_back(Move{from, to, Move::ROOK_PROMO});
+          curr_moves.push_back(Move{from, to, Move::QUEEN_PROMO});
         }
         
       }
       else if (abs(from - to) == 16) { // double pawn push
-        curr_moves.push_back(construct_move(from, to, DOUBLE_PUSH));
+        curr_moves.push_back(Move{from, to, Move::DOUBLE_PUSH});
       }
       else {
-        curr_moves.push_back(construct_move(from, to, flags)); // should already be set to quiet or capture
+        curr_moves.push_back(Move{from, to, flags}); // should already be set to quiet or capture
       }
       REMOVE_FIRST(pawn_moves);
     }
     REMOVE_FIRST(pawns);
   }
-  return;
 }
 
-void generate_rook_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void MoveGenerator::generate_rook_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only) const
+{
   int from;
   int to;
   int flags;
@@ -1060,23 +1038,23 @@ void generate_rook_moves(std::vector<move_t> &curr_moves, bitboard check_mask, p
     from = first_set_bit(rooks);
     rook_bit = BIT_FROM_SQ(from);
     pin_mask = 0xFFFFFFFFFFFFFFFF;
-    if(rook_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-    rook_moves = generate_rook_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+    if(rook_bit & pin.pinned_pieces) pin_mask = pin.ray_at_sq[from];
+    rook_moves = generate_rook_move_bitboard(from, captures_only) & check_mask & pin_mask;
 
     while(rook_moves) {
       to = first_set_bit(rook_moves);
       to_bit = BIT_FROM_SQ(to);
-      if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
-      else                         flags = QUIET_MOVE;
-      curr_moves.push_back(construct_move(from, to, flags));
+      if(to_bit & opponent_pieces) flags = Move::NORMAL_CAPTURE;
+      else                         flags = Move::QUIET_MOVE;
+      curr_moves.push_back(Move{from, to, flags});
       REMOVE_FIRST(rook_moves);
     }
     REMOVE_FIRST(rooks);
   }
-  return;
 }
 
-void generate_bishop_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void MoveGenerator::generate_bishop_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only) const
+{
   int from;
   int to;
   int flags;
@@ -1085,11 +1063,11 @@ void generate_bishop_moves(std::vector<move_t> &curr_moves, bitboard check_mask,
   bitboard bishops;
   bitboard opponent_pieces;
   if (m_board.is_white_turn()) {
-    bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
+    bishops = m_board.get_piece_bitboard(WHITE | BISHOP);
     opponent_pieces = m_board.get_black_pieces();
   }
   else {
-    bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
+    bishops = m_board.get_piece_bitboard(BLACK | BISHOP);
     opponent_pieces = m_board.get_white_pieces();
   }
 
@@ -1099,23 +1077,23 @@ void generate_bishop_moves(std::vector<move_t> &curr_moves, bitboard check_mask,
     from = first_set_bit(bishops);
     bishop_bit = BIT_FROM_SQ(from);
     pin_mask = 0xFFFFFFFFFFFFFFFF;
-    if(bishop_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-    bishop_moves = generate_bishop_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+    if(bishop_bit & pin.pinned_pieces) pin_mask = pin.ray_at_sq[from];
+    bishop_moves = generate_bishop_move_bitboard(from, captures_only) & check_mask & pin_mask;
     
     while(bishop_moves) {
       to = first_set_bit(bishop_moves);
       to_bit = BIT_FROM_SQ(to);
-      if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
-      else                         flags = QUIET_MOVE;
-      curr_moves.push_back(construct_move(from, to, flags));
+      if(to_bit & opponent_pieces) flags = Move::NORMAL_CAPTURE;
+      else                         flags = Move::QUIET_MOVE;
+      curr_moves.push_back(Move{from, to, flags});
       REMOVE_FIRST(bishop_moves);
     }
     REMOVE_FIRST(bishops);
   }
-  return;
 }
 
-void generate_queen_moves(std::vector<move_t> &curr_moves, bitboard check_mask, pin_t *pin, bool captures_only) {
+void MoveGenerator::generate_queen_moves(std::vector<Move> &curr_moves, bitboard check_mask, Pin &pin, bool captures_only) const
+{
   int from;
   int to;
   int flags;
@@ -1138,78 +1116,246 @@ void generate_queen_moves(std::vector<move_t> &curr_moves, bitboard check_mask, 
     from = first_set_bit(queens);
     queen_bit = BIT_FROM_SQ(from);
     pin_mask = 0xFFFFFFFFFFFFFFFF;
-    if(queen_bit & pin->pinned_pieces) pin_mask = pin->ray_at_sq[from];
-    queen_moves = generate_queen_move_bitboard((square)from, captures_only) & check_mask & pin_mask;
+    if(queen_bit & pin.pinned_pieces) pin_mask = pin.ray_at_sq[from];
+    queen_moves = generate_queen_move_bitboard(from, captures_only) & check_mask & pin_mask;
     
     while(queen_moves) {
       to = first_set_bit(queen_moves);
       to_bit = BIT_FROM_SQ(to);
-      if(to_bit & opponent_pieces) flags = NORMAL_CAPTURE;
-      else                         flags = QUIET_MOVE;
-      curr_moves.push_back(construct_move(from, to, flags));
+      if(to_bit & opponent_pieces) flags = Move::NORMAL_CAPTURE;
+      else                         flags = Move::QUIET_MOVE;
+      curr_moves.push_back(Move{from, to, flags});
       REMOVE_FIRST(queen_moves);
     }
     REMOVE_FIRST(queens);
   }
-  return;
 }
 
-move_t long_algebraic_to_move(std::string notation)
+bitboard MoveGenerator::generate_attack_map(bool white_side) const
 {
-  const std::string files = "abcdefgh";
-  const std::string ranks = "12345678";
-  int from_file = files.find(notation[0]);
-  int from_rank = ranks.find(notation[1]);
-  int to_file = files.find(notation[2]);
-  int to_rank = ranks.find(notation[3]);
-
-  bool is_promo = false;
-  int flags;
-  int flags_capture;
-  
-  /* check for promotion */
-  if (notation.size() > 4) 
-  {
-    is_promo = true;
-    switch (notation[4])
-    {
-      case 'q':
-        flags = QUEEN_PROMO;
-        flags_capture = QUEEN_PROMO_CAPTURE;
-        break;
-      case 'b':
-        flags = BISHOP_PROMO;
-        flags_capture = BISHOP_PROMO_CAPTURE;
-        break;
-      case 'n':
-        flags = KNIGHT_PROMO;
-        flags_capture = KNIGHT_PROMO_CAPTURE;
-        break;
-      case 'r':
-        flags = ROOK_PROMO;
-        flags_capture = ROOK_PROMO_CAPTURE;
-        break;
-      default:
-        exit(1);
-    }
+  bitboard attack_map = 0;
+  size_t pc_loc;
+  bitboard color_pieces;
+  bitboard all_pieces_no_king;
+  piece curr_piece;
+  piece color;
+  if(m_board.is_white_turn()) {
+    all_pieces_no_king = m_board.get_all_pieces() & 
+              ~m_board.get_piece_bitboard(BLACK | KING);
+    color_pieces = m_board.get_white_pieces();
+    color = WHITE;
+  }
+  else {
+    all_pieces_no_king = m_board.get_all_pieces() & 
+              ~m_board.get_piece_bitboard(WHITE | KING);
+    color_pieces = m_board.get_black_pieces();
+    color = BLACK;
   }
 
-  std::vector<move_t> moves;
-  generate_moves(moves);
-
-  for (move_t move : moves)
-  {
-    /* check for correct starting and ending square and promotion */
-    if (
-        (FILE(FROM(move)) == from_file) &&
-        (RANK(FROM(move)) == from_rank) &&
-        (FILE(TO(move)) == to_file) &&
-        (RANK(TO(move)) == to_rank) &&
-        (!is_promo || FLAGS(move) == flags || FLAGS(move) == flags_capture)
-       )
-    {
-      return move;
+  while(color_pieces) {
+    pc_loc = first_set_bit(color_pieces);
+    curr_piece = m_board[pc_loc];
+    if(curr_piece == (color | PAWN)) {
+      attack_map |= lut.get_pawn_attacks(pc_loc, white_side);
     }
+    else if(curr_piece == (color | KNIGHT)) {
+      attack_map |= lut.get_knight_attacks(pc_loc);
+    }
+    else if(curr_piece == (color | BISHOP)) {
+      attack_map |= lut.get_bishop_attacks(pc_loc, all_pieces_no_king);
+    }
+    else if(curr_piece == (color | ROOK)) {
+      attack_map |= lut.get_rook_attacks(pc_loc, all_pieces_no_king);
+    }
+    else if(curr_piece == (color | QUEEN)) {
+      attack_map |= lut.get_queen_attacks(pc_loc, all_pieces_no_king);
+    }
+    else if(curr_piece == (color | KING)) {
+      attack_map |= lut.get_king_attacks(pc_loc);
+    }
+    REMOVE_FIRST(color_pieces);
   }
-  return 0;
+  return attack_map;
 }
+
+piece MoveGenerator::least_valued_attacker(int sq) const
+{
+  bitboard opponent_knights;
+  bitboard opponent_pawns;
+  bitboard opponent_rooks;
+  bitboard opponent_bishops;
+  bitboard opponent_queens;
+  if(m_board.is_white_turn()) {
+    opponent_knights = m_board.get_piece_bitboard(BLACK | KNIGHT);
+    opponent_pawns = m_board.get_piece_bitboard(BLACK | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(BLACK | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(BLACK | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(BLACK | QUEEN);
+  }
+  else {
+    opponent_knights = m_board.get_piece_bitboard(WHITE | KNIGHT);
+    opponent_pawns = m_board.get_piece_bitboard(WHITE | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(WHITE | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(WHITE | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(WHITE | QUEEN);
+  }
+  if(lut.get_pawn_attacks(sq, m_board.is_white_turn()) & opponent_pawns) return PAWN;
+  if(lut.get_knight_attacks(sq) & opponent_knights) return KNIGHT;
+  if(lut.get_bishop_attacks(sq, m_board.get_all_pieces()) & opponent_bishops) return BISHOP;
+  if(lut.get_rook_attacks(sq, m_board.get_all_pieces()) & opponent_rooks) return ROOK;
+  if(lut.get_queen_attacks(sq, m_board.get_all_pieces()) & opponent_queens) return QUEEN;
+  // if(get_king_attacks(sq) & opponent_kings) return KING; /* not sure what to do here */
+  return EMPTY;
+}
+
+int MoveGenerator::least_valued_attacker_sq(int sq, bool white_turn) const
+{
+  bitboard opponent_knights;
+  bitboard opponent_pawns;
+  bitboard opponent_rooks;
+  bitboard opponent_bishops;
+  bitboard opponent_queens;
+  if(m_board.is_white_turn()) {
+    opponent_knights = m_board.get_piece_bitboard(BLACK | KNIGHT);
+    opponent_pawns = m_board.get_piece_bitboard(BLACK | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(BLACK | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(BLACK | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(BLACK | QUEEN);
+  }
+  else {
+    opponent_knights = m_board.get_piece_bitboard(WHITE | KNIGHT);
+    opponent_pawns = m_board.get_piece_bitboard(WHITE | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(WHITE | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(WHITE | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(WHITE | QUEEN);
+  }
+  bitboard pawns = lut.get_pawn_attacks(sq, white_turn) & opponent_pawns;
+  if(pawns) return first_set_bit(pawns);
+
+  bitboard knights = lut.get_knight_attacks(sq) & opponent_knights;
+  if(knights) return first_set_bit(knights);
+
+  bitboard bishops = lut.get_bishop_attacks(sq, m_board.get_all_pieces()) & opponent_bishops;
+  if(bishops) return first_set_bit(bishops);
+
+  bitboard rooks = lut.get_rook_attacks(sq, m_board.get_all_pieces()) & opponent_rooks;
+  if(rooks) return first_set_bit(rooks);
+
+  bitboard queens = lut.get_queen_attacks(sq, m_board.get_all_pieces()) & opponent_queens;
+  if(queens) return first_set_bit(queens);
+  return constants::NONE;
+}
+
+bool MoveGenerator::is_attacked_by_pawn(int sq) const
+{
+  bitboard opponent_pawns;
+  if(m_board.is_white_turn())
+    opponent_pawns = m_board.get_piece_bitboard(BLACK | PAWN);
+  else
+    opponent_pawns = m_board.get_piece_bitboard(WHITE | PAWN);
+  if(lut.get_pawn_attacks(sq, m_board.is_white_turn()) & opponent_pawns) return true;
+  return false;
+}
+
+bool MoveGenerator::is_attacked(int sq, bitboard blockers) const
+{
+  bitboard opponent_knights;
+  bitboard opponent_kings;
+  bitboard opponent_pawns;
+  bitboard opponent_rooks;
+  bitboard opponent_bishops;
+  bitboard opponent_queens;
+  if(m_board.is_white_turn()) {
+    opponent_knights = m_board.get_piece_bitboard(BLACK | KNIGHT);
+    opponent_kings = m_board.get_piece_bitboard(BLACK | KING);
+    opponent_pawns = m_board.get_piece_bitboard(BLACK | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(BLACK | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(BLACK | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(BLACK | QUEEN);
+  }
+  else {
+    opponent_knights = m_board.get_piece_bitboard(WHITE | KNIGHT);
+    opponent_kings = m_board.get_piece_bitboard(WHITE | KING);
+    opponent_pawns = m_board.get_piece_bitboard(WHITE | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(WHITE | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(WHITE | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(WHITE | QUEEN);
+  }
+  if(lut.get_bishop_attacks(sq, blockers) & opponent_bishops) return true;
+  if(lut.get_rook_attacks(sq, blockers) & opponent_rooks) return true;
+  if(lut.get_knight_attacks(sq) & opponent_knights) return true;
+  if(lut.get_pawn_attacks(sq, m_board.is_white_turn()) & opponent_pawns) return true;
+  if(lut.get_queen_attacks(sq, blockers) & opponent_queens) return true;
+  if(lut.get_king_attacks(sq) & opponent_kings) return true;
+  return false;
+}
+
+bitboard MoveGenerator::attackers_from_square(int sq) const
+{
+  bitboard attackers = 0;
+  bitboard opponent_knights;
+  bitboard opponent_kings;
+  bitboard opponent_pawns;
+  bitboard opponent_rooks;
+  bitboard opponent_bishops;
+  bitboard opponent_queens;
+  if(m_board.is_white_turn()) {
+    opponent_knights = m_board.get_piece_bitboard(BLACK | KNIGHT);
+    opponent_kings = m_board.get_piece_bitboard(BLACK | KING);
+    opponent_pawns = m_board.get_piece_bitboard(BLACK | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(BLACK | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(BLACK | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(BLACK | QUEEN);
+  }
+  else {
+    opponent_knights = m_board.get_piece_bitboard(WHITE | KNIGHT);
+    opponent_kings = m_board.get_piece_bitboard(WHITE | KING);
+    opponent_pawns = m_board.get_piece_bitboard(WHITE | PAWN);
+    opponent_rooks = m_board.get_piece_bitboard(WHITE | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(WHITE | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(WHITE | QUEEN);
+  }
+  attackers |= lut.get_knight_attacks(sq) & opponent_knights;
+  attackers |= lut.get_king_attacks(sq) & opponent_kings;
+  attackers |= lut.get_pawn_attacks(sq, m_board.is_white_turn()) & opponent_pawns;
+  attackers |= lut.get_rook_attacks(sq, m_board.get_all_pieces()) & opponent_rooks;
+  attackers |= lut.get_bishop_attacks(sq, m_board.get_all_pieces()) & opponent_bishops;
+  attackers |= lut.get_queen_attacks(sq, m_board.get_all_pieces()) & opponent_queens;
+  return attackers;
+}
+
+bitboard MoveGenerator::opponent_slider_rays_to_square(int sq) const
+{
+  bitboard res = 0;
+  int attacker_loc;
+  bitboard attackers;
+  bitboard opponent_rooks;
+  bitboard opponent_bishops;
+  bitboard opponent_queens;
+  if(m_board.is_white_turn()) {
+    opponent_rooks = m_board.get_piece_bitboard(BLACK | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(BLACK | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(BLACK | QUEEN);
+  }
+  else {
+    opponent_rooks = m_board.get_piece_bitboard(WHITE | ROOK);
+    opponent_bishops = m_board.get_piece_bitboard(WHITE | BISHOP);
+    opponent_queens = m_board.get_piece_bitboard(WHITE | QUEEN);
+  }
+  bitboard rook_attacks_from_sq = lut.get_rook_attacks(sq, m_board.get_all_pieces());
+  attackers = rook_attacks_from_sq & (opponent_rooks | opponent_queens);
+  while(attackers) {
+    attacker_loc = first_set_bit(attackers);
+    res |= lut.get_rook_attacks(attacker_loc, m_board.get_all_pieces()) & rook_attacks_from_sq;
+    REMOVE_FIRST(attackers);    
+  }
+  bitboard bishop_attacks_from_sq = lut.get_bishop_attacks(sq, m_board.get_all_pieces());
+  attackers = bishop_attacks_from_sq & (opponent_bishops | opponent_queens);
+  while(attackers) {
+    attacker_loc = first_set_bit(attackers);
+    res |= lut.get_bishop_attacks(attacker_loc, m_board.get_all_pieces()) & bishop_attacks_from_sq;
+    REMOVE_FIRST(attackers);
+  }
+  return res;
+}
+

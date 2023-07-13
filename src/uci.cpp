@@ -8,7 +8,6 @@
 #include "include/board.h"
 #include "include/move.h"
 #include "include/tt.h"
-#include "include/evaluation.h"
 
 std::vector<std::string> uci::split_cmd(std::string& cmd)
 {

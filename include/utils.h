@@ -11,11 +11,11 @@ piece piece_from_fen_char(char c);
 
 int sq_from_name(std::string name);
 
-inline static int file(int sq);
-inline static int rank(int sq);
-inline static int diag(int sq);
-inline static int anti_diag(int sq);
+int file(int sq);
+int rank(int sq);
+int diag(int sq);
+int anti_diag(int sq);
 
-inline static int index_from_pc(piece pc);
+int index_from_pc(piece pc);
 
 }

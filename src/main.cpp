@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <memory>
 #include <iostream>
 
 #include "include/search.h"
@@ -17,7 +18,7 @@ int main()
   // init_eval_table();
   /* begin UCI listening */
 
-  Board board{}; // starting position
+  Board::Ptr board = std::make_shared<Board>();
   Searcher searcher{board};
   std::cout << searcher.perft(4) << std::endl;
   // uci::start_uci_communication();

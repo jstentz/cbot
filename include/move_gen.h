@@ -21,7 +21,7 @@
 class MoveGenerator
 {
 public:
-  MoveGenerator(Board& board);
+  MoveGenerator(Board::Ptr board);
 
   void generate_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
   void order_moves(std::vector<Move> &moves, Move tt_best_move) const;
@@ -33,12 +33,20 @@ public:
   Move move_from_long_algebraic(std::string notation) const;
   void sort_by_long_algebraic_notation(std::vector<Move>& moves) const;
 
+  int see(int sq) const;
+  int see_capture(Move capture) const;
+  bool is_bad_capture(Move capture) const;
+  bool pawn_promo_or_close_push(Move move) const;
+
+  bool in_check() const;
+
 private:
-  Board& m_board;
-  static LookUpTable lut; // initialized on program start
+  Board::Ptr m_board;
+  LookUpTable lut; 
 
 
-  struct Pin {
+  struct Pin
+  {
     bitboard ray_at_sq[64];
     bitboard pinned_pieces{};
   };
@@ -49,12 +57,6 @@ private:
 
   bitboard checking_pieces() const;
   CheckType check_type(bitboard checkers) const;
-  bool in_check() const;
-
-  int see(int sq) const;
-  int see_capture(Move capture) const;
-  bool is_bad_capture(Move capture) const;
-  bool pawn_promo_or_close_push(Move move) const;
 
   bitboard generate_knight_move_bitboard(int knight_sq, bool captures_only = false) const;
   bitboard generate_king_move_bitboard(int king_sq, bool captures_only = false) const;

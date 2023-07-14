@@ -18,4 +18,13 @@ int anti_diag(int sq);
 
 int index_from_pc(piece pc);
 
+/**
+ * @brief Splits a string into a list of strings that are separated by the input delimiter.
+ * 
+ * @param s 
+ * @param delim 
+ * @return std::vector<std::string> 
+ */
+std::vector<std::string> split(const std::string &s, char delim);
+
 }

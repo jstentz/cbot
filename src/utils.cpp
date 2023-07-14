@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include "include/utils.h"
 #include "include/pieces.h"
@@ -70,4 +71,19 @@ int utils::anti_diag(int sq)
 int utils::index_from_pc(piece pc)
 {
   return pc - 2; /// TODO: make a comment on why this works
+}
+
+template <typename Out>
+void splitHelp(const std::string &s, char delim, Out result) {
+  std::istringstream iss(s);
+  std::string item;
+  while (std::getline(iss, item, delim)) {
+    *result++ = item;
+  }
+}
+
+std::vector<std::string> utils::split(const std::string &s, char delim) {
+  std::vector<std::string> elems;
+  splitHelp(s, delim, std::back_inserter(elems));
+  return elems;
 }

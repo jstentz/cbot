@@ -91,12 +91,6 @@ static const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
 static const std::string FEN = "fen"; 
 static const std::string VERIFY = "verify";
 
-/**
- * @brief Splits a command by spaces 
- * this should probably live in some other utils file
-*/
-std::vector<std::string> split_cmd(std::string& cmd); 
-
 void start_uci_communication();
 void handle_uci();
 void handle_is_ready();

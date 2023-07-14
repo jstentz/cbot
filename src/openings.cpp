@@ -16,7 +16,7 @@
 #include <stack>
 #include <random>
 
-void OpeningBook::initialize()
+OpeningBook::OpeningBook()
 {
   m_opening_book.clear();
   srand(clock());
@@ -26,20 +26,20 @@ void OpeningBook::initialize()
   std::vector<Move> moves;
   while(getline(openings_file, line)) {
     split_line = utils::split(line, ' ');
-    hash_val h = stoull(split_line[0]);
+    uint64_t h = stoull(split_line[0]);
     // std::cout << h << endl;
     moves.clear();
     for(int i = 1; i < split_line.size(); i++) {
       moves.emplace_back(stoi(split_line[i]));
     }
-    m_opening_book.insert(std::pair<hash_val, std::vector<Move>>{h, moves});
+    m_opening_book.insert(std::pair<uint64_t, std::vector<Move>>{h, moves});
   }
 }
 
 Move OpeningBook::get_opening_move(Board::Ptr board)
 {
-  hash_val h = board->get_hash();
-  std::unordered_map<hash_val, std::vector<Move>>::iterator got_board = m_opening_book.find(h);
+  uint64_t h = board->get_hash();
+  std::unordered_map<uint64_t, std::vector<Move>>::iterator got_board = m_opening_book.find(h);
   if(got_board == m_opening_book.end()) {
     return Move::NO_MOVE; // position not found
   }
@@ -53,23 +53,23 @@ Move OpeningBook::get_opening_move(Board::Ptr board)
 
 
 /// TODO: these functions below are kinda useless... ignoring for now
-// std::unordered_map<hash_val, std::vector<Move>> OpeningBook::create_opening_book() const;
+// std::unordered_map<uint64_t, std::vector<Move>> OpeningBook::create_opening_book() const;
 
 
-// std::unordered_map<hash_val, std::vector<move_t>> create_opening_book() {
+// std::unordered_map<uint64_t, std::vector<move_t>> create_opening_book() {
 //   srand(clock());
 //   decode_fen(constants::STARTFEN);
 
 //   // board_t board;
 
-//   hash_val h;
+//   uint64_t h;
 
-//   std::unordered_map<hash_val, std::vector<move_t>> opening_book_local;
+//   std::unordered_map<uint64_t, std::vector<move_t>> opening_book_local;
 
 //   std::ifstream openings_file("assets/opening_book_lines.pgn");
 //   std::string line;
 //   move_t move;
-//   std::unordered_map<hash_val, std::vector<move_t>>::iterator got_board;
+//   std::unordered_map<uint64_t, std::vector<move_t>>::iterator got_board;
 //   std::vector<std::string> split_line;
 //   std::string notation;
 //   while(getline(openings_file, line)) {
@@ -82,7 +82,7 @@ Move OpeningBook::get_opening_move(Board::Ptr board)
 //       got_board = opening_book_local.find(h);
 //       if(got_board == opening_book_local.end()) { // board is not in the map
 //         std::vector<move_t> empty;
-//         opening_book_local.insert(std::pair<hash_val, std::vector<move_t>> (h, empty));
+//         opening_book_local.insert(std::pair<uint64_t, std::vector<move_t>> (h, empty));
 //       }
 //       else { // board is in the map
 //         got_board->second.push_back(move);
@@ -99,13 +99,13 @@ Move OpeningBook::get_opening_move(Board::Ptr board)
 //   return opening_book_local;
 // }
 
-// std::unordered_map<hash_val, std::vector<move_t>> opening_book;
+// std::unordered_map<uint64_t, std::vector<move_t>> opening_book;
 
 // void generate_num_data() {
 //   std::ofstream outfile;
 //   outfile.open("assets/opening_book.pgn");
 //   std::vector<move_t> moves;
-//   std::unordered_map<hash_val, std::vector<move_t>>::iterator it;
+//   std::unordered_map<uint64_t, std::vector<move_t>>::iterator it;
 //   for(it = opening_book.begin(); it != opening_book.end(); it++) {
 //     moves = it->second;
 //     if(moves.size() == 0) continue; // don't care about positions we don't know the theory for

@@ -21,20 +21,19 @@
 /// @brief this setup doesn't really make sense, I should redo this and make it faster
 class OpeningBook
 {
-  OpeningBook() {}
-  ~OpeningBook() {} 
-
+public:
   /// @brief populates the opening book from binary text, can take a little bit of time
-  void initialize();
+  OpeningBook();
+  ~OpeningBook() {} 
 
   Move get_opening_move(Board::Ptr board);
 
   /// @brief creates the opening book from the text file of lines 
-  // std::unordered_map<hash_val, std::vector<Move>> create_opening_book() const;
+  // std::unordered_map<uint64_t, std::vector<Move>> create_opening_book() const;
 
   /// @brief converts the book to a file of numbers instead of moves
   // void generate_binary_file();
 
 private:
-  std::unordered_map<hash_val, std::vector<Move>> m_opening_book;
+  std::unordered_map<uint64_t, std::vector<Move>> m_opening_book;
 };

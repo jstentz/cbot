@@ -6,11 +6,11 @@
 #include <time.h>
 #include <stdio.h>
 
-hash_val rand64() {
-  hash_val r = 0;
+uint64_t rand64() {
+  uint64_t r = 0;
   for(int i = 0; i < 64; i++) {
     if(rand() % 2 == 0) {
-      r = r | (hash_val)0x1;
+      r = r | (uint64_t)0x1;
     }
     r = r << 1;
   }
@@ -47,8 +47,8 @@ zobrist_table_t init_zobrist() {
 
 zobrist_table_t zobrist_table;
 
-hash_val zobrist_hash() {
-  hash_val h = 0;
+uint64_t zobrist_hash() {
+  uint64_t h = 0;
   if(b.t == B) h ^= zobrist_table.black_to_move;
   for(int i = 0; i < 64; i++) {
     piece pc = b.sq_board[i];
@@ -71,8 +71,8 @@ hash_val zobrist_hash() {
   return h;
 }
 
-hash_val hash_pieces() {
-  hash_val h = 0;
+uint64_t hash_pieces() {
+  uint64_t h = 0;
   for(int i = 0; i < 64; i++) {
     piece pc = b.sq_board[i];
     if(pc != EMPTY) {
@@ -83,8 +83,8 @@ hash_val hash_pieces() {
   return h;
 }
 
-hash_val hash_pawns() {
-  hash_val h = 0;
+uint64_t hash_pawns() {
+  uint64_t h = 0;
   for(int i = 0; i < 64; i++) {
     piece pc = b.sq_board[i];
     if(PIECE(pc) == PAWN) {

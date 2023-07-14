@@ -15,8 +15,7 @@
 #include <iostream>
 #include <chrono>
 
-/// TODO: I am very suspicious of this constructor, does m_move_gen get initialized correctly?
-Searcher::Searcher(Board::Ptr board) : m_board(board), m_move_gen(board) {}
+Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board} {}
 
 uint64_t Searcher::perft(int depth)
 {
@@ -86,10 +85,10 @@ Move Searcher::find_best_move(int search_time)
   tt_hits = 0;
   tt_probes = 0;
 
-  hash_val h = m_board->get_hash();
+  uint64_t h = m_board->get_hash();
 
   /* check in opening book */
-  Move opening_move = get_opening_move();
+  Move opening_move = m_opening_book.get_opening_move(m_board);
   if(!opening_move.is_no_move()) {
     std::cout << "Depth: None | Evaluation: Book | Move: ";
     std::cout << m_move_gen.notation_from_move(opening_move) << std::endl;
@@ -145,7 +144,7 @@ Move Searcher::find_best_move(int search_time)
 int Searcher::qsearch(int alpha, int beta)
 {
   std::vector<Move> captures;
-  hash_val h = m_board->get_hash();
+  uint64_t h = m_board->get_hash();
 
   /**
    * Since none of these captures are forced, meaning a player doesn't
@@ -180,7 +179,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     return 0;
 
   std::vector<Move> moves;
-  hash_val h = m_board->get_hash();
+  uint64_t h = m_board->get_hash();
 
   int flags = ALPHA;
 

@@ -230,7 +230,7 @@ static const int *piece_scores[14] =
 extern float game_phase;
 
 typedef struct eval_entry_struct {
-  hash_val key;
+  uint64_t key;
   int score;
   char flags;
 } eval_entry;

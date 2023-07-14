@@ -32,7 +32,7 @@
  * 
  */
 typedef struct tt {
-  hash_val key;
+  uint64_t key;
   uint16_t depth;
   char flags;
   int score;
@@ -77,7 +77,7 @@ void free_tt_table();
  * @param beta 
  * @return int 
  */
-int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta);
+int probe_tt_table(uint64_t h, int depth, int ply_searched, int alpha, int beta);
 
 /**
  * @brief Stores an entry in the transposition table based on the inputted parameters.
@@ -89,7 +89,7 @@ int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta)
  * @param score 
  * @param best_move 
  */
-void store_entry(hash_val key, int depth, int ply_searched, int flags, int score, Move best_move);
+void store_entry(uint64_t key, int depth, int ply_searched, int flags, int score, Move best_move);
 
 /**
  * @brief Clears the transposition table.

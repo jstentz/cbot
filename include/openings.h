@@ -18,41 +18,23 @@
 #include <unordered_map>
 #include <vector>
 
-/**
- * @brief Splits a string into a list of strings that are separated by the input delimiter.
- * 
- * @param s 
- * @param delim 
- * @return std::vector<std::string> 
- */
-std::vector<std::string> split(const std::string &s, char delim);
+/// @brief this setup doesn't really make sense, I should redo this and make it faster
+class OpeningBook
+{
+  OpeningBook() {}
+  ~OpeningBook() {} 
 
-/**
- * @brief Create a opening book object
- * 
- * @return unordered_map<hash_val, vector<move_t>> 
- */
-std::unordered_map<hash_val, std::vector<Move>> create_opening_book();
+  /// @brief populates the opening book from binary text, can take a little bit of time
+  void initialize();
 
-/**
- * @brief Searches the opening book for the current board state. Returns a move if
- * one exists for that position.
- * 
- * @return Move 
- */
-Move get_opening_move();
+  Move get_opening_move(Board::Ptr board);
 
-extern std::unordered_map<hash_val, std::vector<Move>> opening_book;
+  /// @brief creates the opening book from the text file of lines 
+  // std::unordered_map<hash_val, std::vector<Move>> create_opening_book() const;
 
-/**
- * @brief Converts the opening book to binary for faster reading.
- * 
- */
-void generate_num_data();
+  /// @brief converts the book to a file of numbers instead of moves
+  // void generate_binary_file();
 
-/**
- * @brief Reads from the file to fill the usable opening book data structure.
- * 
- * @return unordered_map<hash_val, vector<Move>> 
- */
-std::unordered_map<hash_val, std::vector<Move>> populate_opening_book();
+private:
+  std::unordered_map<hash_val, std::vector<Move>> m_opening_book;
+};

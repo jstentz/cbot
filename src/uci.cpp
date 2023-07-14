@@ -8,19 +8,7 @@
 #include "include/board.h"
 #include "include/move.h"
 #include "include/tt.h"
-
-std::vector<std::string> uci::split_cmd(std::string& cmd)
-{
-  std::vector<std::string> str_list;
-  std::string temp_str;
-  std::stringstream ss{cmd};
-  while (std::getline(ss, temp_str, ' '))
-  {
-    str_list.push_back(temp_str);
-  }
-  return str_list;
-}
-
+#include "include/utils.h"
 
 /// TODO: make it so commands at the wrong time don't work
 void uci::start_uci_communication()
@@ -33,7 +21,7 @@ void uci::start_uci_communication()
   while (std::getline(std::cin, cmd))
   {
     /* extract command parts */
-    cmd_list = uci::split_cmd(cmd);
+    cmd_list = utils::split(cmd, ' ');
     if (!cmd_list.size())
       continue;
     main_cmd = cmd_list[0];

@@ -18,93 +18,39 @@
 #include <stack>
 #include <cstdint>
 
-// #define IS_PV 1
-// #define NO_PV 0
-
-// #define CAN_NULL 1
-// #define NO_NULL 0
-
-// extern size_t transpositions;
-
-// typedef struct search_result_struct {
-//   move_t best_move;
-//   move_t principal_variation[100]; /* just a placeholder value */
-//   int score;
-// } search_t;
-
-// /**
-//  * @brief Given a stack of the board history and a depth to search,
-//  * returns the number of nodes reached in bulk.
-//  * 
-//  * @param board Current board state
-//  * @param depth Depth to search
-//  * @return Number of nodes 
-//  */
-// uint64_t num_nodes_bulk(size_t depth);
-
-// /**
-//  * @brief Given a stack of the board history and a depth to search,
-//  * returns the number of nodes reached.
-//  * 
-//  * @param board Current board state
-//  * @param depth Depth to search
-//  * @return Number of nodes 
-//  */
-// uint64_t num_nodes(size_t depth);
-
-// /**
-//  * @brief Given a board state and a depth, prints a perft test.
-//  * 
-//  * @param board Current board state
-//  * @param depth Depth to search
-//  * @return Number of nodes  
-//  */
-// uint64_t perft(size_t depth);
-
-// /**
-//  * @brief Given the board history, searches all captures until there are no
-//  * more captures.
-//  * 
-//  * @param board_stack Board history
-//  * @param alpha Alpha cutoff
-//  * @param beta Beta cutoff
-//  * @return Best score
-//  */
-// int qsearch(int alpha, int beta);
-
-// /**
-//  * @brief Given the board history and a depth, find the best score at a 
-//  * given depth.
-//  * 
-//  * @param board_stack Board history
-//  * @param depth Depth to search
-//  * @param alpha Alpha cutoff
-//  * @param beta Beta cutoff
-//  * @return Best score
-//  */
-// int search_moves(int ply_from_root, int depth, int alpha, int beta, bool is_pv, bool can_null);
-
-// /**
-//  * @brief Given a board state, returns the best move.
-//  * 
-//  * @param board 
-//  * @param search_time
-//  * @return Best move 
-//  */
-// move_t find_best_move(int search_time);
-
-// extern size_t positions_searched; // debugging
-
 // new class implementation
 
+/// TODO: construct the transposition table inside of here
 class Searcher
 {
 public:
-  Searcher(Board& board);
+  Searcher(Board::Ptr board);
 
   uint64_t perft(int depth);
   uint64_t num_nodes_bulk(int depth);
+  uint64_t num_nodes(int depth);
+  Move find_best_move(int search_time);
+
+  /// TODO: add more states to be able to interrupt it at any time
+  enum class Status
+  {
+    WORKING,
+    ABORT,
+    DONE
+  };
+
+
 private:
-  Board& m_board;
+  Board::Ptr m_board;
   MoveGenerator m_move_gen;
+
+  Move m_best_move;
+  int m_score;
+  Status m_status;
+
+  bool m_abort_search;
+  bool m_search_complete;
+
+  int qsearch(int alpha, int beta);
+  int search(int ply_from_room, int depth, int alpha, int beta, bool is_pv = false, bool can_null = false);
 };

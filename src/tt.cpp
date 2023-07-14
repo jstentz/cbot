@@ -35,7 +35,7 @@ int correct_stored_mate_score(int score, int ply_searched) {
   return score;
 }
 
-int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta) {
+int probe_tt_table(uint64_t h, int depth, int ply_searched, int alpha, int beta) {
   tt_probes++;
   tt_entry entry = TT.table[h & (TABLE_SIZE - 1)];
   if(entry.key == h) {
@@ -59,7 +59,7 @@ int probe_tt_table(hash_val h, int depth, int ply_searched, int alpha, int beta)
 
 
 // always replace
-void store_entry(hash_val key, int depth, int ply_searched, int flags, int score, move_t best_move) {
+void store_entry(uint64_t key, int depth, int ply_searched, int flags, int score, move_t best_move) {
   int corrected_score = correct_stored_mate_score(score, ply_searched);
   tt_entry* entry = &TT.table[key & (TABLE_SIZE - 1)];
   entry->key = key;

@@ -187,9 +187,9 @@ void Board::make_move(Move move)
   IrreversibleState state = prev_state; // make a copy 
   m_ply++; /* we do this here to be able to update irr_ply */
 
-  hash_val board_hash = m_board_hash;
-  hash_val piece_hash = m_piece_hash;
-  hash_val pawn_hash = m_pawn_hash;
+  uint64_t board_hash = m_board_hash;
+  uint64_t piece_hash = m_piece_hash;
+  uint64_t pawn_hash = m_pawn_hash;
 
   int from = move.from();
   int to = move.to();
@@ -206,7 +206,7 @@ void Board::make_move(Move move)
     m_positional_score -= piece_scores[utils::index_from_pc(moving_piece)][from];
   
   /* XOR out the piece from hash value */
-  hash_val from_zobrist = zobrist_table.table[from][utils::index_from_pc(moving_piece)];
+  uint64_t from_zobrist = zobrist_table.table[from][utils::index_from_pc(moving_piece)];
   board_hash ^= from_zobrist;
   piece_hash ^= from_zobrist;
   if(PIECE(moving_piece) == PAWN) {
@@ -244,7 +244,7 @@ void Board::make_move(Move move)
   piece promo_piece = EMPTY;
   bitboard *promo_board;
   int opponent_pawn_sq;
-  hash_val to_zobrist = zobrist_table.table[to][utils::index_from_pc(moving_piece)];
+  uint64_t to_zobrist = zobrist_table.table[to][utils::index_from_pc(moving_piece)];
   switch (type) {
     case Move::QUIET_MOVE:
       place_piece(moving_piece, to);
@@ -503,9 +503,9 @@ void Board::unmake_move(Move move) {
   m_ply--;
   m_board_hash_history.pop_back();
 
-  hash_val board_hash = m_board_hash;
-  hash_val piece_hash = m_piece_hash;
-  hash_val pawn_hash = m_pawn_hash;
+  uint64_t board_hash = m_board_hash;
+  uint64_t piece_hash = m_piece_hash;
+  uint64_t pawn_hash = m_pawn_hash;
 
   // game_history.erase(board_hash); /* remove the board hash from the game history */
 
@@ -517,8 +517,8 @@ void Board::unmake_move(Move move) {
   piece captured_piece = EMPTY;
   piece promo_piece = EMPTY;
   int opponent_pawn_sq;
-  hash_val from_zobrist = zobrist_table.table[from][utils::index_from_pc(moving_piece)];
-  hash_val to_zobrist = zobrist_table.table[to][utils::index_from_pc(moving_piece)];
+  uint64_t from_zobrist = zobrist_table.table[from][utils::index_from_pc(moving_piece)];
+  uint64_t to_zobrist = zobrist_table.table[to][utils::index_from_pc(moving_piece)];
   switch (type) {
     case Move::QUIET_MOVE:
       /* the moving piece will always be the same piece unless we are dealing with a promotion */

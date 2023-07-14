@@ -24,7 +24,7 @@ void clear_eval_table() {
   init_eval_table();
 }
 
-int probe_eval_table(hash_val key, int alpha, int beta) {
+int probe_eval_table(uint64_t key, int alpha, int beta) {
   eval_probes++;
   eval_entry entry = eval_table[key & (EVAL_SIZE - 1)];
   if(entry.key == key) {
@@ -40,7 +40,7 @@ int probe_eval_table(hash_val key, int alpha, int beta) {
   return FAILED_LOOKUP;
 }
 
-void store_eval_entry(hash_val key, int score, int flags) {
+void store_eval_entry(uint64_t key, int score, int flags) {
   eval_entry* entry = &eval_table[key & (EVAL_SIZE - 1)];
   entry->key = key;
   entry->score = score;

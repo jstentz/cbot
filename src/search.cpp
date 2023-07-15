@@ -244,6 +244,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
   int evaluation;
   bool pv_search = true;
   
+  /// TODO: don't need the move number, just use : 
   for(int i = 0; i < num_moves; i++) {
     move = moves[i];
     /* searches lines deeper where you push a pawn close to promotion (or promote it)! */

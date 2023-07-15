@@ -16,83 +16,39 @@
 
 #include <climits>
 #include <unordered_set>
+#include <optional>
 
-#define EXACT 0
-#define ALPHA 1
-#define BETA 2
+/// TODO: make this more in the c++ style (using std::allocator?)s
+class TranspositionTable
+{
+  /// TODO: make this an easier number (megabytes) and then round to a power of 2 for them 
+  TranspositionTable(size_t entries);
+  ~TranspositionTable(); // make this free the pointer to the memory
 
-#define FAILED_LOOKUP INT_MIN
+  enum class Flags
+  {
+    EXACT,
+    ALPHA,
+    BETA
+  };
 
-#define TABLE_SIZE 131072 /* 2^17 THIS MUST BE A POWER OF 2 */
+  std::optional<int> fetch(uint64_t hash, int depth, int ply_searched, int alpha, int beta, Move& best_move);
+  void store(uint64_t hash, int depth, int ply_searched, int flags, int score, Move& best_move);
+  void clear();
 
+private:
+  struct Entry
+  {
+    uint64_t key;
+    uint16_t depth;
+    char flags;
+    int score;
+    Move best_move;
+  };
 
-/**
- * @brief Holds all of the necessary info about an entry in the transposition
- * table.
- * 
- */
-typedef struct tt {
-  uint64_t key;
-  uint16_t depth;
-  char flags;
-  int score;
-  Move best_move;
-} tt_entry;
+  Entry* m_table;
+  size_t m_entries;
 
-/**
- * @brief Holds the table itself and the best move after searching the table.
- * 
- */
-typedef struct tt_table {
-  tt_entry *table;
-  Move best_move;
-} tt_t;
-
-extern tt_t TT;
-
-extern size_t tt_hits; // number of transpositions
-extern size_t tt_probes;
-extern size_t checkmates;
-
-/**
- * @brief Initializes the transposition table.
- * 
- */
-void init_tt_table();
-
-/**
- * @brief Frees the memory holding the transposition table.
- * 
- */
-void free_tt_table();
-
-/**
- * @brief Probes the transposition table. Returns a score or FAILED_LOOKUP if no position is found.
- * Note that the function also stores the best move if applicable. 
- * 
- * @param h 
- * @param depth 
- * @param ply_searched 
- * @param alpha 
- * @param beta 
- * @return int 
- */
-int probe_tt_table(uint64_t h, int depth, int ply_searched, int alpha, int beta);
-
-/**
- * @brief Stores an entry in the transposition table based on the inputted parameters.
- * 
- * @param key 
- * @param depth 
- * @param ply_searched 
- * @param flags 
- * @param score 
- * @param best_move 
- */
-void store_entry(uint64_t key, int depth, int ply_searched, int flags, int score, Move best_move);
-
-/**
- * @brief Clears the transposition table.
- * 
- */
-void clear_tt_table();
+  int correct_stored_mate_score(int score, int ply_searched);
+  int correct_retrieved_mate_score(int score, int ply_searched);
+}; 

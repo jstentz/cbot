@@ -76,9 +76,9 @@ void Board::reset(std::string fen)
     // evaluation stuff 
     if(PIECE(pc) != KING && PIECE(pc) != EMPTY) 
     {
-      m_material_score += piece_values[utils::index_from_pc(pc)];
-      m_positional_score += piece_scores[utils::index_from_pc(pc)][pc_loc];
-      m_total_material += abs(piece_values[utils::index_from_pc(pc)]);
+      m_material_score += constants::piece_values[utils::index_from_pc(pc)];
+      m_positional_score += constants::piece_scores[utils::index_from_pc(pc)][pc_loc];
+      m_total_material += abs(constants::piece_values[utils::index_from_pc(pc)]);
     }
     col++;
   }
@@ -205,7 +205,7 @@ void Board::make_move(Move move)
   remove_piece(moving_piece, from);
 
   if(PIECE(moving_piece) != KING) // king done seperately during eval for endgame
-    m_positional_score -= piece_scores[utils::index_from_pc(moving_piece)][from];
+    m_positional_score -= constants::piece_scores[utils::index_from_pc(moving_piece)][from];
   
   /* XOR out the piece from hash value */
   uint64_t from_zobrist = m_hasher.get_hash_val(moving_piece, from);
@@ -281,8 +281,8 @@ void Board::make_move(Move move)
         board_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::F1); // place white rook on F1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::H1); // remove white rook from H1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::F1); // place white rook on F1
-        m_positional_score -= piece_scores[constants::WHITE_ROOKS_INDEX][constants::H1];
-        m_positional_score += piece_scores[constants::WHITE_ROOKS_INDEX][constants::F1];
+        m_positional_score -= constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::H1];
+        m_positional_score += constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::F1];
       }
       else { // black king side
         remove_piece(BLACK | ROOK, constants::H8);
@@ -291,8 +291,8 @@ void Board::make_move(Move move)
         board_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::F8); // place black rook on F8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::H8); // remove black rook from H8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::F8); // place black rook on F8
-        m_positional_score -= piece_scores[constants::BLACK_ROOKS_INDEX][constants::H8];
-        m_positional_score += piece_scores[constants::BLACK_ROOKS_INDEX][constants::F8];
+        m_positional_score -= constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::H8];
+        m_positional_score += constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::F8];
       }
       break;
     case Move::QUEEN_SIDE_CASTLE:
@@ -306,8 +306,8 @@ void Board::make_move(Move move)
         board_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::D1); // place white rook on D1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::A1); // remove white rook from A1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::D1); // place white rook on D1
-        m_positional_score -= piece_scores[constants::WHITE_ROOKS_INDEX][constants::A1];
-        m_positional_score += piece_scores[constants::WHITE_ROOKS_INDEX][constants::D1];
+        m_positional_score -= constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::A1];
+        m_positional_score += constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::D1];
       }
       else { // black queen side
         remove_piece(BLACK | ROOK, constants::A8);
@@ -316,8 +316,8 @@ void Board::make_move(Move move)
         board_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::D8); // place black rook on D8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::A8); // remove black rook from A8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::D8); // place black rook on D8
-        m_positional_score -= piece_scores[constants::BLACK_ROOKS_INDEX][constants::A8];
-        m_positional_score += piece_scores[constants::BLACK_ROOKS_INDEX][constants::D8];
+        m_positional_score -= constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::A8];
+        m_positional_score += constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::D8];
       }
       break;
     case Move::NORMAL_CAPTURE:
@@ -449,32 +449,32 @@ void Board::make_move(Move move)
   /* update evaluation items */
   if(captured_piece != EMPTY){
     if(type == Move::EN_PASSANT_CAPTURE)
-      m_positional_score -= piece_scores[utils::index_from_pc(captured_piece)][opponent_pawn_sq];
+      m_positional_score -= constants::piece_scores[utils::index_from_pc(captured_piece)][opponent_pawn_sq];
     else
-      m_positional_score -= piece_scores[utils::index_from_pc(captured_piece)][to];
-    m_material_score -= piece_values[utils::index_from_pc(captured_piece)];
+      m_positional_score -= constants::piece_scores[utils::index_from_pc(captured_piece)][to];
+    m_material_score -= constants::piece_values[utils::index_from_pc(captured_piece)];
     m_piece_counts[utils::index_from_pc(captured_piece)]--;
-    m_total_material -= abs(piece_values[utils::index_from_pc(captured_piece)]);
+    m_total_material -= abs(constants::piece_values[utils::index_from_pc(captured_piece)]);
   }
 
   if(promo_piece != EMPTY) {
     if(COLOR(promo_piece) == WHITE) {
-      m_material_score -= piece_values[constants::WHITE_PAWNS_INDEX];
+      m_material_score -= constants::piece_values[constants::WHITE_PAWNS_INDEX];
       m_piece_counts[constants::WHITE_PAWNS_INDEX]--;
-      m_total_material -= abs(piece_values[constants::WHITE_PAWNS_INDEX]);
+      m_total_material -= abs(constants::piece_values[constants::WHITE_PAWNS_INDEX]);
     }
     else {
-      m_material_score -= piece_values[constants::BLACK_PAWNS_INDEX];
+      m_material_score -= constants::piece_values[constants::BLACK_PAWNS_INDEX];
       m_piece_counts[constants::BLACK_PAWNS_INDEX]--;
-      m_total_material -= abs(piece_values[constants::BLACK_PAWNS_INDEX]);
+      m_total_material -= abs(constants::piece_values[constants::BLACK_PAWNS_INDEX]);
     }
-    m_material_score += piece_values[utils::index_from_pc(promo_piece)];
-    m_positional_score += piece_scores[utils::index_from_pc(promo_piece)][to];
+    m_material_score += constants::piece_values[utils::index_from_pc(promo_piece)];
+    m_positional_score += constants::piece_scores[utils::index_from_pc(promo_piece)][to];
     m_piece_counts[utils::index_from_pc(promo_piece)]++;
-    m_total_material += abs(piece_values[utils::index_from_pc(promo_piece)]);
+    m_total_material += abs(constants::piece_values[utils::index_from_pc(promo_piece)]);
   }
   else if(PIECE(moving_piece) != KING) {
-    m_positional_score += piece_scores[utils::index_from_pc(moving_piece)][to];
+    m_positional_score += constants::piece_scores[utils::index_from_pc(moving_piece)][to];
   }
 
   /* if we make an irreversible move, remember it! */
@@ -566,8 +566,8 @@ void Board::unmake_move(Move move) {
         board_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::H1); // place white rook on H1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::F1); // remove white rook from F1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::H1); // place white rook on H1
-        m_positional_score -= piece_scores[constants::WHITE_ROOKS_INDEX][constants::F1];
-        m_positional_score += piece_scores[constants::WHITE_ROOKS_INDEX][constants::H1];
+        m_positional_score -= constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::F1];
+        m_positional_score += constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::H1];
       }
       else { // black king side
         remove_piece(BLACK | ROOK, constants::F8);
@@ -576,8 +576,8 @@ void Board::unmake_move(Move move) {
         board_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::H8); // place black rook on H8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::F8); // remove black rook from F8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::H8); // place black rook on H8
-        m_positional_score -= piece_scores[constants::BLACK_ROOKS_INDEX][constants::F8];
-        m_positional_score += piece_scores[constants::BLACK_ROOKS_INDEX][constants::H8];
+        m_positional_score -= constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::F8];
+        m_positional_score += constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::H8];
       }
       break;
     case Move::QUEEN_SIDE_CASTLE:
@@ -597,8 +597,8 @@ void Board::unmake_move(Move move) {
         board_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::A1); // place white rook on A1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::D1); // remove white rook from D1
         piece_hash ^= m_hasher.get_hash_val(WHITE | ROOK, constants::A1); // place white rook on A1
-        m_positional_score -= piece_scores[constants::WHITE_ROOKS_INDEX][constants::D1];
-        m_positional_score += piece_scores[constants::WHITE_ROOKS_INDEX][constants::A1];
+        m_positional_score -= constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::D1];
+        m_positional_score += constants::piece_scores[constants::WHITE_ROOKS_INDEX][constants::A1];
       }
       else { // black queen side
         remove_piece(BLACK | ROOK, constants::D8);
@@ -607,8 +607,8 @@ void Board::unmake_move(Move move) {
         board_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::A8); // place black rook on A8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::D8); // remove black rook from D8
         piece_hash ^= m_hasher.get_hash_val(BLACK | ROOK, constants::A8); // place black rook on A8
-        m_positional_score -= piece_scores[constants::BLACK_ROOKS_INDEX][constants::D8];
-        m_positional_score += piece_scores[constants::BLACK_ROOKS_INDEX][constants::A8];
+        m_positional_score -= constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::D8];
+        m_positional_score += constants::piece_scores[constants::BLACK_ROOKS_INDEX][constants::A8];
       }
       break;
     case Move::NORMAL_CAPTURE:
@@ -807,35 +807,35 @@ void Board::unmake_move(Move move) {
   /* update evaluation items */
   if(captured_piece != EMPTY){
     if(type == Move::EN_PASSANT_CAPTURE)
-      m_positional_score += piece_scores[utils::index_from_pc(captured_piece)][opponent_pawn_sq];
+      m_positional_score += constants::piece_scores[utils::index_from_pc(captured_piece)][opponent_pawn_sq];
     else
-      m_positional_score += piece_scores[utils::index_from_pc(captured_piece)][to];
-    m_material_score += piece_values[utils::index_from_pc(captured_piece)];
+      m_positional_score += constants::piece_scores[utils::index_from_pc(captured_piece)][to];
+    m_material_score += constants::piece_values[utils::index_from_pc(captured_piece)];
     m_piece_counts[utils::index_from_pc(captured_piece)]++;
-    m_total_material += abs(piece_values[utils::index_from_pc(captured_piece)]);
+    m_total_material += abs(constants::piece_values[utils::index_from_pc(captured_piece)]);
   }
 
   if(promo_piece != EMPTY) {
     if(COLOR(promo_piece) == WHITE) {
-      m_material_score += piece_values[constants::WHITE_PAWNS_INDEX];
+      m_material_score += constants::piece_values[constants::WHITE_PAWNS_INDEX];
       m_piece_counts[constants::WHITE_PAWNS_INDEX]++;
-      m_positional_score += piece_scores[constants::WHITE_PAWNS_INDEX][from];
-      m_total_material += abs(piece_values[constants::WHITE_PAWNS_INDEX]);
+      m_positional_score += constants::piece_scores[constants::WHITE_PAWNS_INDEX][from];
+      m_total_material += abs(constants::piece_values[constants::WHITE_PAWNS_INDEX]);
     }
     else {
-      m_material_score += piece_values[constants::BLACK_PAWNS_INDEX];
+      m_material_score += constants::piece_values[constants::BLACK_PAWNS_INDEX];
       m_piece_counts[constants::BLACK_PAWNS_INDEX]++;
-      m_positional_score += piece_scores[constants::BLACK_PAWNS_INDEX][from];
-      m_total_material += abs(piece_values[constants::BLACK_PAWNS_INDEX]);
+      m_positional_score += constants::piece_scores[constants::BLACK_PAWNS_INDEX][from];
+      m_total_material += abs(constants::piece_values[constants::BLACK_PAWNS_INDEX]);
     }
-    m_material_score -= piece_values[utils::index_from_pc(promo_piece)];
-    m_positional_score -= piece_scores[utils::index_from_pc(promo_piece)][to];
+    m_material_score -= constants::piece_values[utils::index_from_pc(promo_piece)];
+    m_positional_score -= constants::piece_scores[utils::index_from_pc(promo_piece)][to];
     m_piece_counts[utils::index_from_pc(promo_piece)]--;
-    m_total_material -= abs(piece_values[utils::index_from_pc(promo_piece)]);
+    m_total_material -= abs(constants::piece_values[utils::index_from_pc(promo_piece)]);
   }
   else if(PIECE(moving_piece) != KING) {
-    m_positional_score -= piece_scores[utils::index_from_pc(moving_piece)][to];
-    m_positional_score += piece_scores[utils::index_from_pc(moving_piece)][from];
+    m_positional_score -= constants::piece_scores[utils::index_from_pc(moving_piece)][to];
+    m_positional_score += constants::piece_scores[utils::index_from_pc(moving_piece)][from];
   }
 
   m_white_turn = !m_white_turn;

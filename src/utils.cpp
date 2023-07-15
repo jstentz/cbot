@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <cstdlib>
+#include <cstdint>
 
 #include "include/utils.h"
 #include "include/pieces.h"
@@ -86,4 +88,18 @@ std::vector<std::string> utils::split(const std::string &s, char delim) {
   std::vector<std::string> elems;
   splitHelp(s, delim, std::back_inserter(elems));
   return elems;
+}
+
+uint64_t utils::rand64() 
+{
+  uint64_t r = 0;
+  for (int i = 0; i < 64; i++) 
+  {
+    if (rand() % 2 == 0) 
+    {
+      r = r | 0x1;
+    }
+    r = r << 1;
+  }
+  return r;
 }

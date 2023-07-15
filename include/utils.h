@@ -27,4 +27,12 @@ int index_from_pc(piece pc);
  */
 std::vector<std::string> split(const std::string &s, char delim);
 
+
+/**
+ * @brief Returns a random 64-bit number.
+ * 
+ * @return uint64_t 
+ */
+uint64_t rand64();
+
 }

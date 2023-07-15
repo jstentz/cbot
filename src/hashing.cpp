@@ -67,6 +67,7 @@ uint64_t Hasher::hash_pieces(piece* sq_board) const
       h ^= m_zobrist_table.table[i][j];
     }
   }
+  return h;
 }
 
 uint64_t Hasher::hash_pawns(piece* sq_board) const

@@ -1,7 +1,7 @@
 #include "include/tt.h"
 #include "include/hashing.h"
 #include "include/move.h"
-#include "include/evaluation.h"
+#include "include/utils.h"
 
 #include <unordered_set>
 #include <cstdlib>
@@ -9,7 +9,7 @@
 
 int TranspositionTable::correct_retrieved_mate_score(int score, int ply_searched) 
 {
-  if(is_mate_score(score)) 
+  if(utils::is_mate_score(score)) 
   {
     int sign = (score >= 0) ? 1 : -1;
     return (score * sign - ply_searched) * sign; /* correct it by adding onto it how far in the search we are from the root */
@@ -19,7 +19,7 @@ int TranspositionTable::correct_retrieved_mate_score(int score, int ply_searched
 
 int TranspositionTable::correct_stored_mate_score(int score, int ply_searched) 
 {
-  if(is_mate_score(score)) 
+  if(utils::is_mate_score(score)) 
   {
     int sign = (score >= 0) ? 1 : -1;
     return (score * sign + ply_searched) * sign; /* correct it by adding onto it how far in the search we are from the root */
@@ -66,7 +66,23 @@ std::optional<int> TranspositionTable::fetch(uint64_t hash, int depth, int ply_s
   return std::nullopt;
 }
 
-void TranspositionTable::store(uint64_t hash, int depth, int ply_searched, int flags, int score, Move& best_move)
+std::optional<int> TranspositionTable::fetch(uint64_t hash, int alpha, int beta)
+{
+  Entry entry = m_table[hash & (m_entries - 1)];
+  if(entry.key == hash) 
+  {
+    int score = entry.score;
+    if(entry.flags == EXACT)
+      return std::make_optional(score);
+    if(entry.flags == ALPHA && score <= alpha)
+      return std::make_optional(alpha);
+    if(entry.flags == BETA && score >= beta)
+      return std::make_optional(beta);
+  }
+  return std::nullopt;
+}
+
+void TranspositionTable::store(uint64_t hash, int depth, int ply_searched, Flags flags, int score, Move& best_move)
 {
   int corrected_score = correct_stored_mate_score(score, ply_searched);
   Entry* entry = &m_table[hash & (m_entries - 1)];
@@ -75,5 +91,13 @@ void TranspositionTable::store(uint64_t hash, int depth, int ply_searched, int f
   entry->flags = flags;
   entry->score = corrected_score;
   entry->best_move = best_move;
+}
+
+void TranspositionTable::store(uint64_t hash, Flags flags, int score)
+{
+  Entry* entry = &m_table[hash & (m_entries - 1)];
+  entry->key = hash;
+  entry->score = score;
+  entry->flags = flags;
 }
 

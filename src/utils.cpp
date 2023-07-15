@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cstdint>
+#include <climits>
 
 #include "include/utils.h"
 #include "include/pieces.h"
@@ -102,4 +103,30 @@ uint64_t utils::rand64()
     r = r << 1;
   }
   return r;
+}
+
+bool utils::is_mate_score(int score) 
+{
+  return (score > (INT_MAX - 100)) || (score < ((INT_MIN + 1) + 100));
+}
+
+int utils::moves_until_mate(int mate_score) 
+{
+  mate_score = abs(mate_score);
+  return (INT_MAX - mate_score - 1) / 2;
+}
+
+
+int utils::cmd(int sq) 
+{
+  return constants::center_manhattan_distance_arr[sq];
+}
+
+int utils::md(int sq1, int sq2) 
+{
+  int f1 = file(sq1);
+  int f2 = file(sq2);
+  int r1 = rank(sq1);
+  int r2 = rank(sq2);
+  return abs(r2 - r1) + abs(f2 - f1);
 }

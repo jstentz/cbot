@@ -11,11 +11,12 @@
 
 #pragma once
 
+#include <cstdint>
+
 #define REMOVE_FIRST(a) ((a) = ((a) & ((a)-1)))
 #define BIT_FROM_SQ(a) ((bitboard)0x1 << a) // replace all luts.pieces with this
 
 typedef long long unsigned int bitboard;
-typedef short unsigned int uint16_t;
 
 /**
  * @brief Rotate the bitboard 90 degrees clockwise.

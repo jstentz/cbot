@@ -82,7 +82,7 @@ std::optional<int> TranspositionTable::fetch(uint64_t hash, int alpha, int beta)
   return std::nullopt;
 }
 
-void TranspositionTable::store(uint64_t hash, int depth, int ply_searched, Flags flags, int score, Move& best_move)
+void TranspositionTable::store(uint64_t hash, int depth, int ply_searched, Flags flags, int score, Move best_move)
 {
   int corrected_score = correct_stored_mate_score(score, ply_searched);
   Entry* entry = &m_table[hash & (m_entries - 1)];

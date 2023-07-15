@@ -24,6 +24,8 @@ public:
 
   int evaluate(int alpha, int beta);
 
+  void clear_eval_table();
+
 private:
   Board::Ptr m_board;
   LookUpTable lut; // would like to not have to repeat this in the future
@@ -37,10 +39,4 @@ private:
   int evaluate_bishops(bitboard white_king_squares, bitboard black_king_squares);
   int evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares);
   int evaluate_queens(bitboard white_king_squares, bitboard black_king_squares);
-
-
-  const int ENDGAME_MATERIAL = 2000;
-  const int LAZY_EVAL_MARGIN = 200;
-  const int ATTACKING_WEIGHT = 15;
-  const int MOBILITY_WEIGHT = 1;
 };

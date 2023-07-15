@@ -43,7 +43,7 @@ Move OpeningBook::get_opening_move(Board::Ptr board)
   if(got_board == m_opening_book.end()) {
     return Move::NO_MOVE; // position not found
   }
-  unsigned int r = rand64() % got_board->second.size();
+  unsigned int r = utils::rand64() % got_board->second.size();
 
   if(got_board->second.size() == 0) {
     std::cerr << "No known moves from this position!" << std::endl;

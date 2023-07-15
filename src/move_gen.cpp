@@ -84,47 +84,47 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move) con
     if (mv.is_promo()) 
     {
       if (flags == Move::KNIGHT_PROMO || flags == Move::KNIGHT_PROMO_CAPTURE) {
-        score += piece_values[constants::WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
+        score += constants::piece_values[constants::WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
       }
       else if (flags == Move::BISHOP_PROMO || flags == Move::BISHOP_PROMO_CAPTURE) {
-        score += piece_values[constants::WHITE_BISHOPS_INDEX];
+        score += constants::piece_values[constants::WHITE_BISHOPS_INDEX];
       }
       else if (flags == Move::ROOK_PROMO || flags == Move::ROOK_PROMO_CAPTURE) {
-        score += piece_values[constants::WHITE_ROOKS_INDEX];
+        score += constants::piece_values[constants::WHITE_ROOKS_INDEX];
       }
       else {
-        score += piece_values[constants::WHITE_QUEENS_INDEX];
+        score += constants::piece_values[constants::WHITE_QUEENS_INDEX];
       }
     }
     /* check recapturing moves */
     if (to == recapture_square) 
     {
-      score += 5 * abs(piece_values[utils::index_from_pc(mv_piece)]); // arbitrary multiplication
+      score += 5 * abs(constants::piece_values[utils::index_from_pc(mv_piece)]); // arbitrary multiplication
     }
     else if (mv.is_capture()) {
       // score += see_capture(mv); /* this function isn't fast enough I need incrementally updated attack tables */
       tar_piece = (*m_board)[to];
       if (!is_attacked(to, m_board->get_all_pieces())) 
       {
-        score += 5 * abs(piece_values[utils::index_from_pc(tar_piece)]);
+        score += 5 * abs(constants::piece_values[utils::index_from_pc(tar_piece)]);
       }
       else 
       {
-        score += abs(piece_values[utils::index_from_pc(tar_piece)]) - abs(piece_values[utils::index_from_pc(mv_piece)]);    
+        score += abs(constants::piece_values[utils::index_from_pc(tar_piece)]) - abs(constants::piece_values[utils::index_from_pc(mv_piece)]);    
       }
     }
     /* score moves to squares attacked by pawns */
     else if(PIECE(mv_piece) != PAWN && is_attacked_by_pawn(to)) 
-      score -= abs(piece_values[utils::index_from_pc(mv_piece)]); // can play around with this
+      score -= abs(constants::piece_values[utils::index_from_pc(mv_piece)]); // can play around with this
     
     // done for better endgame move ordering of king moves
     if (PIECE(mv_piece) == KING && m_board->get_piece_bitboard(WHITE | QUEEN) == 0 && m_board->get_piece_bitboard(BLACK | QUEEN) == 0)
     {
-      score += perspective * (piece_scores[utils::index_from_pc(mv_piece) + 2][to] - piece_scores[utils::index_from_pc(mv_piece) + 2][from]);
+      score += perspective * (constants::piece_scores[utils::index_from_pc(mv_piece) + 2][to] - constants::piece_scores[utils::index_from_pc(mv_piece) + 2][from]);
     }
     else 
     {
-      score += perspective * (piece_scores[utils::index_from_pc(mv_piece)][to] - piece_scores[utils::index_from_pc(mv_piece)][from]);
+      score += perspective * (constants::piece_scores[utils::index_from_pc(mv_piece)][to] - constants::piece_scores[utils::index_from_pc(mv_piece)][from]);
     }
 
     // if(flags == QUIET_MOVE) {
@@ -620,7 +620,7 @@ int MoveGenerator::see(int sq) const
     Move capture{attacker_sq, sq, Move::NORMAL_CAPTURE}; /* would this also work for promotions? */
     piece captured_piece = (*m_board)[sq];
     m_board->make_move(capture);
-    value = std::max(0, abs(piece_values[utils::index_from_pc(captured_piece)]) - see(sq));
+    value = std::max(0, abs(constants::piece_values[utils::index_from_pc(captured_piece)]) - see(sq));
     m_board->unmake_move(capture);
   }
   return value;
@@ -632,7 +632,7 @@ int MoveGenerator::see_capture(Move capture) const
   int to = capture.to();
   piece cap_piece = (*m_board)[to];
   m_board->make_move(capture);
-  value = std::abs(piece_values[utils::index_from_pc(cap_piece)]) - see(to);
+  value = std::abs(constants::piece_values[utils::index_from_pc(cap_piece)]) - see(to);
   m_board->unmake_move(capture);
   return value;
 }
@@ -642,8 +642,8 @@ bool MoveGenerator::is_bad_capture(Move capture) const
   piece mv_piece = (*m_board)[capture.from()];
   piece cap_piece = (*m_board)[capture.to()];
   /* if we are capturing a piece of higher material, its probably good */
-  if(abs(piece_values[utils::index_from_pc(cap_piece)]) 
-     - abs(piece_values[utils::index_from_pc(mv_piece)]) > 50) {
+  if(abs(constants::piece_values[utils::index_from_pc(cap_piece)]) 
+     - abs(constants::piece_values[utils::index_from_pc(mv_piece)]) > 50) {
     return false;
   }
   return see_capture(capture) < -50;

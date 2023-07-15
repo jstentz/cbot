@@ -12,8 +12,8 @@ Evaluator::Evaluator(Board::Ptr board) : m_board{board}, m_table{constants::EVAL
 int Evaluator::evaluate(int alpha, int beta)
 {
   /* widen the margins a bit for lazy evaluation */
-  if (!utils::is_mate_score(alpha)) alpha -= LAZY_EVAL_MARGIN; /* prevents underflow */
-  if (!utils::is_mate_score(beta))  beta  += LAZY_EVAL_MARGIN; /* prevents overflow  */
+  if (!utils::is_mate_score(alpha)) alpha -= constants::LAZY_EVAL_MARGIN; /* prevents underflow */
+  if (!utils::is_mate_score(beta))  beta  += constants::LAZY_EVAL_MARGIN; /* prevents overflow  */
 
   /* probe the eval table */
   std::optional<int> table_score = m_table.fetch(m_board->get_piece_hash(), alpha, beta); /* use the pieces since that's all that matters for eval */
@@ -205,15 +205,15 @@ int Evaluator::evaluate_knights(bitboard white_king_squares, bitboard black_king
   bitboard attacks;
   while(white_knights) {
     attacks = lut.get_knight_attacks(first_set_bit(white_knights));
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    mobility += pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(white_knights);
   }
 
   while(black_knights) {
     attacks = lut.get_knight_attacks(first_set_bit(black_knights));
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    mobility -= pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(black_knights);
   }
   return mobility + attacking_score;
@@ -229,15 +229,15 @@ int Evaluator::evaluate_bishops(bitboard white_king_squares, bitboard black_king
   bitboard attacks;
   while(white_bishops) {
     attacks = lut.get_bishop_attacks(first_set_bit(white_bishops), m_board->get_all_pieces());
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    mobility += pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(white_bishops);
   }
 
   while(black_bishops) {
     attacks = lut.get_bishop_attacks(first_set_bit(black_bishops), m_board->get_all_pieces());
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    mobility -= pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(black_bishops);
   }
   return mobility + attacking_score;
@@ -253,15 +253,15 @@ int Evaluator::evaluate_rooks(bitboard white_king_squares, bitboard black_king_s
 
   while(white_rooks) {
     attacks = lut.get_rook_attacks(first_set_bit(white_rooks), m_board->get_all_pieces());
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    mobility += pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(white_rooks);
   }
 
   while(black_rooks) {
     attacks = lut.get_rook_attacks(first_set_bit(black_rooks), m_board->get_all_pieces());
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    mobility -= pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(black_rooks);
   }
   return mobility + attacking_score;
@@ -277,16 +277,21 @@ int Evaluator::evaluate_queens(bitboard white_king_squares, bitboard black_king_
 
   while(white_queens) {
     attacks = lut.get_queen_attacks(first_set_bit(white_queens), m_board->get_all_pieces());
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    mobility += pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(white_queens);
   }
 
   while(black_queens) {
     attacks = lut.get_queen_attacks(first_set_bit(black_queens), m_board->get_all_pieces());
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    mobility -= pop_count(attacks) * constants::MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * constants::ATTACKING_WEIGHT;
     REMOVE_FIRST(black_queens);
   }
   return mobility + attacking_score;
+}
+
+void Evaluator::clear_eval_table()
+{
+  m_table.clear();
 }

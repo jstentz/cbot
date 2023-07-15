@@ -255,4 +255,9 @@ const int center_manhattan_distance_arr[64] =
   6, 5, 4, 3, 3, 4, 5, 6
 };
 
+const int ENDGAME_MATERIAL = 2000;
+const int LAZY_EVAL_MARGIN = 200;
+const int ATTACKING_WEIGHT = 15;
+const int MOBILITY_WEIGHT = 1;
+
 }

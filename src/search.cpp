@@ -7,6 +7,7 @@
 #include "include/openings.h"
 #include "include/evaluation.h"
 #include "include/constants.h"
+#include "include/utils.h"
 
 #include <vector>
 #include <unordered_set>
@@ -16,7 +17,7 @@
 #include <iostream>
 #include <chrono>
 
-Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE} {}
+Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE}, m_evaluator{m_board} {}
 
 uint64_t Searcher::perft(int depth)
 {
@@ -78,13 +79,9 @@ uint64_t Searcher::num_nodes(int depth)
 Move Searcher::find_best_move(int search_time)
 {
   /* clear the eval table */
-  clear_eval_table();
-  eval_hits = 0;
-  eval_probes = 0;
+  m_evaluator.clear_eval_table();
   /* clear the transposition table */
-  clear_tt_table();
-  tt_hits = 0;
-  tt_probes = 0;
+  m_tt.clear();
 
   uint64_t h = m_board->get_hash();
 
@@ -132,10 +129,10 @@ Move Searcher::find_best_move(int search_time)
   int perspective = (m_board->is_white_turn()) ? 1 : -1;
   Move final_best_move = m_best_move;
   int final_score = m_score * perspective;
-  if(is_mate_score(final_score) && final_score > 0)
-    std::cout << "Evaluation: White has mate in " << moves_until_mate(final_score) << " move(s) | ";
-  else if(is_mate_score(final_score) && final_score < 0)
-    std::cout << "Evaluation: Black has mate in " << moves_until_mate(final_score) << " move(s) | ";
+  if(utils::is_mate_score(final_score) && final_score > 0)
+    std::cout << "Evaluation: White has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
+  else if(utils::is_mate_score(final_score) && final_score < 0)
+    std::cout << "Evaluation: Black has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
   else
     std::cout << "Evaluation: " << final_score / 100.0 << " | ";
   std::cout << "Move: " << m_move_gen.notation_from_move(final_best_move) << std::endl;
@@ -153,7 +150,7 @@ int Searcher::qsearch(int alpha, int beta)
    * them not taking the piece. We will see if it is better or worse for
    * them to make that capture.
    */
-  int stand_pat = evaluate(alpha, beta); // fall back evaluation
+  int stand_pat = m_evaluator.evaluate(alpha, beta); // fall back evaluation
   if(stand_pat >= beta) return beta;
   if(alpha < stand_pat) alpha = stand_pat;
 
@@ -182,7 +179,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
   std::vector<Move> moves;
   uint64_t h = m_board->get_hash();
 
-  int flags = ALPHA;
+  TranspositionTable::Flags flags = TranspositionTable::ALPHA;
 
   bool check_flag;
   if(!can_null) /* if we just made a null move (passed the turn), we cannot be in check */
@@ -196,10 +193,11 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
 
   /* look up the hash value in the transposition table 
      this will set the tt best move global variable */
-  int tt_score = probe_tt_table(h, depth, ply_from_root, alpha, beta);
-  if(tt_score != FAILED_LOOKUP) 
+  Move best_tt_move;
+  std::optional<int> tt_score = m_tt.fetch(h, depth, ply_from_root, alpha, beta, best_tt_move);
+  if(tt_score) 
   {
-    return tt_score;
+    return tt_score.value();
   }
 
   if(depth == 0) 
@@ -223,7 +221,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
   if(depth > 2 && 
      can_null && 
      !is_pv && 
-     m_board->get_total_material() > ENDGAME_MATERIAL &&
+     m_board->get_total_material() > constants::ENDGAME_MATERIAL &&
      !check_flag) {
     int reduce = 2;
     if(depth > 6) reduce = 3;
@@ -231,11 +229,10 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     int score = -search(ply_from_root, depth - reduce - 1, -beta, -beta + 1, false, false);
     m_board->unmake_nullmove();
     if(m_abort_search) return 0;
-    store_entry(h, depth, ply_from_root, BETA, beta, Move::NO_MOVE);
+    m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE);
     if(score >= beta) return beta;
   }
 
-  Move best_tt_move = TT.best_move;
   m_move_gen.generate_moves(moves);
   m_move_gen.order_moves(moves, best_tt_move);
   
@@ -273,12 +270,12 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
       return 0;
     
     if(evaluation >= beta) {
-      store_entry(h, depth, ply_from_root, BETA, beta, move);
+      m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, move);
       return beta;
     }
     /* found a new best move here! */
     if(evaluation > alpha) {
-      flags = EXACT;
+      flags = TranspositionTable::EXACT;
       alpha = evaluation;
       best_move = move;
       /* if we are at the root node, replace the best move we've seen so far */
@@ -298,11 +295,11 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
       /* stalemate! */
       alpha = 0;
     }
-    flags = EXACT; /* we know the exact score of checkmated or stalemated positions */
+    flags = TranspositionTable::EXACT; /* we know the exact score of checkmated or stalemated positions */
   }
 
   /* store this in the transposition table */
-  store_entry(h, depth, ply_from_root, flags, alpha, best_move);
+  m_tt.store(h, depth, ply_from_root, flags, alpha, best_move);
 
   if(ply_from_root == 0)
     m_search_complete = true;

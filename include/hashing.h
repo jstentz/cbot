@@ -13,6 +13,8 @@
 
 #include <cstdint>
 
+#include "include/pieces.h"
+
 class Hasher
 {
 public:
@@ -23,6 +25,14 @@ public:
   uint64_t hash_board(bool white_turn, piece* sq_board, bool white_ks, bool white_qs, bool black_ks, bool black_qs, int en_passant_sq) const;
   uint64_t hash_pieces(piece* sq_board) const;
   uint64_t hash_pawns(piece* sq_board) const;
+
+  uint64_t get_hash_val(piece pc, int sq) const;
+  uint64_t get_white_king_side_hash() const;
+  uint64_t get_white_queen_side_hash() const;
+  uint64_t get_black_king_side_hash() const;
+  uint64_t get_black_queen_side_hash() const;
+  uint64_t get_en_passant_hash(int sq) const;
+  uint64_t get_black_to_move_hash() const;
 private:
   struct ZobristTable 
   {

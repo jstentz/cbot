@@ -82,3 +82,38 @@ uint64_t Hasher::hash_pawns(piece* sq_board) const
   }
   return h;
 }
+
+uint64_t Hasher::get_hash_val(piece pc, int sq) const
+{
+  return m_zobrist_table.table[sq][utils::index_from_pc(pc)];
+}
+
+uint64_t Hasher::get_white_king_side_hash() const
+{
+  return m_zobrist_table.white_king_side;
+}
+
+uint64_t Hasher::get_white_queen_side_hash() const
+{
+  return m_zobrist_table.white_queen_side;
+}
+
+uint64_t Hasher::get_black_king_side_hash() const
+{
+  return m_zobrist_table.black_king_side;
+}
+
+uint64_t Hasher::get_black_queen_side_hash() const
+{
+  return m_zobrist_table.black_queen_side;
+}
+
+uint64_t Hasher::get_en_passant_hash(int sq) const
+{
+  return m_zobrist_table.en_passant_file[utils::file(sq)];
+}
+
+uint64_t Hasher::get_black_to_move_hash() const
+{
+  return m_zobrist_table.black_to_move; 
+}

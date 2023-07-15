@@ -19,6 +19,7 @@
 #include "include/pieces.h"
 #include "include/constants.h"
 #include "include/move.h"
+#include "include/hashing.h"
 
 class Board
 {
@@ -188,6 +189,7 @@ private:
   void remove_piece(piece pc, int sq);
 
   /* private members */
+  Hasher m_hasher;
 
   bitboard m_piece_boards[12];
   bitboard m_white_pieces;

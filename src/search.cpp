@@ -76,68 +76,68 @@ uint64_t Searcher::num_nodes(int depth)
 }
 
 /// TODO: Need to make this interruptable from the outside
-Move Searcher::find_best_move(int search_time)
-{
-  /* clear the eval table */
-  m_evaluator.clear_eval_table();
-  /* clear the transposition table */
-  m_tt.clear();
+// Move Searcher::find_best_move(int search_time)
+// {
+//   /* clear the eval table */
+//   m_evaluator.clear_eval_table();
+//   /* clear the transposition table */
+//   m_tt.clear();
 
-  uint64_t h = m_board->get_hash();
+//   uint64_t h = m_board->get_hash();
 
-  /* check in opening book */
-  Move opening_move = m_opening_book.get_opening_move(m_board);
-  if(!opening_move.is_no_move()) {
-    std::cout << "Depth: None | Evaluation: Book | Move: ";
-    std::cout << m_move_gen.notation_from_move(opening_move) << std::endl;
-    return opening_move;
-  }
+//   /* check in opening book */
+//   Move opening_move = m_opening_book.get_opening_move(m_board);
+//   if(!opening_move.is_no_move()) {
+//     std::cout << "Depth: None | Evaluation: Book | Move: ";
+//     std::cout << m_move_gen.notation_from_move(opening_move) << std::endl;
+//     return opening_move;
+//   }
 
-  size_t depth = 0;
-  int alpha = INT_MIN + 1;
-  int beta = INT_MAX;
-  clock_t tStart = clock();
-  clock_t tStop = clock();
-  m_abort_search = false;
-  m_search_complete = true;
-  m_score = 0;
-  m_best_move = Move::NO_MOVE;
-  std::thread t;
+//   size_t depth = 0;
+//   int alpha = INT_MIN + 1;
+//   int beta = INT_MAX;
+//   clock_t tStart = clock();
+//   clock_t tStop = clock();
+//   m_abort_search = false;
+//   m_search_complete = true;
+//   m_score = 0;
+//   m_best_move = Move::NO_MOVE;
+//   std::thread t;
 
-  /* iterative deepening framework with threading */
-  while(true) {
-    tStop = clock();
-    if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
-      m_abort_search = true;
-      break;
-    }
-    if(m_search_complete) {
-      if(t.joinable())
-        t.join();
-      m_search_complete = false;
-      depth++;
-      t = std::thread{search, 0, depth, alpha, beta, true, true};
-    }
-  }
-  /* wait for any lingering thread to finish */
-  if(t.joinable())
-    t.join();
+//   /* iterative deepening framework with threading */
+//   while(true) {
+//     tStop = clock();
+//     if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
+//       m_abort_search = true;
+//       break;
+//     }
+//     if(m_search_complete) {
+//       if(t.joinable())
+//         t.join();
+//       m_search_complete = false;
+//       depth++;
+//       t = std::thread{search, 0, depth, alpha, beta, true, true};
+//     }
+//   }
+//   /* wait for any lingering thread to finish */
+//   if(t.joinable())
+//     t.join();
 
-  float time_elapsed = (tStop - tStart);
-  std::cout << "Depth: " << depth << " | ";
+//   float time_elapsed = (tStop - tStart);
+//   std::cout << "Depth: " << depth << " | ";
 
-  int perspective = (m_board->is_white_turn()) ? 1 : -1;
-  Move final_best_move = m_best_move;
-  int final_score = m_score * perspective;
-  if(utils::is_mate_score(final_score) && final_score > 0)
-    std::cout << "Evaluation: White has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
-  else if(utils::is_mate_score(final_score) && final_score < 0)
-    std::cout << "Evaluation: Black has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
-  else
-    std::cout << "Evaluation: " << final_score / 100.0 << " | ";
-  std::cout << "Move: " << m_move_gen.notation_from_move(final_best_move) << std::endl;
-  return final_best_move;
-}
+//   int perspective = (m_board->is_white_turn()) ? 1 : -1;
+//   Move final_best_move = m_best_move;
+//   int final_score = m_score * perspective;
+//   if(utils::is_mate_score(final_score) && final_score > 0)
+//     std::cout << "Evaluation: White has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
+//   else if(utils::is_mate_score(final_score) && final_score < 0)
+//     std::cout << "Evaluation: Black has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
+//   else
+//     std::cout << "Evaluation: " << final_score / 100.0 << " | ";
+//   std::cout << "Move: " << m_move_gen.notation_from_move(final_best_move) << std::endl;
+//   return final_best_move;
+// }
 
 int Searcher::qsearch(int alpha, int beta)
 {

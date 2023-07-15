@@ -13,6 +13,9 @@
 
 #include "include/board.h"
 #include "include/move_gen.h"
+#include "include/openings.h"
+#include "include/evaluation.h"
+#include "include/tt.h"
 
 #include <stddef.h>
 #include <stack>

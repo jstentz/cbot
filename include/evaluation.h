@@ -14,6 +14,7 @@
 #include "include/board.h"
 #include "include/hashing.h"
 #include "include/tt.h"
+#include "attacks.h"
 #include <climits>
 
 class Evaluator

@@ -14,6 +14,7 @@
 
 #include "include/move.h"
 #include "include/hashing.h"
+#include "include/board.h"
 
 #include <unordered_map>
 #include <vector>

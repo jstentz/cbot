@@ -1,4 +1,4 @@
 For Linux:
-        g++ -o Cbot -I ./ -pthread -Ofast src/*.cpp
+        g++ -o cbot -I ./ -pthread -Ofast src/*.cpp -std=c++20
 
 the -I ./ sets the include path

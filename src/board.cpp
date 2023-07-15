@@ -33,19 +33,24 @@ void Board::reset(std::string fen)
 {
   clear(); // clear the board
   // decode the fen string 
-  std::string layout;
-  std::string turn;
-  std::string castling_rights;
-  std::string en_passant_sq;
+  char layout_buf[100];
+  char turn_buf[100];
+  char castling_rights_buf[100];
+  char en_passant_sq_buf[100];
   uint16_t half_move_clock;
   uint16_t full_move_clock;
 
-  int num_read = std::sscanf(fen.c_str(), "%s %s %s %s %d %d", layout, turn, castling_rights, en_passant_sq, &half_move_clock, &full_move_clock);
+  int num_read = std::sscanf(fen.c_str(), "%s %s %s %s %d %d", layout_buf, turn_buf, castling_rights_buf, en_passant_sq_buf, &half_move_clock, &full_move_clock);
   if (num_read != 6)
   {
     std::cerr << "Invalid fen string!" << std::endl;
     exit(1);
   }
+  /// TODO: fix this
+  std::string layout{layout_buf};
+  std::string turn{turn_buf};
+  std::string castling_rights{castling_rights_buf};
+  std::string en_passant_sq{en_passant_sq_buf};
 
   m_white_turn = turn == "w";
 
@@ -1059,6 +1064,11 @@ bitboard Board::get_black_pieces() const
 bitboard Board::get_all_pieces() const
 {
   return m_all_pieces;
+}
+
+bool Board::is_white_turn() const
+{
+  return m_white_turn;
 }
 
 ///////////////////////////////////////////////// HELPFUL BOARD FUNCTIONS /////////////////////////////////////////////////

@@ -5,12 +5,12 @@
 namespace constants
 {
 
-const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-const std::string RANKS = "12345678";
-const std::string FILES = "abcdefgh";
-const std::string PIECES = "PNBRQK";
+inline std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+inline std::string RANKS = "12345678";
+inline std::string FILES = "abcdefgh";
+inline std::string PIECES = "PNBRQK";
 
-const size_t NUM_PIECE_TYPES = 12; // white knight, black king, etc...
+inline size_t NUM_PIECE_TYPES = 12; // white knight, black king, etc...
 
 enum Square : int { A1, B1, C1, D1, E1, F1, G1, H1,
                                  A2, B2, C2, D2, E2, F2, G2, H2,
@@ -24,20 +24,20 @@ enum Square : int { A1, B1, C1, D1, E1, F1, G1, H1,
 enum Rank : int { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 enum File : int { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
-const char WHITE_PAWNS_INDEX = 0;
-const char BLACK_PAWNS_INDEX = 1;
-const char WHITE_KNIGHTS_INDEX = 2;
-const char BLACK_KNIGHTS_INDEX = 3;
-const char WHITE_BISHOPS_INDEX = 4;
-const char BLACK_BISHOPS_INDEX = 5;
-const char WHITE_ROOKS_INDEX = 6;
-const char BLACK_ROOKS_INDEX = 7;
-const char WHITE_QUEENS_INDEX = 8;
-const char BLACK_QUEENS_INDEX = 9;
-const char WHITE_KINGS_INDEX = 10;
-const char BLACK_KINGS_INDEX = 11;
+inline char WHITE_PAWNS_INDEX = 0;
+inline char BLACK_PAWNS_INDEX = 1;
+inline char WHITE_KNIGHTS_INDEX = 2;
+inline char BLACK_KNIGHTS_INDEX = 3;
+inline char WHITE_BISHOPS_INDEX = 4;
+inline char BLACK_BISHOPS_INDEX = 5;
+inline char WHITE_ROOKS_INDEX = 6;
+inline char BLACK_ROOKS_INDEX = 7;
+inline char WHITE_QUEENS_INDEX = 8;
+inline char BLACK_QUEENS_INDEX = 9;
+inline char WHITE_KINGS_INDEX = 10;
+inline char BLACK_KINGS_INDEX = 11;
 
-const int piece_values[10] = {100, // white pawn
+inline int piece_values[10] = {100, // white pawn
                -100, // black pawn
                 320, // white knight
                -320, // black knight
@@ -48,7 +48,7 @@ const int piece_values[10] = {100, // white pawn
                 900, // white queen
                -900};// black queen
 
-const int white_pawns_score[64] = 
+inline int white_pawns_score[64] = 
 {
   0,   0,   0,   0,   0,   0,   0,  0,
   5,  10,  10, -20, -20,  10,  10,  5,
@@ -60,7 +60,7 @@ const int white_pawns_score[64] =
   0,   0,   0,   0,   0,   0,   0,  0
 };
 
-const int black_pawns_score[64] = 
+inline int black_pawns_score[64] = 
 {
   0,   0,   0,   0,   0,   0,   0,  0,
   -50, -50, -50, -50, -50, -50, -50,-50,
@@ -72,7 +72,7 @@ const int black_pawns_score[64] =
   0,   0,   0,   0,   0,   0,   0,  0
 };
 
-const int white_knights_score[64] = 
+inline int white_knights_score[64] = 
 {
   -50, -40, -30, -30, -30, -30, -40, -50,
   -40, -20,   0,   5,   5,   0, -20, -40,
@@ -84,7 +84,7 @@ const int white_knights_score[64] =
   -50, -40, -30, -30, -30, -30, -40, -50
 };
 
-const int black_knights_score[64] = 
+inline int black_knights_score[64] = 
 {
   50, 40, 30, 30, 30,  30, 40, 50,
   40, 20,   0,   0,   0,   0, 20, 40,
@@ -96,7 +96,7 @@ const int black_knights_score[64] =
   50, 40, 30, 30, 30, 30, 40, 50
 };
 
-const int white_bishops_score[64] = 
+inline int white_bishops_score[64] = 
 {
   -20, -10, -10, -10, -10, -10, -10, -20,
   -10,   5,   0,   0,   0,   0,   5, -10,
@@ -108,7 +108,7 @@ const int white_bishops_score[64] =
   -20, -10, -10, -10, -10, -10, -10, -20
 };
 
-const int black_bishops_score[64] = 
+inline int black_bishops_score[64] = 
 {
   20, 10, 10, 10, 10, 10, 10, 20,
   10,   0,   0,   0,   0,   0,   0, 10,
@@ -120,7 +120,7 @@ const int black_bishops_score[64] =
   20, 10, 10, 10, 10, 10, 10, 20
 };
 
-const int white_rooks_score[64] = 
+inline int white_rooks_score[64] = 
 {
    0,    0,   0,   5,   5,   0,   0,   0,
   -5,    0,   0,   0,   0,   0,   0,  -5,
@@ -132,7 +132,7 @@ const int white_rooks_score[64] =
    0,    0,   0,   0,   0,   0,   0,   0
 };
 
-const int black_rooks_score[64] = 
+inline int black_rooks_score[64] = 
 {
    0,    0,   0,   0,   0,   0,   0,   0,
    -5,   -10,  -10,  -10,  -10,  -10,  -10,   -5,
@@ -144,7 +144,7 @@ const int black_rooks_score[64] =
    0,    0,   0,   -5,   -5,   0,   0,   0
 };
 
-const int white_queens_score[64] = 
+inline int white_queens_score[64] = 
 {
  -20,  -10, -10,  -5,  -5, -10, -10,  -20,
  -10,    0,   5,   0,   0,   0,   0, -10,
@@ -156,7 +156,7 @@ const int white_queens_score[64] =
  -20,  -10, -10,  -5,  -5, -10, -10,  -20
 };
 
-const int black_queens_score[64] = 
+inline int black_queens_score[64] = 
 {
  20,  10, 10,  5,  5, 10, 10,  20,
  10,    0,   0,   0,   0,   0,   0, 10,
@@ -168,7 +168,7 @@ const int black_queens_score[64] =
  20,  10, 10,  5,  5, 10, 10, 20
 };
 
-const int white_king_middlegame_score[64] = 
+inline int white_king_middlegame_score[64] = 
 {
    20, 30, 10,  0,  0, 10, 30, 20,
    20, 20,  0,  0,  0,  0, 20, 20,
@@ -180,7 +180,7 @@ const int white_king_middlegame_score[64] =
   -30,-40,-40,-50,-50,-40,-40,-30
 };
 
-const int black_king_middlegame_score[64] = 
+inline int black_king_middlegame_score[64] = 
 {
   30,40,40,50,50,40,40,30,
   30,40,40,50,50,40,40,30,
@@ -192,7 +192,7 @@ const int black_king_middlegame_score[64] =
    -20, -30, -10,  0,  0, -10, -30, -20
 };
 
-const int white_king_endgame_score[64] = 
+inline int white_king_endgame_score[64] = 
 {
   -50,-30,-30,-30,-30,-30,-30,-50,
   -30,-30,  0,  0,  0,  0,-30,-30,
@@ -204,7 +204,7 @@ const int white_king_endgame_score[64] =
   -50,-40,-30,-20,-20,-30,-40,-50
 };
 
-const int black_king_endgame_score[64] = 
+inline int black_king_endgame_score[64] = 
 {
   50,40,30,20,20,30,40,50,
   30,20,10,  0,  0,10,20,30,
@@ -220,7 +220,7 @@ const int black_king_endgame_score[64] =
  * @brief Contains an array of piece-location scores from white's perspective.
  * 
  */
-const int* piece_scores[14] = 
+inline int* piece_scores[14] = 
 {
   white_pawns_score,
   black_pawns_score,
@@ -240,10 +240,10 @@ const int* piece_scores[14] =
 
 /// TODO: make these part of the parameterization 
 // this is also the number of entries... the real size is num_entries * sizeof(Entry)
-const size_t SEARCH_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
-const size_t EVAL_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
+inline size_t SEARCH_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
+inline size_t EVAL_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
 
-const int center_manhattan_distance_arr[64] = 
+inline int center_manhattan_distance_arr[64] = 
 {
   6, 5, 4, 3, 3, 4, 5, 6,
   5, 4, 3, 2, 2, 3, 4, 5,
@@ -255,9 +255,9 @@ const int center_manhattan_distance_arr[64] =
   6, 5, 4, 3, 3, 4, 5, 6
 };
 
-const int ENDGAME_MATERIAL = 2000;
-const int LAZY_EVAL_MARGIN = 200;
-const int ATTACKING_WEIGHT = 15;
-const int MOBILITY_WEIGHT = 1;
+inline int ENDGAME_MATERIAL = 2000;
+inline int LAZY_EVAL_MARGIN = 200;
+inline int ATTACKING_WEIGHT = 15;
+inline int MOBILITY_WEIGHT = 1;
 
 }

@@ -32,6 +32,7 @@ piece utils::piece_from_fen_char(char c)
       break;
     case 'k':
       type = KING;
+      break;
     default: 
       std::cerr << "Invalid piece name!" << std::endl;
       exit(1);
@@ -41,7 +42,11 @@ piece utils::piece_from_fen_char(char c)
 
 int utils::sq_from_name(std::string name)
 {
-  if (name.size() != 2)
+  if (name == "-")
+  {
+    return constants::NONE;
+  }
+  else if (name.size() != 2)
   {
     std::cerr << "Invalid square name!" << std::endl;
     exit(1);

@@ -6,49 +6,6 @@
 
 #include <cstdlib>
 
-eval_entry *eval_table;
-
-int eval_hits = 0;
-int eval_probes = 0;
-
-void init_eval_table() {
-  eval_table = (eval_entry *)calloc(sizeof(eval_entry), EVAL_SIZE);
-}
-
-void free_eval_table() {
-  free(eval_table);
-}
-
-void clear_eval_table() {
-  free_eval_table();
-  init_eval_table();
-}
-
-int probe_eval_table(uint64_t key, int alpha, int beta) {
-  eval_probes++;
-  eval_entry entry = eval_table[key & (EVAL_SIZE - 1)];
-  if(entry.key == key) {
-    eval_hits++;
-    int score = entry.score;
-    if(entry.flags == EXACT)
-      return score;
-    if(entry.flags == ALPHA && score <= alpha)
-      return alpha;
-    if(entry.flags == BETA && score >= beta)
-      return beta;
-  }
-  return FAILED_LOOKUP;
-}
-
-void store_eval_entry(uint64_t key, int score, int flags) {
-  eval_entry* entry = &eval_table[key & (EVAL_SIZE - 1)];
-  entry->key = key;
-  entry->score = score;
-  entry->flags = flags;
-}
-
-float game_phase;
-
 /* The general rule here is that if there is no pawns for one side, they must have 
    more than +4 pawns worth of material to be able to win */
 bool sufficient_checkmating_material() {
@@ -107,29 +64,6 @@ void calculate_game_phase() {
 
   game_phase = (phase * 256 + (total_phase / 2)) / total_phase;
   return;
-}
-
-const int center_manhattan_distance_arr[64] = {
-  6, 5, 4, 3, 3, 4, 5, 6,
-  5, 4, 3, 2, 2, 3, 4, 5,
-  4, 3, 2, 1, 1, 2, 3, 4,
-  3, 2, 1, 0, 0, 1, 2, 3,
-  3, 2, 1, 0, 0, 1, 2, 3,
-  4, 3, 2, 1, 1, 2, 3, 4,
-  5, 4, 3, 2, 2, 3, 4, 5,
-  6, 5, 4, 3, 3, 4, 5, 6
-};
-
-int cmd(square sq) {
-  return center_manhattan_distance_arr[sq];
-}
-
-int md(square sq1, square sq2) {
-  int f1 = FILE(sq1);
-  int f2 = FILE(sq2);
-  int r1 = RANK(sq1);
-  int r2 = RANK(sq2);
-  return abs(r2 - r1) + abs(f2 - f1);
 }
 
 
@@ -359,11 +293,4 @@ int evaluate(int alpha, int beta) {
   return eval;
 }
 
-bool is_mate_score(int score) {
-  return (score > (INT_MAX - 100)) || (score < ((INT_MIN + 1) + 100));
-}
-
-int moves_until_mate(int mate_score) {
-  mate_score = abs(mate_score);
-  return (INT_MAX - mate_score - 1) / 2;
-}
+Evaluator::Evaluator()

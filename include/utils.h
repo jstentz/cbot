@@ -35,4 +35,24 @@ std::vector<std::string> split(const std::string &s, char delim);
  */
 uint64_t rand64();
 
+/**
+ * @brief Given a score, returns true if it is a mating score and false otherwise.
+ * 
+ * @param score 
+ * @return true 
+ * @return false 
+ */
+bool is_mate_score(int score);
+
+/**
+ * @brief Given a mating score, returns the moves until checkmate
+ * 
+ * @param mate_score 
+ * @return moves until mate 
+ */
+int moves_until_mate(int mate_score);
+
+int cmd(int sq);
+int md(int sq1, int sq2);
+
 }

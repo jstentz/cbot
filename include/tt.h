@@ -21,19 +21,22 @@
 /// TODO: make this more in the c++ style (using std::allocator?)s
 class TranspositionTable
 {
+public:
   /// TODO: make this an easier number (megabytes) and then round to a power of 2 for them 
   TranspositionTable(size_t entries);
   ~TranspositionTable(); // make this free the pointer to the memory
 
-  enum class Flags
+  enum Flags : char
   {
     EXACT,
     ALPHA,
     BETA
   };
 
-  std::optional<int> fetch(uint64_t hash, int depth, int ply_searched, int alpha, int beta, Move& best_move);
-  void store(uint64_t hash, int depth, int ply_searched, int flags, int score, Move& best_move);
+  std::optional<int> fetch(uint64_t hash, int depth, int ply_searched, int alpha, int beta, Move& best_move); // for search
+  std::optional<int> fetch(uint64_t hash, int alpha, int beta); // for eval
+  void store(uint64_t hash, int depth, int ply_searched, Flags flags, int score, Move& best_move); // for search
+  void store(uint64_t hash, Flags flags, int score); // for eval
   void clear();
 
 private:
@@ -41,7 +44,7 @@ private:
   {
     uint64_t key;
     uint16_t depth;
-    char flags;
+    Flags flags;
     int score;
     Move best_move;
   };

@@ -44,6 +44,7 @@ private:
   Board::Ptr m_board;
   MoveGenerator m_move_gen;
   OpeningBook m_opening_book;
+  TranspositionTable m_tt;
 
   Move m_best_move;
   int m_score;

@@ -6,6 +6,7 @@
 #include "include/tt.h"
 #include "include/openings.h"
 #include "include/evaluation.h"
+#include "include/constants.h"
 
 #include <vector>
 #include <unordered_set>
@@ -15,7 +16,7 @@
 #include <iostream>
 #include <chrono>
 
-Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board} {}
+Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE} {}
 
 uint64_t Searcher::perft(int depth)
 {

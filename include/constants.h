@@ -243,4 +243,16 @@ const int* piece_scores[14] =
 const size_t SEARCH_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
 const size_t EVAL_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
 
+const int center_manhattan_distance_arr[64] = 
+{
+  6, 5, 4, 3, 3, 4, 5, 6,
+  5, 4, 3, 2, 2, 3, 4, 5,
+  4, 3, 2, 1, 1, 2, 3, 4,
+  3, 2, 1, 0, 0, 1, 2, 3,
+  3, 2, 1, 0, 0, 1, 2, 3,
+  4, 3, 2, 1, 1, 2, 3, 4,
+  5, 4, 3, 2, 2, 3, 4, 5,
+  6, 5, 4, 3, 3, 4, 5, 6
+};
+
 }

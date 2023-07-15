@@ -31,8 +31,8 @@ private:
 
   bool sufficient_checkmating_material();
   float calculate_game_phase();
-  int mop_up_eval(bool white_winning_side);
-  void evaluate_pawns();
+  int mop_up_eval(bool white_winning);
+  int evaluate_pawns();
   int evaluate_knights(bitboard white_king_squares, bitboard black_king_squares);
   int evaluate_bishops(bitboard white_king_squares, bitboard black_king_squares);
   int evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares);

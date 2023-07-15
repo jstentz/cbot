@@ -7,177 +7,7 @@
 
 #include <cstdlib>
 
-/* 
-  can probably incrementally update this value in the future and store it in the board
-  can also probably incrementally update number of pieces and positional scores
-*/
-void calculate_game_phase() {
-  int pawn_phase = 0;
-  int knight_phase = 1;
-  int bishop_phase = 1;
-  int rook_phase = 2;
-  int queen_phase = 4;
-  float total_phase = pawn_phase * 16 + 
-            knight_phase * 4 + 
-            bishop_phase * 4 + 
-            rook_phase * 4 + 
-            queen_phase * 2;
-
-  float phase = total_phase;
-  /* count the number of each piece */
-  int wp = b.piece_counts[WHITE_PAWNS_INDEX];
-  int wn = b.piece_counts[WHITE_KNIGHTS_INDEX];
-  int wb = b.piece_counts[WHITE_BISHOPS_INDEX];
-  int wr = b.piece_counts[WHITE_ROOKS_INDEX];
-  int wq = b.piece_counts[WHITE_QUEENS_INDEX];
-
-  int bp = b.piece_counts[BLACK_PAWNS_INDEX];
-  int bn = b.piece_counts[BLACK_KNIGHTS_INDEX];
-  int bb = b.piece_counts[BLACK_BISHOPS_INDEX];
-  int br = b.piece_counts[BLACK_ROOKS_INDEX];
-  int bq = b.piece_counts[BLACK_QUEENS_INDEX];
-
-  phase -= wp * pawn_phase;
-  phase -= wn * knight_phase;
-  phase -= wb * bishop_phase;
-  phase -= wr * rook_phase;
-  phase -= wq * queen_phase;
-
-  phase -= bp * pawn_phase;
-  phase -= bn * knight_phase;
-  phase -= bb * bishop_phase;
-  phase -= br * rook_phase;
-  phase -= bq * queen_phase;
-
-  game_phase = (phase * 256 + (total_phase / 2)) / total_phase;
-  return;
-}
-
-
-int mop_up_eval(turn winning_side) {
-  // this function assumes that there are no pawns for either side
-  // always returns from white's perspective
-  int eval;
-  square losing_king;
-  square winning_king;
-  int perspective;
-
-  if(winning_side == W) {
-    losing_king = b.black_king_loc;
-    winning_king = b.white_king_loc;
-    perspective = 1;
-  }
-  else {
-    losing_king = b.white_king_loc;
-    winning_king = b.black_king_loc;
-    perspective = -1;
-  }
-
-  eval = 10 * cmd(losing_king) + 4 * (14 - md(losing_king, winning_king));
-  return eval * perspective;
-}
-
-/* value returned will be from white's perspective 
-   this means that a negative score is good for black */
-/* shoud check here for attacking pawns! */
-int evaluate_pawns() {
-  return 0;
-}
-
-int evaluate_knights(bitboard white_king_squares, bitboard black_king_squares) {
-  int mobility = 0;
-  int attacking_score = 0;
-
-  bitboard white_knights = b.piece_boards[WHITE_KNIGHTS_INDEX];
-  bitboard black_knights = b.piece_boards[BLACK_KNIGHTS_INDEX];
-  bitboard attacks;
-  while(white_knights) {
-    attacks = get_knight_attacks((square)first_set_bit(white_knights));
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(white_knights);
-  }
-
-  while(black_knights) {
-    attacks = get_knight_attacks((square)first_set_bit(black_knights));
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(black_knights);
-  }
-  return mobility + attacking_score;
-}
-
-int evaluate_bishops(bitboard white_king_squares, bitboard black_king_squares) {
-  int mobility = 0;
-  int attacking_score = 0;
-
-  bitboard white_bishops = b.piece_boards[WHITE_BISHOPS_INDEX];
-  bitboard black_bishops = b.piece_boards[BLACK_BISHOPS_INDEX];
-  bitboard attacks;
-  while(white_bishops) {
-    attacks = get_bishop_attacks((square)first_set_bit(white_bishops), b.all_pieces);
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(white_bishops);
-  }
-
-  while(black_bishops) {
-    attacks = get_bishop_attacks((square)first_set_bit(black_bishops), b.all_pieces);
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(black_bishops);
-  }
-  return mobility + attacking_score;
-}
-
-int evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares) {
-  int mobility = 0;
-  int attacking_score;
-  bitboard white_rooks = b.piece_boards[WHITE_ROOKS_INDEX];
-  bitboard black_rooks = b.piece_boards[BLACK_ROOKS_INDEX];
-  bitboard attacks;
-
-  while(white_rooks) {
-    attacks = get_rook_attacks((square)first_set_bit(white_rooks), b.all_pieces);
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(white_rooks);
-  }
-
-  while(black_rooks) {
-    attacks = get_rook_attacks((square)first_set_bit(black_rooks), b.all_pieces);
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(black_rooks);
-  }
-  return mobility + attacking_score;
-}
-
-int evaluate_queens(bitboard white_king_squares, bitboard black_king_squares) {
-  int mobility = 0;
-  int attacking_score;
-  bitboard white_queens = b.piece_boards[WHITE_QUEENS_INDEX];
-  bitboard black_queens = b.piece_boards[BLACK_QUEENS_INDEX];
-  bitboard attacks;
-
-  while(white_queens) {
-    attacks = get_queen_attacks((square)first_set_bit(white_queens), b.all_pieces);
-    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(white_queens);
-  }
-
-  while(black_queens) {
-    attacks = get_queen_attacks((square)first_set_bit(black_queens), b.all_pieces);
-    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
-    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
-    REMOVE_FIRST(black_queens);
-  }
-  return mobility + attacking_score;
-}
-
-
-Evaluator::Evaluator(Board::Ptr board) : m_board{board} {}
+Evaluator::Evaluator(Board::Ptr board) : m_board{board}, m_table{constants::EVAL_TT_SIZE} {}
 
 int Evaluator::evaluate(int alpha, int beta)
 {
@@ -299,5 +129,164 @@ bool Evaluator::sufficient_checkmating_material()
 
 float Evaluator::calculate_game_phase()
 {
-  
+  int pawn_phase = 0;
+  int knight_phase = 1;
+  int bishop_phase = 1;
+  int rook_phase = 2;
+  int queen_phase = 4;
+  float total_phase = pawn_phase * 16 + 
+            knight_phase * 4 + 
+            bishop_phase * 4 + 
+            rook_phase * 4 + 
+            queen_phase * 2;
+
+  float phase = total_phase;
+  /* count the number of each piece */
+  int wp = m_board->get_piece_count(WHITE | PAWN);
+  int wn = m_board->get_piece_count(WHITE | KNIGHT);
+  int wb = m_board->get_piece_count(WHITE | BISHOP);
+  int wr = m_board->get_piece_count(WHITE | ROOK);  
+  int wq = m_board->get_piece_count(WHITE | QUEEN);
+
+  int bp = m_board->get_piece_count(BLACK | PAWN);
+  int bn = m_board->get_piece_count(BLACK | KNIGHT);
+  int bb = m_board->get_piece_count(BLACK | BISHOP);
+  int br = m_board->get_piece_count(BLACK | ROOK);  
+  int bq = m_board->get_piece_count(BLACK | QUEEN);
+
+  phase -= wp * pawn_phase;
+  phase -= wn * knight_phase;
+  phase -= wb * bishop_phase;
+  phase -= wr * rook_phase;
+  phase -= wq * queen_phase;
+
+  phase -= bp * pawn_phase;
+  phase -= bn * knight_phase;
+  phase -= bb * bishop_phase;
+  phase -= br * rook_phase;
+  phase -= bq * queen_phase;
+  return (phase * 256 + (total_phase / 2)) / total_phase;
+}
+
+int Evaluator::mop_up_eval(bool white_winning)
+{
+  int eval;
+  int losing_king;
+  int winning_king;
+  int perspective;
+
+  if(white_winning) {
+    losing_king = m_board->get_black_king_loc();
+    winning_king = m_board->get_white_king_loc();
+    perspective = 1;
+  }
+  else {
+    losing_king = m_board->get_white_king_loc();
+    winning_king = m_board->get_black_king_loc();
+    perspective = -1;
+  }
+
+  eval = 10 * utils::cmd(losing_king) + 4 * (14 - utils::md(losing_king, winning_king));
+  return eval * perspective;
+}
+
+int Evaluator::evaluate_pawns()
+{
+  return 0; // unimplemented
+}
+
+int Evaluator::evaluate_knights(bitboard white_king_squares, bitboard black_king_squares)
+{
+  int mobility = 0;
+  int attacking_score = 0;
+
+  bitboard white_knights = m_board->get_piece_bitboard(WHITE | KNIGHT);
+  bitboard black_knights = m_board->get_piece_bitboard(BLACK | KNIGHT);
+  bitboard attacks;
+  while(white_knights) {
+    attacks = lut.get_knight_attacks(first_set_bit(white_knights));
+    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(white_knights);
+  }
+
+  while(black_knights) {
+    attacks = lut.get_knight_attacks(first_set_bit(black_knights));
+    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(black_knights);
+  }
+  return mobility + attacking_score;
+}
+
+int Evaluator::evaluate_bishops(bitboard white_king_squares, bitboard black_king_squares)
+{
+  int mobility = 0;
+  int attacking_score = 0;
+
+  bitboard white_bishops = m_board->get_piece_bitboard(WHITE | BISHOP);
+  bitboard black_bishops = m_board->get_piece_bitboard(BLACK | BISHOP);
+  bitboard attacks;
+  while(white_bishops) {
+    attacks = lut.get_bishop_attacks(first_set_bit(white_bishops), m_board->get_all_pieces());
+    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(white_bishops);
+  }
+
+  while(black_bishops) {
+    attacks = lut.get_bishop_attacks(first_set_bit(black_bishops), m_board->get_all_pieces());
+    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(black_bishops);
+  }
+  return mobility + attacking_score;
+}
+
+int Evaluator::evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares)
+{
+  int mobility = 0;
+  int attacking_score;
+  bitboard white_rooks = m_board->get_piece_bitboard(WHITE | ROOK);
+  bitboard black_rooks = m_board->get_piece_bitboard(BLACK | ROOK);
+  bitboard attacks;
+
+  while(white_rooks) {
+    attacks = lut.get_rook_attacks(first_set_bit(white_rooks), m_board->get_all_pieces());
+    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(white_rooks);
+  }
+
+  while(black_rooks) {
+    attacks = lut.get_rook_attacks(first_set_bit(black_rooks), m_board->get_all_pieces());
+    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(black_rooks);
+  }
+  return mobility + attacking_score;
+}
+
+int Evaluator::evaluate_queens(bitboard white_king_squares, bitboard black_king_squares)
+{
+  int mobility = 0;
+  int attacking_score;
+  bitboard white_queens = m_board->get_piece_bitboard(WHITE | QUEEN);
+  bitboard black_queens = m_board->get_piece_bitboard(BLACK | QUEEN);
+  bitboard attacks;
+
+  while(white_queens) {
+    attacks = lut.get_queen_attacks(first_set_bit(white_queens), m_board->get_all_pieces());
+    mobility += pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score += pop_count(attacks & black_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(white_queens);
+  }
+
+  while(black_queens) {
+    attacks = lut.get_queen_attacks(first_set_bit(black_queens), m_board->get_all_pieces());
+    mobility -= pop_count(attacks) * MOBILITY_WEIGHT;
+    attacking_score -= pop_count(attacks & white_king_squares) * ATTACKING_WEIGHT;
+    REMOVE_FIRST(black_queens);
+  }
+  return mobility + attacking_score;
 }

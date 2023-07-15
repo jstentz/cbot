@@ -12,7 +12,7 @@
 #include <string>
 #include <algorithm>
 
-MoveGenerator::MoveGenerator(Board::Ptr board) : m_board(board) {}
+MoveGenerator::MoveGenerator(Board::Ptr board) : m_board{board} {}
 
 void MoveGenerator::generate_moves(std::vector<Move> &curr_moves, bool captures_only) const
 {

@@ -17,7 +17,10 @@
 #include <iostream>
 #include <chrono>
 
-Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE}, m_evaluator{m_board} {}
+Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE}, m_evaluator{m_board} 
+{
+  std::cout << "here!" << std::endl;
+}
 
 uint64_t Searcher::perft(int depth)
 {

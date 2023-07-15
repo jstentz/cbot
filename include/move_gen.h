@@ -42,7 +42,7 @@ public:
 
 private:
   Board::Ptr m_board;
-  LookUpTable lut; 
+  LookUpTable lut;
 
 
   struct Pin

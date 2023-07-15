@@ -3,22 +3,9 @@
 #include "include/bitboard.h"
 #include "include/pieces.h"
 #include "include/attacks.h"
+#include "include/utils.h"
 
 #include <cstdlib>
-
-/* The general rule here is that if there is no pawns for one side, they must have 
-   more than +4 pawns worth of material to be able to win */
-bool sufficient_checkmating_material() {
-  if(b.piece_counts[WHITE_PAWNS_INDEX] != 0 ||
-     b.piece_counts[BLACK_PAWNS_INDEX] != 0)
-    return true;
-  
-  if(b.material_score >= 400 ||
-     b.material_score <= -400) {
-    return true;
-  }
-  return false;
-}
 
 /* 
   can probably incrementally update this value in the future and store it in the board
@@ -189,76 +176,80 @@ int evaluate_queens(bitboard white_king_squares, bitboard black_king_squares) {
   return mobility + attacking_score;
 }
 
-int evaluate(int alpha, int beta) {
+
+Evaluator::Evaluator(Board::Ptr board) : m_board{board} {}
+
+int Evaluator::evaluate(int alpha, int beta)
+{
   /* widen the margins a bit for lazy evaluation */
-  if(!is_mate_score(alpha)) alpha -= LAZY_EVAL_MARGIN; /* prevents underflow */
-  if(!is_mate_score(beta))  beta  += LAZY_EVAL_MARGIN; /* prevents overflow  */
+  if (!utils::is_mate_score(alpha)) alpha -= LAZY_EVAL_MARGIN; /* prevents underflow */
+  if (!utils::is_mate_score(beta))  beta  += LAZY_EVAL_MARGIN; /* prevents overflow  */
 
   /* probe the eval table */
-  int table_score = probe_eval_table(b.piece_hash, alpha, beta); /* use the pieces since that's all that matters for eval */
-  if(table_score != FAILED_LOOKUP) 
-    return table_score;
+  std::optional<int> table_score = m_table.fetch(m_board->get_piece_hash(), alpha, beta); /* use the pieces since that's all that matters for eval */
+  if (table_score)
+    return table_score.value();
 
   int eval;
   int lazy_eval;
   int middlegame_eval;
   int endgame_eval;
-  int perspective = (b.t == W) ? 1 : -1;
+  int perspective = (m_board->is_white_turn()) ? 1 : -1;
 
   if(!sufficient_checkmating_material()) {
-    store_eval_entry(b.piece_hash, 0, EXACT);
+    m_table.store(m_board->get_piece_hash(), TranspositionTable::EXACT, 0);
     return 0;
   }
 
-  calculate_game_phase();
+  float game_phase = calculate_game_phase();
 
-  square white_king_loc = b.white_king_loc;
-  square black_king_loc = b.black_king_loc;
+  int white_king_loc = m_board->get_white_king_loc();
+  int black_king_loc = m_board->get_white_king_loc();
 
-  int middlegame_positional = b.positional_score + 
-                piece_scores[WHITE_KINGS_INDEX][white_king_loc] +
-                piece_scores[BLACK_KINGS_INDEX][black_king_loc];
+  int middlegame_positional = m_board->get_positional_score() + 
+                constants::piece_scores[constants::WHITE_KINGS_INDEX][white_king_loc] +
+                constants::piece_scores[constants::BLACK_KINGS_INDEX][black_king_loc];
 
-  int endgame_positional = b.positional_score + 
-               piece_scores[WHITE_KINGS_INDEX + 2][white_king_loc] +
-               piece_scores[BLACK_KINGS_INDEX + 2][black_king_loc];
+  int endgame_positional = m_board->get_positional_score() + 
+               constants::piece_scores[constants::WHITE_KINGS_INDEX + 2][white_king_loc] +
+               constants::piece_scores[constants::BLACK_KINGS_INDEX + 2][black_king_loc];
 
-  middlegame_eval = middlegame_positional + b.material_score;
-  endgame_eval = endgame_positional + b.material_score;
+  middlegame_eval = middlegame_positional + m_board->get_material_score();
+  endgame_eval = endgame_positional + m_board->get_material_score();
 
   /* in order to do lazy eval, we will see if this exceeds the alpha-beta bounds */
   lazy_eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
   lazy_eval *= perspective;
   if(lazy_eval >= beta) {
-    store_eval_entry(b.piece_hash, beta, BETA);
+    m_table.store(m_board->get_piece_hash(), TranspositionTable::BETA, beta);
     return beta;
   }
   else if(lazy_eval <= alpha) {
-    store_eval_entry(b.piece_hash, alpha, ALPHA);
+    m_table.store(m_board->get_piece_hash(), TranspositionTable::ALPHA, alpha);
     return alpha;
   }
   /* otherwise we get the exact score */
 
   /* mop up eval for winning side */
-  if(b.material_score != 0){
-    if(b.material_score > 0) endgame_eval += mop_up_eval(W);
-    else endgame_eval += mop_up_eval(B);
+  if(m_board->get_material_score() != 0){
+    if(m_board->get_material_score() > 0) endgame_eval += mop_up_eval(true);
+    else endgame_eval += mop_up_eval(false);
   }
   
   // /* add a tempo bonus to middle game */
   // if(b.t == W) middlegame_eval += 10;
   // else         middlegame_eval -= 10;
 
-  int queen_moves_from_white_king = pop_count(get_queen_attacks(b.white_king_loc, b.all_pieces) & ~b.white_pieces);
-  int queen_moves_from_black_king = pop_count(get_queen_attacks(b.black_king_loc, b.all_pieces) & ~b.black_pieces);
+  int queen_moves_from_white_king = pop_count(lut.get_queen_attacks(m_board->get_white_king_loc(), m_board->get_all_pieces()) & ~m_board->get_white_pieces());
+  int queen_moves_from_black_king = pop_count(lut.get_queen_attacks(m_board->get_black_king_loc(), m_board->get_all_pieces()) & ~m_board->get_black_pieces());
 
   middlegame_eval -= queen_moves_from_white_king * 5;
   middlegame_eval += queen_moves_from_black_king * 5;
 
 
   /* evaluate the mobility and attacking score of each piece */
-  bitboard white_king_squares = BIT_FROM_SQ(white_king_loc) | get_king_attacks(white_king_loc);
-  bitboard black_king_squares = BIT_FROM_SQ(black_king_loc) | get_king_attacks(black_king_loc);
+  bitboard white_king_squares = BIT_FROM_SQ(white_king_loc) | lut.get_king_attacks(white_king_loc);
+  bitboard black_king_squares = BIT_FROM_SQ(black_king_loc) | lut.get_king_attacks(black_king_loc);
   
   int knight_score = evaluate_knights(white_king_squares, black_king_squares);
   int bishop_score = evaluate_bishops(white_king_squares, black_king_squares);
@@ -281,16 +272,32 @@ int evaluate(int alpha, int beta) {
 
   eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
 
-  if(b.piece_counts[WHITE_BISHOPS_INDEX] >= 2) eval += 30; /* bishop pair bonus for white */
-  if(b.piece_counts[BLACK_BISHOPS_INDEX] >= 2) eval -= 30; /* bishop pair bonus for black */
+  if(m_board->get_piece_count(WHITE | BISHOP) >= 2) eval += 30; /* bishop pair bonus for white */
+  if(m_board->get_piece_count(BLACK | BISHOP) >= 2) eval -= 30; /* bishop pair bonus for black */
 
   eval *= perspective;
 
   /* save the evaluation we just made */
   /* here I just need to hash the board's pieces 
   add this after I finish unmake move */
-  store_eval_entry(b.piece_hash, eval, EXACT); /* use just the pieces again */
+  m_table.store(m_board->get_piece_hash(), TranspositionTable::EXACT, eval); /* use just the pieces again */
   return eval;
 }
 
-Evaluator::Evaluator()
+bool Evaluator::sufficient_checkmating_material()
+{
+  if(m_board->get_piece_count(WHITE | BISHOP) != 0 ||
+     m_board->get_piece_count(BLACK | BISHOP) != 0)
+    return true;
+  
+  if(m_board->get_material_score() >= 400 ||
+     m_board->get_material_score() <= -400) {
+    return true;
+  }
+  return false;
+}
+
+float Evaluator::calculate_game_phase()
+{
+  
+}

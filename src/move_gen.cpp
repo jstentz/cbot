@@ -841,10 +841,10 @@ bitboard MoveGenerator::generate_rook_move_bitboard(int rook_sq, bool captures_o
 {
   bitboard rook_attacks = lut.get_rook_attacks(rook_sq, m_board->get_all_pieces());
   if(captures_only) {
-    bitboard opponent_pieces = (m_board->is_white_turn()) ? m_board->get_white_pieces() : m_board->get_white_pieces();
+    bitboard opponent_pieces = (m_board->is_white_turn()) ? m_board->get_black_pieces() : m_board->get_white_pieces();
     return rook_attacks & opponent_pieces;
   }
-  bitboard own_pieces = (m_board->is_white_turn()) ? m_board->get_white_pieces() : m_board->get_white_pieces();
+  bitboard own_pieces = (m_board->is_white_turn()) ? m_board->get_white_pieces() : m_board->get_black_pieces();
   return rook_attacks & ~own_pieces;
 }
 
@@ -852,10 +852,10 @@ bitboard MoveGenerator::generate_bishop_move_bitboard(int bishop_sq, bool captur
 {
   bitboard bishop_attacks = lut.get_bishop_attacks(bishop_sq, m_board->get_all_pieces());
   if(captures_only) {
-    bitboard opponent_pieces = (m_board->is_white_turn()) ? m_board->get_white_pieces() : m_board->get_white_pieces();
+    bitboard opponent_pieces = (m_board->is_white_turn()) ? m_board->get_black_pieces() : m_board->get_white_pieces();
     return bishop_attacks & opponent_pieces;
   }
-  bitboard own_pieces = (m_board->is_white_turn()) ? m_board->get_white_pieces() : m_board->get_white_pieces();
+  bitboard own_pieces = (m_board->is_white_turn()) ? m_board->get_white_pieces() : m_board->get_black_pieces();
   return bishop_attacks & ~own_pieces;
 }
 

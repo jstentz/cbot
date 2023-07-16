@@ -189,6 +189,7 @@ void Board::make_move(Move move)
     std::cerr << "Attempting to make no_move!\n";
     return;
   }
+
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState prev_state = m_irr_state_history.back();
   IrreversibleState state = prev_state; // make a copy 
@@ -208,8 +209,6 @@ void Board::make_move(Move move)
    */
   piece moving_piece = m_sq_board[from];
   remove_piece(moving_piece, from);
-
-  std::cout << "here!\n";
 
   if(PIECE(moving_piece) != KING) // king done seperately during eval for endgame
     m_positional_score -= constants::piece_scores[utils::index_from_pc(moving_piece)][from];

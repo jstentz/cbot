@@ -137,22 +137,6 @@ void Board::reset(std::string fen)
   m_board_hash_history.clear();
   m_board_hash_history.push_back(m_board_hash);
 
-  utils::print_bitboard(get_piece_bitboard(WHITE | PAWN));
-  utils::print_bitboard(get_piece_bitboard(WHITE | KNIGHT));
-  utils::print_bitboard(get_piece_bitboard(WHITE | BISHOP));
-  utils::print_bitboard(get_piece_bitboard(WHITE | ROOK));
-  utils::print_bitboard(get_piece_bitboard(WHITE | QUEEN));
-  utils::print_bitboard(get_piece_bitboard(WHITE | KING));
-  utils::print_bitboard(get_piece_bitboard(BLACK | PAWN));
-  utils::print_bitboard(get_piece_bitboard(BLACK | KNIGHT));
-  utils::print_bitboard(get_piece_bitboard(BLACK | BISHOP));
-  utils::print_bitboard(get_piece_bitboard(BLACK | ROOK));
-  utils::print_bitboard(get_piece_bitboard(BLACK | QUEEN));
-  utils::print_bitboard(get_piece_bitboard(BLACK | KING));
-  utils::print_bitboard(get_white_pieces());
-  utils::print_bitboard(get_black_pieces());
-  utils::print_bitboard(get_all_pieces());
-
   /* more eval stuff */
   for(int i = 0; i < 10; i++) {
     m_piece_counts[i] = pop_count(m_piece_boards[i]);
@@ -911,10 +895,7 @@ void Board::place_piece(piece pc, int sq)
 void Board::place_piece_in_bb(piece pc, int sq)
 {
   int index = utils::index_from_pc(pc);
-  m_piece_boards[index] |= (1 << sq);
-  std::cout << "Placing piece " << pc << " at " << sq << " with index " << index << std::endl;
-  utils::print_bitboard(m_piece_boards[index]);
-
+  m_piece_boards[index] |= (1LL << sq);
 }
 
 void Board::remove_piece(piece pc, int sq)
@@ -931,7 +912,7 @@ void Board::remove_piece(piece pc, int sq)
 void Board::remove_piece_from_bb(piece pc, int sq)
 {
   int index = utils::index_from_pc(pc);
-  m_piece_boards[index] &= ~(1 << sq);
+  m_piece_boards[index] &= ~(1LL << sq);
 }
 
 void Board::update_redundant_boards()

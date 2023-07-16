@@ -187,12 +187,7 @@ void Board::make_move(Move move)
     std::cerr << "Attempting to make no_move!\n";
     return;
   }
-  if (m_sq_board[move.from()] == EMPTY)
-  {
-    std::cerr << "Moving empty piece\n";
-    std::cout << "Making: From " << move.from() << ", To " << move.to() << ", Type " << move.type() << ", Piece " << m_sq_board[move.from()] << std::endl;
-  }
-
+  
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState prev_state = m_irr_state_history.back();
   IrreversibleState state = prev_state; // make a copy 
@@ -512,13 +507,6 @@ void Board::unmake_move(Move move) {
   m_ply--;
   m_board_hash_history.pop_back();
 
-  // if (m_sq_board[move.to()] == EMPTY)
-  // {
-  //   std::cerr << "unmoving empty piece\n";
-  //   std::cout << "Unmaking: From " << move.get_move() << ", To " << move.to() << ", Type " << move.type() << ", Piece " << m_sq_board[move.to()] << std::endl;
-
-  // }
-
   uint64_t board_hash = m_board_hash;
   uint64_t piece_hash = m_piece_hash;
   uint64_t pawn_hash = m_pawn_hash;
@@ -697,7 +685,7 @@ void Board::unmake_move(Move move) {
       pawn_hash ^= m_hasher.get_hash_val(moving_piece, from);
 
       remove_piece_from_bb(promo_piece, to);
-      if(!move.is_capture()) /* if they aren't capturing anything, then make the promotion square empty */
+      if(!move.is_capture()) 
         m_sq_board[to] = EMPTY;
       break;
     case Move::BISHOP_PROMO_CAPTURE:

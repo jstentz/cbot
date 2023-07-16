@@ -20,8 +20,8 @@ int main()
   /* begin UCI listening */
 
   Board::Ptr board = std::make_shared<Board>();
-  // MoveGenerator gen{board};
 
+  // MoveGenerator gen{board};
   // for ( ;; )
   // {
   //   std::cout << board->to_string();

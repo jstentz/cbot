@@ -75,8 +75,8 @@ void Board::reset(std::string fen)
     int pc_loc = row * 8 + col; 
     place_piece(pc, pc_loc);
 
-    m_white_king_loc = (pc == WHITE | KING) ? pc_loc : m_white_king_loc;
-    m_black_king_loc = (pc == BLACK | KING) ? pc_loc : m_black_king_loc;
+    m_white_king_loc = (pc == (WHITE | KING)) ? pc_loc : m_white_king_loc;
+    m_black_king_loc = (pc == (BLACK | KING)) ? pc_loc : m_black_king_loc;
 
     // evaluation stuff 
     if(PIECE(pc) != KING && PIECE(pc) != EMPTY) 
@@ -110,9 +110,6 @@ void Board::reset(std::string fen)
       case 'q':
         black_queen_side = true;
         break;
-      default:
-        std::cerr << "Invalid fen string!" << std::endl;
-        exit(1);
     };
   }
 
@@ -138,7 +135,8 @@ void Board::reset(std::string fen)
   m_board_hash_history.push_back(m_board_hash);
 
   /* more eval stuff */
-  for(int i = 0; i < 10; i++) {
+  for(int i = 0; i < 10; i++) 
+  {
     m_piece_counts[i] = pop_count(m_piece_boards[i]);
   }
 }
@@ -188,6 +186,11 @@ void Board::make_move(Move move)
   {
     std::cerr << "Attempting to make no_move!\n";
     return;
+  }
+  if (m_sq_board[move.from()] == EMPTY)
+  {
+    std::cerr << "Moving empty piece\n";
+    std::cout << "Making: From " << move.from() << ", To " << move.to() << ", Type " << move.type() << ", Piece " << m_sq_board[move.from()] << std::endl;
   }
 
   /* make a copy of the irreversible aspects of the position */
@@ -503,10 +506,18 @@ void Board::unmake_move(Move move) {
     std::cerr << "Attempting to unmake no_move!\n";
     return;
   }
+
   /* make a copy of the irreversible aspects of the position */
   IrreversibleState state = m_irr_state_history.back();
   m_ply--;
   m_board_hash_history.pop_back();
+
+  // if (m_sq_board[move.to()] == EMPTY)
+  // {
+  //   std::cerr << "unmoving empty piece\n";
+  //   std::cout << "Unmaking: From " << move.get_move() << ", To " << move.to() << ", Type " << move.type() << ", Piece " << m_sq_board[move.to()] << std::endl;
+
+  // }
 
   uint64_t board_hash = m_board_hash;
   uint64_t piece_hash = m_piece_hash;

@@ -4,6 +4,7 @@
 
 #include "include/search.h"
 #include "include/board.h"
+#include "include/utils.h"
 // #include "include/uci.h"
 
 int main() 
@@ -19,8 +20,24 @@ int main()
   /* begin UCI listening */
 
   Board::Ptr board = std::make_shared<Board>();
-  Searcher searcher{board};
-  std::cout << searcher.perft(4) << std::endl;
+  // utils::print_bitboard(board->get_piece_bitboard(WHITE | PAWN));
+  // utils::print_bitboard(board->get_piece_bitboard(WHITE | KNIGHT));
+  // utils::print_bitboard(board->get_piece_bitboard(WHITE | BISHOP));
+  // utils::print_bitboard(board->get_piece_bitboard(WHITE | ROOK));
+  // utils::print_bitboard(board->get_piece_bitboard(WHITE | QUEEN));
+  // utils::print_bitboard(board->get_piece_bitboard(WHITE | KING));
+  // utils::print_bitboard(board->get_piece_bitboard(BLACK | PAWN));
+  // utils::print_bitboard(board->get_piece_bitboard(BLACK | KNIGHT));
+  // utils::print_bitboard(board->get_piece_bitboard(BLACK | BISHOP));
+  // utils::print_bitboard(board->get_piece_bitboard(BLACK | ROOK));
+  // utils::print_bitboard(board->get_piece_bitboard(BLACK | QUEEN));
+  // utils::print_bitboard(board->get_piece_bitboard(BLACK | KING));
+  // utils::print_bitboard(board->get_white_pieces());
+  // utils::print_bitboard(board->get_black_pieces());
+  // utils::print_bitboard(board->get_all_pieces());
+  
+  // Searcher searcher{board};
+  // std::cout << searcher.perft(4) << std::endl;
 
   
   // uci::start_uci_communication();

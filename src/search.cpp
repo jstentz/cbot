@@ -17,15 +17,13 @@
 #include <iostream>
 #include <chrono>
 
-Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE}, m_evaluator{m_board} 
-{
-  std::cout << "here!" << std::endl;
-}
+Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE}, m_evaluator{m_board} {}
 
 uint64_t Searcher::perft(int depth)
 {
   std::vector<Move> moves;
   m_move_gen.generate_moves(moves);
+
   uint64_t total_nodes = 0;
   uint64_t nodes_from_move;
   // m_move_gen.sort_by_algebraic_notation(moves);

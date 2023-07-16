@@ -5,6 +5,7 @@
 #include <climits>
 #include <string>
 #include <sstream>
+#include <bitset>
 
 #include "include/utils.h"
 #include "include/pieces.h"
@@ -133,4 +134,18 @@ int utils::md(int sq1, int sq2)
   int r1 = rank(sq1);
   int r2 = rank(sq2);
   return abs(r2 - r1) + abs(f2 - f1);
+}
+
+void utils::print_bitboard(bitboard b) 
+{
+  std::bitset<64> bs(b);
+  for (size_t i = 0; i < 8; i++) 
+  {
+    for (size_t j = 0; j < 8; j++) 
+    {
+      std::cout << bs[(7-i)*8 + j];
+    }
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
 }

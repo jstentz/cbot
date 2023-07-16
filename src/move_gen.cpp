@@ -38,6 +38,7 @@ void MoveGenerator::generate_moves(std::vector<Move> &curr_moves, bool captures_
       push_mask = 0;
     }
   }
+
   bool pawn_check = (check_pieces & (m_board->get_piece_bitboard(WHITE | PAWN) | m_board->get_piece_bitboard(BLACK | PAWN))) != 0;
   bitboard check_mask = push_mask | capture_mask;
   Pin pin = get_pinned_pieces(friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
@@ -833,7 +834,6 @@ bitboard MoveGenerator::generate_pawn_move_bitboard(int pawn_sq, bool captures_o
     }
     forward_moves = forward_one | forward_two;
   }
-
   return captures | forward_moves | en_passant_capture;
 }
 
@@ -979,7 +979,6 @@ void MoveGenerator::generate_pawn_moves(std::vector<Move> &curr_moves, bitboard 
     pin_mask = 0xFFFFFFFFFFFFFFFF;
     if(pawn_bit & pin.pinned_pieces) pin_mask = pin.ray_at_sq[from];
     pawn_moves = generate_pawn_move_bitboard(from, captures_only) & check_mask & pin_mask;
-    
     while(pawn_moves) {
       to = first_set_bit(pawn_moves);
       to_bit = BIT_FROM_SQ(to);

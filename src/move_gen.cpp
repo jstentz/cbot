@@ -682,6 +682,7 @@ bitboard MoveGenerator::generate_king_move_bitboard(int king_sq, bool captures_o
   bitboard king_pseudomoves = (captures_only) ? (king_attacks & opponent_pieces) : (king_attacks & ~own_pieces);
 
   if(!king_pseudomoves) return 0; // if the king has no pseudolegal moves, it cannot castle
+  std::cout << "here!\n";
 
   bitboard king_legal_moves = 0;
   bitboard blocking_pieces = m_board->get_all_pieces() & ~BIT_FROM_SQ(king_sq); // the king cannot block the attack on a square behind it
@@ -755,6 +756,7 @@ bitboard MoveGenerator::generate_king_move_bitboard(int king_sq, bool captures_o
          }
     } 
   }
+  std::cout << std::hex << (king_legal_moves | king_castle) << std::dec << std::endl;
   return king_legal_moves | king_castle;
 }
 

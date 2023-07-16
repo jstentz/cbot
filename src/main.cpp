@@ -21,23 +21,24 @@ int main()
 
   Board::Ptr board = std::make_shared<Board>();
 
-  // MoveGenerator gen{board};
-  // for ( ;; )
-  // {
-  //   std::cout << board->to_string();
-  //   std::vector<Move> moves;
-  //   gen.generate_moves(moves);
-  //   for (auto move : moves)
-  //   {
-  //     std::cout << gen.notation_from_move(move) << ' ';
-  //   }
-  //   int index;
-  //   std::cin >> index;
-  //   board->make_move(moves[index]);
-  // }
+  MoveGenerator gen{board};
+  for ( ;; )
+  {
+    std::cout << board->to_string();
+    std::cout << board->can_white_king_side_castle() << board->can_white_queen_side_castle() << board->can_black_king_side_castle() << board->can_black_queen_side_castle() << std::endl;
+    std::vector<Move> moves;
+    gen.generate_moves(moves);
+    for (int i = 0; i < moves.size(); i++)
+    {
+      std::cout << i << ": " << gen.move_to_long_algebraic(moves[i]) << " ; ";
+    }
+    int index;
+    std::cin >> index;
+    board->make_move(moves[index]);
+  }
 
-  Searcher searcher{board};
-  std::cout << searcher.perft(4) << std::endl;
+  // Searcher searcher{board};
+  // searcher.perft(4);
 
   
   // uci::start_uci_communication();

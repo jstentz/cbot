@@ -20,6 +20,22 @@ int main()
   /* begin UCI listening */
 
   Board::Ptr board = std::make_shared<Board>();
+  // MoveGenerator gen{board};
+
+  // for ( ;; )
+  // {
+  //   std::cout << board->to_string();
+  //   std::vector<Move> moves;
+  //   gen.generate_moves(moves);
+  //   for (auto move : moves)
+  //   {
+  //     std::cout << gen.notation_from_move(move) << ' ';
+  //   }
+  //   int index;
+  //   std::cin >> index;
+  //   board->make_move(moves[index]);
+  // }
+
   Searcher searcher{board};
   std::cout << searcher.perft(4) << std::endl;
 

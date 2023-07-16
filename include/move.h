@@ -12,20 +12,20 @@ public:
   // move types, needs to be exposed so others can see
   enum MoveType : int
   {
-    QUIET_MOVE,
-    DOUBLE_PUSH,
-    KING_SIDE_CASTLE,
-    QUEEN_SIDE_CASTLE,
-    NORMAL_CAPTURE,
-    EN_PASSANT_CAPTURE,
-    KNIGHT_PROMO,
-    BISHOP_PROMO,
-    ROOK_PROMO,
-    QUEEN_PROMO,
-    KNIGHT_PROMO_CAPTURE,
-    BISHOP_PROMO_CAPTURE,
-    ROOK_PROMO_CAPTURE,
-    QUEEN_PROMO_CAPTURE
+    QUIET_MOVE =           0x0,
+    DOUBLE_PUSH =          0x1,
+    KING_SIDE_CASTLE =     0x2,
+    QUEEN_SIDE_CASTLE =    0x3,
+    NORMAL_CAPTURE =       0x4,
+    EN_PASSANT_CAPTURE =   0x5,
+    KNIGHT_PROMO =         0x8,
+    BISHOP_PROMO =         0x9,
+    ROOK_PROMO =           0xA,
+    QUEEN_PROMO =          0xB,
+    KNIGHT_PROMO_CAPTURE = 0xC,
+    BISHOP_PROMO_CAPTURE = 0xD,
+    ROOK_PROMO_CAPTURE =   0xE,
+    QUEEN_PROMO_CAPTURE =  0xF
   };
 
   const static int NO_MOVE = 0;

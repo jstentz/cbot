@@ -9,7 +9,7 @@
 
 int main() 
 {
-  // std::string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  std::string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   std::string test_pos_2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
   std::string test_pos_3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
   std::string test_pos_4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
@@ -18,51 +18,21 @@ int main()
 
   std::string debug_white_promo = "2n4k/1P6/8/8/8/8/8/7K w - - 0 1";
 
-  Board::Ptr board = std::make_shared<Board>(debug_white_promo);
-
-  std::cout << board->to_string() << std::endl;
-  
-  for (int i = 2; i < 14; i++)
-  {
-    utils::print_bitboard(board->get_piece_bitboard(i));
-  }
-
-  std::cout << board->get_white_king_loc() << " " << board->get_black_king_loc() << std::endl;
-
-
+  Board::Ptr board = std::make_shared<Board>(test_pos_1);
   Searcher searcher{board};
   int d;
   std::cin >> d;
   searcher.perft(d);
-  // board->reset(test_pos_2);
-  // searcher.perft(5);
-  // board->reset(test_pos_3);
-  // searcher.perft(5);
-  // board->reset(test_pos_4);
-  // searcher.perft(5);
-  // board->reset(test_pos_5);
-  // searcher.perft(5);
-  // board->reset(test_pos_6);
-  // searcher.perft(5);
-
-  // MoveGenerator gen{board};
-  // for ( ;; )
-  // {
-  //   std::cout << board->to_string();
-  //   std::cout << board->can_white_king_side_castle() << board->can_white_queen_side_castle() << board->can_black_king_side_castle() << board->can_black_queen_side_castle() << std::endl;
-  //   std::vector<Move> moves;
-  //   gen.generate_moves(moves);
-  //   for (int i = 0; i < moves.size(); i++)
-  //   {
-  //     std::cout << i << ": " << gen.move_to_long_algebraic(moves[i]) << " ; ";
-  //   }
-  //   int index;
-  //   std::cin >> index;
-  //   board->make_move(moves[index]);
-  // }
-
-
-  
+  board->reset(test_pos_2);
+  searcher.perft(d);
+  board->reset(test_pos_3);
+  searcher.perft(d);
+  board->reset(test_pos_4);
+  searcher.perft(d);
+  board->reset(test_pos_5);
+  searcher.perft(d);
+  board->reset(test_pos_6);
+  searcher.perft(d);
   // uci::start_uci_communication();
   return 0;
 }

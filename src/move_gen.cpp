@@ -319,13 +319,13 @@ Move MoveGenerator::move_from_notation(std::string notation) const
 
 std::string MoveGenerator::move_to_long_algebraic(Move move) const
 {
-  std::string result = "";
+  std::string result;
   
   int from_file = utils::file(move.from());
   int from_rank = utils::rank(move.from());
   
   int to_file = utils::file(move.to());
-  int to_rank = utils::rank(move.from());
+  int to_rank = utils::rank(move.to());
 
   result.push_back(constants::FILES[from_file]);
   result.push_back(constants::RANKS[from_rank]);

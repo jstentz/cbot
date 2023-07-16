@@ -209,6 +209,8 @@ void Board::make_move(Move move)
   piece moving_piece = m_sq_board[from];
   remove_piece(moving_piece, from);
 
+  std::cout << "here!\n";
+
   if(PIECE(moving_piece) != KING) // king done seperately during eval for endgame
     m_positional_score -= constants::piece_scores[utils::index_from_pc(moving_piece)][from];
   
@@ -245,11 +247,8 @@ void Board::make_move(Move move)
   /* default there to be no en passant Square and set it if double pawn push */
   state.set_en_passant_sq(constants::NONE);
 
-  bitboard *rook_board;
   piece captured_piece = EMPTY;
-  bitboard *captured_board;
   piece promo_piece = EMPTY;
-  bitboard *promo_board;
   int opponent_pawn_sq;
   uint64_t to_zobrist = m_hasher.get_hash_val(moving_piece, to);
   switch (type) {

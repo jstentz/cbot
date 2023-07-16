@@ -24,11 +24,11 @@ uint64_t Searcher::perft(int depth)
   std::vector<Move> moves;
   m_move_gen.generate_moves(moves);
 
-  for (auto move : moves)
-  {
-    std::cout << m_move_gen.move_to_long_algebraic(move) << ' ';
-  }
-  std::cout << std::endl;
+  // for (auto move : moves)
+  // {
+  //   std::cout << m_move_gen.move_to_long_algebraic(move) << ' ';
+  // }
+  // std::cout << std::endl;
 
   uint64_t total_nodes = 0;
   uint64_t nodes_from_move;

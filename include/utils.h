@@ -5,6 +5,8 @@
 
 #include "include/pieces.h"
 #include "include/constants.h"
+#include "include/bitboard.h"
+
 
 namespace utils
 {
@@ -55,5 +57,7 @@ int moves_until_mate(int mate_score);
 
 int cmd(int sq);
 int md(int sq1, int sq2);
+
+void print_bitboard(bitboard b);
 
 }

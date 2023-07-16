@@ -270,7 +270,7 @@ void Board::make_move(Move move)
       if(utils::rank(from) == constants::RANK_2)
         state.set_en_passant_sq(from + 8);
       else
-        state.set_en_passant_sq(from + 8);
+        state.set_en_passant_sq(from - 8);
       // hash value update for en passant Square happens later
       break;
     case Move::KING_SIDE_CASTLE:

@@ -26,16 +26,16 @@ uint64_t Searcher::perft(int depth)
 
   uint64_t total_nodes = 0;
   uint64_t nodes_from_move;
-  // m_move_gen.sort_by_algebraic_notation(moves);
+  m_move_gen.sort_by_long_algebraic_notation(moves);
   for(Move& move : moves) {
-    // std::cout << algebraic_notation(move) << ": ";
+    std::cout << m_move_gen.move_to_long_algebraic(move) << ": ";
     m_board->make_move(move);
     nodes_from_move = num_nodes_bulk(depth - 1);
     total_nodes += nodes_from_move;
-    // std::cout << nodes_from_move << endl;
+    std::cout << nodes_from_move << std::endl;
     m_board->unmake_move(move);
   }
-  // std::cout << "Nodes searched: " << total_nodes << endl;
+  std::cout << "Nodes searched: " << total_nodes << std::endl;
   return total_nodes;
 }
 

@@ -13,10 +13,12 @@
 
 #include <vector>
 #include <string>
+#include <array>
 
 #include "include/move.h"
 #include "include/board.h"
 #include "include/attacks.h"
+#include "include/constants.h"
 
 class MoveGenerator
 {
@@ -43,6 +45,7 @@ public:
 private:
   Board::Ptr m_board;
   LookUpTable lut;
+  std::array<Move, constants::MAX_MOVES> moves;
 
 
   struct Pin

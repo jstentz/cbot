@@ -248,25 +248,6 @@ LookUpTable::LookUpTable()
   }
 }
 
-bitboard LookUpTable::get_knight_attacks(int sq) const
-{
-  // doesn't depend on the current position
-  return knight_attacks[sq];
-}
-
-bitboard LookUpTable::get_king_attacks(int sq) const
-{
-  // doesn't depend on the current position
-  return king_attacks[sq];
-}
-
-bitboard LookUpTable::get_pawn_attacks(int sq, bool white_side) const
-{
-  // depends on who's turn it is to move
-  if(white_side) return white_pawn_attacks[sq];
-  return black_pawn_attacks[sq];
-}
-
 bitboard LookUpTable::get_rook_attacks(int rook_sq, bitboard blockers) const
 {
   // depends on the placement of blockers on the board
@@ -342,14 +323,4 @@ bitboard LookUpTable::get_ray_from_queen_to_king(int queen_sq, int king_sq) cons
 bitboard LookUpTable::get_ray_from_sq_to_sq(int start, int target) const
 {
   return get_ray_from_queen_to_king(start, target);
-}
-
-bitboard LookUpTable::get_rank_mask(int rank) const
-{
-  return mask_rank[rank];
-}
-
-bitboard LookUpTable::get_pawn_pushes(int sq, bool white) const
-{
-  return white ? white_pawn_pushes[sq] : black_pawn_pushes[sq];
 }

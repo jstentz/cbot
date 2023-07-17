@@ -13,15 +13,37 @@
 
 #include "include/bitboard.h"
 
+
+// after doing magic bitboards, all of the getters will be inline
 class LookUpTable
 {
 public:
   LookUpTable(); // construct the lut
 
-  bitboard get_knight_attacks(int sq) const;
-  bitboard get_king_attacks(int sq) const;
-  bitboard get_pawn_attacks(int sq, bool white_side) const;
-  bitboard get_pawn_pushes(int sq, bool white) const;
+  inline bitboard get_knight_attacks(int sq) const
+  {
+    // doesn't depend on the current position
+    return knight_attacks[sq];
+  }
+
+  inline bitboard get_king_attacks(int sq) const
+  {
+    // doesn't depend on the current position
+    return king_attacks[sq];
+  }
+
+  inline bitboard get_pawn_attacks(int sq, bool white_side) const
+  {
+    // depends on who's turn it is to move
+    if(white_side) return white_pawn_attacks[sq];
+    return black_pawn_attacks[sq];
+  }
+  
+  inline bitboard get_pawn_pushes(int sq, bool white) const
+  {
+    return white ? white_pawn_pushes[sq] : black_pawn_pushes[sq];
+  }
+
   bitboard get_rook_attacks(int sq, bitboard blockers) const;
   bitboard get_bishop_attacks(int sq, bitboard blockers) const;
   bitboard get_queen_attacks(int sq, bitboard blockers) const;
@@ -31,7 +53,11 @@ public:
   bitboard get_ray_from_queen_to_king(int queen_sq, int king_sq) const;
   bitboard get_ray_from_sq_to_sq(int start_sq, int target_sq) const;
 
-  bitboard get_rank_mask(int rank) const;
+  inline bitboard get_rank_mask(int rank) const
+  {
+    return mask_rank[rank];
+  }
+
   
 
 private:

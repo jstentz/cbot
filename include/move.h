@@ -30,25 +30,73 @@ public:
 
   const static int NO_MOVE = 0;
 
-  Move();
-  Move(int from, int to, int type);
-  Move(int from, int to, int type, int score);
-  Move(int move);
+  inline Move() {}
 
-  int from() const;
-  int to() const;
-  int type() const;
-  bool is_capture() const;
-  bool is_promo() const;
+  inline Move(int from, int to, int flags)
+  {
+    m_move = (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12);
+  }
 
-  int score() const;
-  void set_score(int score);
+  inline Move(int from, int to, int flags, int score)
+  {
+    m_move = (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12) | ((score & 0xFFFF) << 16);
+  }
 
-  bool is_no_move() const;
+  inline Move(int move)
+  {
+    m_move = move;
+  }
 
-  int get_move() const;
+  inline int from() const
+  {
+    return m_move & 0x3F;
+  }
 
-  bool operator==(Move other_move) const;
+  inline int to() const
+  {
+    return (m_move >> 6) & 0x3F;
+  }
+
+  inline int type() const
+  {
+    return (m_move >> 12) & 0xF;
+  }
+
+  inline bool is_capture() const
+  {
+    return m_move & 0x4000;
+  }
+
+  inline bool is_promo() const
+  {
+    return m_move & 0x8000;
+  }
+
+  inline int score() const
+  {
+    return m_move >> 16;
+  }
+
+  inline void set_score(int score)
+  {
+    m_move &= 0x0000FFFF; 
+    m_move |= score << 16;
+  }
+
+  inline int get_move() const
+  {
+    return m_move;
+  }
+
+  inline bool is_no_move() const
+  {
+    return m_move == NO_MOVE;
+  }
+
+  inline bool operator==(Move other_move) const
+  {
+    return (to() == other_move.to()) && (from() == other_move.from()) && (type() == other_move.type());
+  }
 
 private:
   int m_move{};

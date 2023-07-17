@@ -20,6 +20,7 @@
 #include "include/constants.h"
 #include "include/move.h"
 #include "include/hashing.h"
+#include "include/utils.h"
 
 class Board
 {
@@ -66,36 +67,115 @@ public:
 
   BoardStatus get_game_status() const;
 
-  bool is_white_turn() const;
-
   // *IMPORTANT* for all of these getters, consider using a const reference for speed reasons...
 
   // indexing into the square board
-  piece operator[](int sq) const;
+  inline piece operator[](int sq) const
+  {
+    return m_sq_board[sq];
+  }
 
-  int get_piece_count(piece pc) const;
-  int get_material_score() const;
-  int get_positional_score() const;
-  int get_total_material() const;
+  inline int get_piece_count(piece pc) const
+  {
+    return m_piece_counts[utils::index_from_pc(pc)];
+  }
 
-  uint64_t get_hash() const;
-  uint64_t get_piece_hash() const;
-  uint64_t get_pawn_hash() const;
+  inline int get_material_score() const
+  {
+    return m_material_score;
+  }
+
+  inline int get_positional_score() const
+  {
+    return m_positional_score;
+  }
+
+  inline int get_total_material() const
+  {
+    return m_total_material;
+  }
+
+  inline uint64_t get_hash() const
+  {
+    return m_board_hash;
+  }
+
+  inline uint64_t get_piece_hash() const
+  {
+    return m_piece_hash;
+  }
+
+  inline uint64_t get_pawn_hash() const
+  {
+    return m_pawn_hash;
+  }
+
   bool is_repetition() const;
 
-  bitboard get_piece_bitboard(piece pc) const;
-  bitboard get_white_pieces() const;
-  bitboard get_black_pieces() const;
-  bitboard get_all_pieces() const;
+  inline bitboard get_piece_bitboard(piece pc) const
+  {
+    return m_piece_boards[utils::index_from_pc(pc)];
+  }
 
-  int get_white_king_loc() const;
-  int get_black_king_loc() const;
-  bool can_white_king_side_castle() const;
-  bool can_white_queen_side_castle() const;
-  bool can_black_king_side_castle() const;
-  bool can_black_queen_side_castle() const;
-  int get_en_passant_sq() const;
-  Move get_last_move() const;
+  inline int get_white_king_loc() const
+  {
+    return m_white_king_loc;
+  }
+
+  inline int get_black_king_loc() const
+  {
+    return m_black_king_loc;
+  }
+
+  inline bool can_white_king_side_castle() const
+  {
+    return m_irr_state_history.back().can_white_king_side_castle();
+  }
+
+  inline bool can_white_queen_side_castle() const
+  {
+    return m_irr_state_history.back().can_white_queen_side_castle();
+  }
+
+  inline bool can_black_king_side_castle() const
+  {
+    return m_irr_state_history.back().can_black_king_side_castle();
+  }
+
+  inline bool can_black_queen_side_castle() const
+  {
+    return m_irr_state_history.back().can_black_queen_side_castle();
+  }
+
+  inline int get_en_passant_sq() const
+  {
+    return m_irr_state_history.back().get_en_passant_sq();
+  }
+
+  inline Move get_last_move() const
+  {
+    return m_irr_state_history.back().get_last_move();
+  }
+
+  inline bitboard get_white_pieces() const
+  {
+    return m_white_pieces;
+  }
+
+  inline bitboard get_black_pieces() const
+  {
+    return m_black_pieces;
+  }
+
+  inline bitboard get_all_pieces() const
+  {
+    return m_all_pieces;
+  }
+
+  inline bool is_white_turn() const
+  {
+    return m_white_turn;
+  }
 
   std::string to_string() const;
   std::string to_fen_string() const;

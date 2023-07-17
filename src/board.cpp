@@ -948,45 +948,7 @@ Board::IrreversibleState::IrreversibleState(bool white_ks,
 
 ///////////////////////////////////////////////// GETTER FUNCTIONS /////////////////////////////////////////////////
 
-piece Board::operator[](int sq) const
-{
-  return m_sq_board[sq];
-}
 
-int Board::get_piece_count(piece pc) const
-{
-  return m_piece_counts[utils::index_from_pc(pc)];
-}
-
-int Board::get_material_score() const
-{
-  return m_material_score;
-}
-
-int Board::get_positional_score() const
-{
-  return m_positional_score;
-}
-
-int Board::get_total_material() const
-{
-  return m_total_material;
-}
-
-uint64_t Board::get_hash() const
-{
-  return m_board_hash;
-}
-
-uint64_t Board::get_piece_hash() const
-{
-  return m_piece_hash;
-}
-
-uint64_t Board::get_pawn_hash() const
-{
-  return m_pawn_hash;
-}
 
 bool Board::is_repetition() const 
 {
@@ -1002,70 +964,6 @@ bool Board::is_repetition() const
     }
   }
   return false;
-}
-
-bitboard Board::get_piece_bitboard(piece pc) const
-{
-  return m_piece_boards[utils::index_from_pc(pc)];
-}
-
-int Board::get_white_king_loc() const
-{
-  return m_white_king_loc;
-}
-
-int Board::get_black_king_loc() const
-{
-  return m_black_king_loc;
-}
-
-bool Board::can_white_king_side_castle() const
-{
-  return m_irr_state_history.back().can_white_king_side_castle();
-}
-
-bool Board::can_white_queen_side_castle() const
-{
-  return m_irr_state_history.back().can_white_queen_side_castle();
-}
-
-bool Board::can_black_king_side_castle() const
-{
-  return m_irr_state_history.back().can_black_king_side_castle();
-}
-
-bool Board::can_black_queen_side_castle() const
-{
-  return m_irr_state_history.back().can_black_queen_side_castle();
-}
-
-int Board::get_en_passant_sq() const
-{
-  return m_irr_state_history.back().get_en_passant_sq();
-}
-
-Move Board::get_last_move() const
-{
-  return m_irr_state_history.back().get_last_move();
-}
-
-bitboard Board::get_white_pieces() const
-{
-  return m_white_pieces;
-}
-
-bitboard Board::get_black_pieces() const
-{
-  return m_black_pieces;
-}
-bitboard Board::get_all_pieces() const
-{
-  return m_all_pieces;
-}
-
-bool Board::is_white_turn() const
-{
-  return m_white_turn;
 }
 
 ///////////////////////////////////////////////// HELPFUL BOARD FUNCTIONS /////////////////////////////////////////////////

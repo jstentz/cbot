@@ -35,8 +35,6 @@ bitboard rotate_90_anticlockwise(bitboard b) {
   return flip_diag_a1_h8(flip_vertical(b));
 }
 
-bitboard rotate_right(bitboard b, int s) {return (b >> s) | (b << (64 - s));}
-
 bitboard pseudo_rotate_45_clockwise(bitboard b) {
   const bitboard k1 = bitboard(0xAAAAAAAAAAAAAAAA);
   const bitboard k2 = bitboard(0xCCCCCCCCCCCCCCCC);

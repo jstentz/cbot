@@ -72,6 +72,9 @@ inline uint16_t first_set_bit(bitboard bits) {
   return constants::index64[((bits ^ (bits-1)) * constants::debruijn64) >> 58];
 }
 
+inline bitboard rotate_right(bitboard b, int s) {return (b >> s) | (b << (64 - s));}
+
+
 /**
  * @brief Given a bitboard, return the number of 1s in the bit pattern.
  * 

@@ -2,3 +2,4 @@ assets/config.txt
 build-unix
 .vscode
 cbot
+callgrind*

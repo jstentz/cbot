@@ -59,31 +59,6 @@ int utils::sq_from_name(std::string name)
   return rank * 8 + file; 
 }
 
-int utils::file(int sq)
-{
-  return sq & 7;
-}
-
-int utils::rank(int sq)
-{
-  return sq >> 3;
-}
-
-int utils::diag(int sq)
-{
-  return 7 + rank(sq) - file(sq);
-}
-
-int utils::anti_diag(int sq)
-{
-  return rank(sq) + file(sq);
-}
-
-int utils::index_from_pc(piece pc)
-{
-  return pc - 2; /// TODO: make a comment on why this works
-}
-
 std::vector<std::string> utils::split(std::string& cmd, char delim)
 {
   std::vector<std::string> str_list;

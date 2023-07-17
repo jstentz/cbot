@@ -133,11 +133,11 @@ private:
     inline bool can_white_castle() const            { return can_white_king_side_castle() || can_white_queen_side_castle(); }
     inline bool can_black_castle() const            { return can_black_king_side_castle() || can_black_queen_side_castle(); }
 
-    inline int get_en_passant_sq() const    { return (m_state >> EN_PASSANT_OFFSET) & EN_PASSANT_SQ_MASK; }
-    inline piece get_last_capture() const   { return (m_state >> PIECE_OFFSET) & PIECE_MASK; }
-    inline uint16_t get_fifty_move() const  { return (m_state >> FIFTY_MOVE_OFFSET) & FIFTY_MOVE_MASK; }
-    inline uint32_t get_irr_ply() const     { return (m_state >> IRR_PLY_OFFSET) & IRR_PLY_MASK; }
-    inline Move get_last_move() const       { return Move((m_state >> LAST_MOVE_OFFSET) & LAST_MOVE_MASK); }
+    inline int get_en_passant_sq() const    { return (m_state >> constants::EN_PASSANT_OFFSET) & constants::EN_PASSANT_SQ_MASK; }
+    inline piece get_last_capture() const   { return (m_state >> constants::PIECE_OFFSET) & constants::PIECE_MASK; }
+    inline uint16_t get_fifty_move() const  { return (m_state >> constants::FIFTY_MOVE_OFFSET) & constants::FIFTY_MOVE_MASK; }
+    inline uint32_t get_irr_ply() const     { return (m_state >> constants::IRR_PLY_OFFSET) & constants::IRR_PLY_MASK; }
+    inline Move get_last_move() const       { return Move((m_state >> constants::LAST_MOVE_OFFSET) & constants::LAST_MOVE_MASK); }
 
     /* setters */
     inline void set_white_king_side_castle(bool can_castle)  { m_state &= ~(1 << 3); m_state |= can_castle << 3; }
@@ -147,34 +147,24 @@ private:
     inline void set_white_castle(bool can_castle)            { set_white_king_side_castle(can_castle); set_white_queen_side_castle(can_castle); }
     inline void set_black_castle(bool can_castle)            { set_black_king_side_castle(can_castle); set_black_queen_side_castle(can_castle); }
 
-    inline void clr_en_passant_sq()        { m_state &= ~(EN_PASSANT_SQ_MASK << EN_PASSANT_OFFSET); }
-    inline void set_en_passant_sq(int sq)  { clr_en_passant_sq(); m_state |= ((uint64_t) sq & EN_PASSANT_SQ_MASK) << EN_PASSANT_OFFSET; }
+    inline void clr_en_passant_sq()        { m_state &= ~(constants::EN_PASSANT_SQ_MASK << constants::EN_PASSANT_OFFSET); }
+    inline void set_en_passant_sq(int sq)  { clr_en_passant_sq(); m_state |= ((uint64_t) sq & constants::EN_PASSANT_SQ_MASK) << constants::EN_PASSANT_OFFSET; }
 
-    inline void clr_last_capture()          { m_state &= ~(PIECE_MASK << PIECE_OFFSET); }
-    inline void set_last_capture(piece pc)  { clr_last_capture(); m_state |= ((uint64_t) pc & PIECE_MASK) << PIECE_OFFSET; }
+    inline void clr_last_capture()          { m_state &= ~(constants::PIECE_MASK << constants::PIECE_OFFSET); }
+    inline void set_last_capture(piece pc)  { clr_last_capture(); m_state |= ((uint64_t) pc & constants::PIECE_MASK) << constants::PIECE_OFFSET; }
 
-    inline void clr_fifty_move()                    { m_state &= ~(FIFTY_MOVE_MASK << FIFTY_MOVE_OFFSET); }
-    inline void set_fifty_move(uint16_t move_count) { clr_fifty_move(); m_state |= (move_count & FIFTY_MOVE_MASK) << FIFTY_MOVE_OFFSET; }
+    inline void clr_fifty_move()                    { m_state &= ~(constants::FIFTY_MOVE_MASK << constants::FIFTY_MOVE_OFFSET); }
+    inline void set_fifty_move(uint16_t move_count) { clr_fifty_move(); m_state |= (move_count & constants::FIFTY_MOVE_MASK) << constants::FIFTY_MOVE_OFFSET; }
     inline void inc_fifty_move()                    { set_fifty_move(get_fifty_move() + 1); }
 
-    inline void clr_irr_ply()             { m_state &= ~(IRR_PLY_MASK << IRR_PLY_OFFSET); }
-    inline void set_irr_ply(uint32_t ply) { clr_irr_ply(); m_state |= (ply & IRR_PLY_MASK) << IRR_PLY_OFFSET; }
+    inline void clr_irr_ply()             { m_state &= ~(constants::IRR_PLY_MASK << constants::IRR_PLY_OFFSET); }
+    inline void set_irr_ply(uint32_t ply) { clr_irr_ply(); m_state |= (ply & constants::IRR_PLY_MASK) << constants::IRR_PLY_OFFSET; }
 
-    inline void clr_last_move()               { m_state &= ~(LAST_MOVE_MASK << LAST_MOVE_OFFSET); }
-    inline void set_last_move(Move last_move) { clr_last_move(); m_state |= (last_move.get_move() & LAST_MOVE_MASK) << LAST_MOVE_OFFSET; }
+    inline void clr_last_move()               { m_state &= ~(constants::LAST_MOVE_MASK << constants::LAST_MOVE_OFFSET); }
+    inline void set_last_move(Move last_move) { clr_last_move(); m_state |= (last_move.get_move() & constants::LAST_MOVE_MASK) << constants::LAST_MOVE_OFFSET; }
 
   private:
     uint64_t m_state{};
-    const static uint64_t EN_PASSANT_SQ_MASK = 0x7F;
-    const static uint16_t EN_PASSANT_OFFSET = 4;
-    const static uint64_t PIECE_MASK = 0xF;
-    const static uint16_t PIECE_OFFSET = 11;
-    const static uint64_t FIFTY_MOVE_MASK = 0x7F;
-    const static uint16_t FIFTY_MOVE_OFFSET = 15; 
-    const static uint64_t IRR_PLY_MASK = 0x3FF;
-    const static uint16_t IRR_PLY_OFFSET = 22; 
-    const static uint64_t LAST_MOVE_MASK = 0xFFFFFFFF;
-    const static uint16_t LAST_MOVE_OFFSET = 32;
   };
 
   /**

@@ -260,4 +260,15 @@ inline int LAZY_EVAL_MARGIN = 200;
 inline int ATTACKING_WEIGHT = 15;
 inline int MOBILITY_WEIGHT = 1;
 
+inline static uint64_t EN_PASSANT_SQ_MASK = 0x7F;
+inline static uint16_t EN_PASSANT_OFFSET = 4;
+inline static uint64_t PIECE_MASK = 0xF;
+inline static uint16_t PIECE_OFFSET = 11;
+inline static uint64_t FIFTY_MOVE_MASK = 0x7F;
+inline static uint16_t FIFTY_MOVE_OFFSET = 15; 
+inline static uint64_t IRR_PLY_MASK = 0x3FF;
+inline static uint16_t IRR_PLY_OFFSET = 22; 
+inline static uint64_t LAST_MOVE_MASK = 0xFFFFFFFF;
+inline static uint16_t LAST_MOVE_OFFSET = 32;
+
 }

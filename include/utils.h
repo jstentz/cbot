@@ -14,12 +14,30 @@ piece piece_from_fen_char(char c);
 
 int sq_from_name(std::string name);
 
-int file(int sq);
-int rank(int sq);
-int diag(int sq);
-int anti_diag(int sq);
+inline int file(int sq)
+{
+  return sq & 7;
+}
 
-int index_from_pc(piece pc);
+inline int rank(int sq)
+{
+  return sq >> 3;
+}
+
+inline int diag(int sq)
+{
+  return 7 + rank(sq) - file(sq);
+}
+
+inline int anti_diag(int sq)
+{
+  return rank(sq) + file(sq);
+}
+
+inline int index_from_pc(piece pc)
+{
+  return pc - 2; /// TODO: make a comment on why this works
+}
 
 /**
  * @brief Splits a string into a list of strings that are separated by the input delimiter.

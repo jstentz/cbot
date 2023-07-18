@@ -1,5 +1,8 @@
 #pragma once
 
+#include "include/board.h"
+#include "include/search.h"
+
 /**
  * Reference: https://gist.github.com/DOBRO/2592c6dad754ba67e6dcaec8c90165bf
  * 
@@ -68,37 +71,46 @@
 #include <vector>
 #include <string>
 
-namespace uci
+class UCICommunicator
 {
+public:
+  UCICommunicator() {}
+  ~UCICommunicator() {}
 
-/* GUI -> ENGINE COMMANDS */
-static const std::string UCI = "uci";
-static const std::string ISREADY = "isready";
-static const std::string SETOPTION = "setoption";
-static const std::string UCINEWGAME = "ucinewgame";
-static const std::string POSITION = "position";
-static const std::string QUIT = "quit";
+  void start_uci_communication();
 
-/* ENGINE -> GUI COMMANDS */
-static const std::string UCIOK = "uciok\n";
-static const std::string READYOK = "readyok\n";
-static const std::string ID_NAME = "id name cbot\n";
-static const std::string ID_AUTHOR = "id author Jason Stentz\n";
+private:
+  Board::Ptr m_board;
+  Searcher::Ptr m_searcher;
 
-/* other constants */
-static const std::string STARTPOS = "startpos";
-static const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-static const std::string FEN = "fen"; 
-static const std::string VERIFY = "verify";
+  void handle_uci();
+  void handle_is_ready();
+  void handle_new_game();
+  void handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd);
 
-void start_uci_communication();
-void handle_uci();
-void handle_is_ready();
-void handle_new_game();
-void handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd);
+  void handle_quit();
 
-void handle_quit();
+  /* My own commands */
+  void handle_verify(std::vector<std::string>& parsed_cmd); /* takes in a depth param */
 
-/* My own commands */
-void handle_verify(std::vector<std::string>& parsed_cmd); /* takes in a depth param */
-}
+
+  /* GUI -> ENGINE COMMANDS */
+  static const std::string UCI;
+  static const std::string ISREADY;
+  static const std::string SETOPTION;
+  static const std::string UCINEWGAME;
+  static const std::string POSITION;
+  static const std::string QUIT;
+
+  /* ENGINE -> GUI COMMANDS */
+  static const std::string UCIOK;
+  static const std::string READYOK;
+  static const std::string ID_NAME;
+  static const std::string ID_AUTHOR;
+
+  /* other constants */
+  static const std::string STARTPOS;
+  static const std::string STARTFEN;
+  static const std::string FEN; 
+  static const std::string VERIFY;
+};

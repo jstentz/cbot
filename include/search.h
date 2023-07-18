@@ -27,6 +27,9 @@
 class Searcher
 {
 public:
+  using Ptr = std::shared_ptr<Searcher>;
+  using ConstPtr = std::shared_ptr<const Searcher>;
+  
   Searcher(Board::Ptr board);
 
   uint64_t perft(int depth);

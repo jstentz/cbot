@@ -10,8 +10,28 @@
 #include "include/tt.h"
 #include "include/utils.h"
 
+/* GUI -> ENGINE COMMANDS */
+const std::string UCICommunicator::UCI = "uci";
+const std::string UCICommunicator::ISREADY = "isready";
+const std::string UCICommunicator::SETOPTION = "setoption";
+const std::string UCICommunicator::UCINEWGAME = "ucinewgame";
+const std::string UCICommunicator::POSITION = "position";
+const std::string UCICommunicator::QUIT = "quit";
+
+  /* ENGINE -> GUI COMMANDS */
+const std::string UCICommunicator::UCIOK = "uciok\n";
+const std::string UCICommunicator::READYOK = "readyok\n";
+const std::string UCICommunicator::ID_NAME = "id name cbot\n";
+const std::string UCICommunicator::ID_AUTHOR = "id author Jason Stentz\n";
+
+  /* other constants */
+const std::string UCICommunicator::STARTPOS = "startpos";
+const std::string UCICommunicator::STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const std::string UCICommunicator::FEN = "fen"; 
+const std::string UCICommunicator::VERIFY = "verify";
+
 /// TODO: make it so commands at the wrong time don't work
-void uci::start_uci_communication()
+void UCICommunicator::start_uci_communication()
 {
   std::string cmd;
   std::vector<std::string> cmd_list;
@@ -54,7 +74,7 @@ void uci::start_uci_communication()
   }
 }
 
-void uci::handle_uci()
+void UCICommunicator::handle_uci()
 {
   /// TODO: add option command in here to give engine options 
   std::cout << ID_NAME;
@@ -62,17 +82,18 @@ void uci::handle_uci()
   std::cout << UCIOK;
 }
 
-void uci::handle_is_ready()
+void UCICommunicator::handle_is_ready()
 {
   std::cout << READYOK;
 }
 
-void uci::handle_new_game()
+void UCICommunicator::handle_new_game()
 {
-  /* do nothing for now */
+  m_board = std::make_shared<Board>();
+  m_searcher = std::make_shared<Searcher>(m_board);
 }
 
-void uci::handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd)
+void UCICommunicator::handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd)
 {
   std::string fen;
   if (parsed_cmd[1] == STARTPOS)
@@ -105,17 +126,18 @@ void uci::handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd
     long_algebraic_moves.push_back(*it);
   }
 
-  /* use this info to get to this position on the board */
-  decode_fen(fen);
+  m_board = std::make_shared<Board>(fen);
+  m_searcher = std::make_shared<Searcher>(m_board);
+  
 
   for (std::string algebraic_move : long_algebraic_moves)
   {
-    move_t move = long_algebraic_to_move(algebraic_move);
+    Move move = long_algebraic_to_move(algebraic_move);
     make_move(move);
   }
 }
 
-void uci::handle_verify(std::vector<std::string>& parsed_cmd)
+void UCICommunicator::handle_verify(std::vector<std::string>& parsed_cmd)
 {
   int depth = parsed_cmd.size() > 1 ? std::stoi(parsed_cmd[1]) : 5; /* default */
   std::string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -125,23 +147,22 @@ void uci::handle_verify(std::vector<std::string>& parsed_cmd)
   std::string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
   std::string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-  decode_fen(test_pos_1);
-  std::cout << "Test 1 total: " << num_nodes_bulk(depth) << std::endl;
-  decode_fen(test_pos_2);
-  std::cout << "Test 2 total: " << num_nodes_bulk(depth) << std::endl;
-  decode_fen(test_pos_3);
-  std::cout << "Test 3 total: " << num_nodes_bulk(depth) << std::endl;
-  decode_fen(test_pos_4);
-  std::cout << "Test 4 total: " << num_nodes_bulk(depth) << std::endl;
-  decode_fen(test_pos_5);
-  std::cout << "Test 5 total: " << num_nodes_bulk(depth) << std::endl;
-  decode_fen(test_pos_6);
-  std::cout << "Test 6 total: " << num_nodes_bulk(depth) << std::endl;
+  Board::Ptr board = std::make_shared<Board>(test_pos_1);
+  Searcher searcher{board};
+  std::cout << "Test 1 total: " << searcher.num_nodes_bulk(depth) << std::endl;
+  board->reset(test_pos_2);
+  std::cout << "Test 2 total: " << searcher.num_nodes_bulk(depth) << std::endl;
+  board->reset(test_pos_3);
+  std::cout << "Test 3 total: " << searcher.num_nodes_bulk(depth) << std::endl;
+  board->reset(test_pos_4);
+  std::cout << "Test 4 total: " << searcher.num_nodes_bulk(depth) << std::endl;
+  board->reset(test_pos_5);
+  std::cout << "Test 5 total: " << searcher.num_nodes_bulk(depth) << std::endl;
+  board->reset(test_pos_6);
+  std::cout << "Test 6 total: " << searcher.num_nodes_bulk(depth) << std::endl;
 }
 
-void uci::handle_quit()
+void UCICommunicator::handle_quit()
 {
-  free_tt_table();
-  free_eval_table();
   exit(0); /* quit successfully*/
 }

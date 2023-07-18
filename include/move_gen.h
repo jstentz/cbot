@@ -23,6 +23,7 @@
 class MoveGenerator
 {
 public:
+  using MoveArray = std::array<Move, constants::MAX_MOVES>;
   MoveGenerator(Board::Ptr board);
 
   void generate_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
@@ -45,8 +46,6 @@ public:
 private:
   Board::Ptr m_board;
   LookUpTable lut;
-  std::array<Move, constants::MAX_MOVES> moves;
-
 
   struct Pin
   {

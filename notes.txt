@@ -71,3 +71,6 @@ Design Ideas:
 *  Hasher
 *  
 */
+
+I should really store the opening book as hex values so its more efficient
+I have to regenerate the opening book... do this later

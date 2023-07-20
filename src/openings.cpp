@@ -39,13 +39,17 @@ OpeningBook::OpeningBook()
 Move OpeningBook::get_opening_move(Board::Ptr board)
 {
   uint64_t h = board->get_hash();
+  std::cout << h << std::endl;
   std::unordered_map<uint64_t, std::vector<Move>>::iterator got_board = m_opening_book.find(h);
-  if(got_board == m_opening_book.end()) {
+  if(got_board == m_opening_book.end()) 
+  {
+    std::cout << "here!" << std::endl;
     return Move::NO_MOVE; // position not found
   }
   unsigned int r = utils::rand64() % got_board->second.size();
 
-  if(got_board->second.size() == 0) {
+  if(got_board->second.size() == 0) 
+  {
     std::cerr << "No known moves from this position!" << std::endl;
   }
   return got_board->second[r];

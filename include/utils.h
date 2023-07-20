@@ -14,27 +14,27 @@ piece piece_from_fen_char(char c);
 
 int sq_from_name(std::string name);
 
-inline int file(int sq)
+constexpr int file(int sq)
 {
   return sq & 7;
 }
 
-inline int rank(int sq)
+constexpr int rank(int sq)
 {
   return sq >> 3;
 }
 
-inline int diag(int sq)
+constexpr int diag(int sq)
 {
   return 7 + rank(sq) - file(sq);
 }
 
-inline int anti_diag(int sq)
+constexpr int anti_diag(int sq)
 {
   return rank(sq) + file(sq);
 }
 
-inline int index_from_pc(piece pc)
+constexpr int index_from_pc(piece pc)
 {
   return pc - 2; /// TODO: make a comment on why this works
 }

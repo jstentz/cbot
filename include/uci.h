@@ -74,14 +74,16 @@
 class UCICommunicator
 {
 public:
-  UCICommunicator() {}
+  UCICommunicator() : m_board{std::make_shared<Board>()}, m_searcher{m_board}, m_move_gen{m_board} {}
   ~UCICommunicator() {}
 
   void start_uci_communication();
 
 private:
   Board::Ptr m_board;
-  Searcher::Ptr m_searcher;
+  Searcher m_searcher;
+  MoveGenerator m_move_gen; /// TODO: we don't need this 
+
 
   void handle_uci();
   void handle_is_ready();
@@ -92,25 +94,27 @@ private:
 
   /* My own commands */
   void handle_verify(std::vector<std::string>& parsed_cmd); /* takes in a depth param */
+  void handle_show();
 
 
   /* GUI -> ENGINE COMMANDS */
-  static const std::string UCI;
-  static const std::string ISREADY;
-  static const std::string SETOPTION;
-  static const std::string UCINEWGAME;
-  static const std::string POSITION;
-  static const std::string QUIT;
+  inline static const std::string UCI = "uci";
+  inline static const std::string ISREADY = "isready";
+  inline static const std::string SETOPTION = "setoption";
+  inline static const std::string UCINEWGAME = "ucinewgame";
+  inline static const std::string POSITION = "position";
+  inline static const std::string QUIT = "quit";
 
   /* ENGINE -> GUI COMMANDS */
-  static const std::string UCIOK;
-  static const std::string READYOK;
-  static const std::string ID_NAME;
-  static const std::string ID_AUTHOR;
+  inline static const std::string UCIOK = "uciok\n";
+  inline static const std::string READYOK = "readyok\n";
+  inline static const std::string ID_NAME = "id name cbot\n";
+  inline static const std::string ID_AUTHOR = "id author Jason Stentz\n";
 
   /* other constants */
-  static const std::string STARTPOS;
-  static const std::string STARTFEN;
-  static const std::string FEN; 
-  static const std::string VERIFY;
+  inline static const std::string STARTPOS = "startpos";
+  inline static const std::string STARTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  inline static const std::string FEN = "fen"; 
+  inline static const std::string VERIFY = "verify";
+  inline static const std::string SHOW = "show";
 };

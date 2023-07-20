@@ -32,11 +32,6 @@ public:
 
   inline Move() {}
 
-  inline Move(std::string long_algebraic)
-  {
-    
-  }
-
   inline Move(int from, int to, int flags)
   {
     m_move = (from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12);

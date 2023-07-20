@@ -1021,6 +1021,5 @@ std::string Board::to_string() const
     }
     str.push_back('\n');
   }
-  str.push_back('\n');
   return str;
 }

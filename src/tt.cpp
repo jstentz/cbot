@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <cstdlib>
 #include <memory.h>
+#include <iostream>
 
 int TranspositionTable::correct_retrieved_mate_score(int score, int ply_searched) 
 {

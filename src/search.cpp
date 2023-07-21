@@ -82,17 +82,17 @@ Move Searcher::find_best_move(int search_time)
   /* clear the eval table */
   m_evaluator.clear_eval_table();
   /* clear the transposition table */
-  m_tt.clear();
+  m_tt.clear(); /// TODO: I don't think I should have to clear these
 
   uint64_t h = m_board->get_hash();
 
   /* check in opening book */
-  Move opening_move = m_opening_book.get_opening_move(m_board);
-  if(!opening_move.is_no_move()) {
-    std::cout << "Depth: None | Evaluation: Book | Move: ";
-    std::cout << m_move_gen.notation_from_move(opening_move) << std::endl;
-    return opening_move;
-  }
+  // Move opening_move = m_opening_book.get_opening_move(m_board);
+  // if(!opening_move.is_no_move()) {
+  //   std::cout << "Depth: None | Evaluation: Book | Move: ";
+  //   std::cout << m_move_gen.notation_from_move(opening_move) << std::endl;
+  //   return opening_move;
+  // }
 
   size_t depth = 0;
   int alpha = INT_MIN + 1;
@@ -230,7 +230,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     int score = -search(ply_from_root, depth - reduce - 1, -beta, -beta + 1, false, false);
     m_board->unmake_nullmove();
     if(m_abort_search) return 0;
-    m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE);
+    // m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE);
     if(score >= beta) return beta;
   }
 
@@ -271,7 +271,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
       return 0;
     
     if(evaluation >= beta) {
-      m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, move);
+      // m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, move);
       return beta;
     }
     /* found a new best move here! */

@@ -74,3 +74,8 @@ Design Ideas:
 
 I should really store the opening book as hex values so its more efficient
 I have to regenerate the opening book... do this later
+
+It seems as though the hashing might be broken, cuz idk if we are getting
+hits on the TT table 
+
+^ make sure its being initialized correctly first in fen decoding

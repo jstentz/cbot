@@ -6,6 +6,7 @@
 #include "include/utils.h"
 
 #include <cstdlib>
+#include <iostream>
 
 Evaluator::Evaluator(Board::Ptr board) : m_board{board}, m_table{constants::EVAL_TT_SIZE} {}
 
@@ -34,7 +35,7 @@ int Evaluator::evaluate(int alpha, int beta)
   float game_phase = calculate_game_phase();
 
   int white_king_loc = m_board->get_white_king_loc();
-  int black_king_loc = m_board->get_white_king_loc();
+  int black_king_loc = m_board->get_black_king_loc();
 
   int middlegame_positional = m_board->get_positional_score() + 
                 constants::piece_scores[constants::WHITE_KINGS_INDEX][white_king_loc] +
@@ -46,6 +47,7 @@ int Evaluator::evaluate(int alpha, int beta)
 
   middlegame_eval = middlegame_positional + m_board->get_material_score();
   endgame_eval = endgame_positional + m_board->get_material_score();
+
 
   /* in order to do lazy eval, we will see if this exceeds the alpha-beta bounds */
   lazy_eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
@@ -100,7 +102,8 @@ int Evaluator::evaluate(int alpha, int beta)
   // middlegame_eval -= white_pawn_shield_penalty;
   // middlegame_eval -= black_pawn_shield_penalty;
 
-  eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
+  eval = (((middlegame_eval * (256.0 - game_phase)) + (endgame_eval * game_phase)) / 256);
+
 
   if(m_board->get_piece_count(WHITE | BISHOP) >= 2) eval += 30; /* bishop pair bonus for white */
   if(m_board->get_piece_count(BLACK | BISHOP) >= 2) eval -= 30; /* bishop pair bonus for black */
@@ -246,7 +249,7 @@ int Evaluator::evaluate_bishops(bitboard white_king_squares, bitboard black_king
 int Evaluator::evaluate_rooks(bitboard white_king_squares, bitboard black_king_squares)
 {
   int mobility = 0;
-  int attacking_score;
+  int attacking_score = 0;
   bitboard white_rooks = m_board->get_piece_bitboard(WHITE | ROOK);
   bitboard black_rooks = m_board->get_piece_bitboard(BLACK | ROOK);
   bitboard attacks;
@@ -270,7 +273,7 @@ int Evaluator::evaluate_rooks(bitboard white_king_squares, bitboard black_king_s
 int Evaluator::evaluate_queens(bitboard white_king_squares, bitboard black_king_squares)
 {
   int mobility = 0;
-  int attacking_score;
+  int attacking_score = 0;
   bitboard white_queens = m_board->get_piece_bitboard(WHITE | QUEEN);
   bitboard black_queens = m_board->get_piece_bitboard(BLACK | QUEEN);
   bitboard attacks;

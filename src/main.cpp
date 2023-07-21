@@ -17,15 +17,7 @@ int main()
   std::string test_pos_5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
   std::string test_pos_6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
-  Board::Ptr board = std::make_shared<Board>();
-  Searcher searcher{board};
-  MoveGenerator move_gen{board};
-
-  board->reset(test_pos_1);
-  std::cout << board->to_string();
-  std::cout << move_gen.move_to_long_algebraic(searcher.find_best_move(1000)) << std::endl;
-
-  // Board::Ptr board = std::make_shared<Board>(test_pos_1);000);
+  // Board::Ptr board = std::make_shared<Board>(test_pos_1);
   // Searcher searcher{board};
   // int d;
   // std::cin >> d;
@@ -48,8 +40,17 @@ int main()
   // std::cout << seconds << std::endl;
   // std::cout << ((double)total / seconds) << std::endl;
 
-  UCICommunicator uci;
-  uci.start_uci_communication();
+
+  Board::Ptr board = std::make_shared<Board>();
+  Searcher searcher{board};
+  MoveGenerator move_gen{board};
+
+  board->reset(test_pos_1);
+  std::cout << board->to_string();
+  std::cout << move_gen.move_to_long_algebraic(searcher.find_best_move(1000)) << std::endl;
+
+  // UCICommunicator uci;
+  // uci.start_uci_communication();
 
   return 0;
 }

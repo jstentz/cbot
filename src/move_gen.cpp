@@ -11,6 +11,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <thread>
 
 MoveGenerator::MoveGenerator(Board::Ptr board) : m_board{board} {}
 
@@ -42,6 +43,7 @@ void MoveGenerator::generate_moves(std::vector<Move> &curr_moves, bool captures_
   bool pawn_check = (check_pieces & (m_board->get_piece_bitboard(WHITE | PAWN) | m_board->get_piece_bitboard(BLACK | PAWN))) != 0;
   bitboard check_mask = push_mask | capture_mask;
   Pin pin = get_pinned_pieces(friendly_king_loc); // maybe change this so that the board holds the pinned pieces info
+
   generate_pawn_moves(curr_moves, check_mask, pawn_check, pin, captures_only);
   generate_knight_moves(curr_moves, check_mask, pin, captures_only);
   generate_bishop_moves(curr_moves, check_mask, pin, captures_only);

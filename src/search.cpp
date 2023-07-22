@@ -35,7 +35,7 @@ uint64_t Searcher::perft(int depth)
     std::cout << nodes_from_move << std::endl;
     m_board->unmake_move(move);
   }
-  std::cout << "Nodes searched: " << total_nodes << std::endl;
+  std::cout << std::endl << "Nodes searched: " << total_nodes << std::endl << std::endl;
   return total_nodes;
 }
 

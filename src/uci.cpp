@@ -43,6 +43,10 @@ void UCICommunicator::start_uci_communication()
     {
       handle_position(cmd_list, cmd);
     }
+    else if (main_cmd == GO)
+    {
+      handle_go(cmd_list, cmd);
+    }
     else if (main_cmd == QUIT)
     {
       handle_quit(); 
@@ -115,6 +119,23 @@ void UCICommunicator::handle_position(std::vector<std::string>& parsed_cmd, std:
   {
     Move move = m_move_gen.move_from_long_algebraic(algebraic_move);
     m_board->make_move(move);
+  }
+}
+
+void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::string& cmd)
+{
+  if (parsed_cmd.size() == 1)
+  {
+    // search the board here
+  } 
+  else if (parsed_cmd[1] == PERFT)
+  {
+    if (parsed_cmd.size() < 3)
+    {
+      return;
+    }
+    int depth = std::stoi(parsed_cmd[2]);
+    m_searcher.perft(depth);
   }
 }
 

@@ -8,6 +8,41 @@
 #include "include/utils.h"
 #include "include/uci.h"
 
+void simulate_game()
+{
+  Board::Ptr board = std::make_shared<Board>();
+  Searcher searcher{board};
+  MoveGenerator move_gen{board};
+
+  for ( ;; )
+  {
+    std::cout << board->to_string();
+    std::cout << std::hex << board->get_hash() << std::endl;
+    std::cout << board->get_piece_hash() << std::endl << std::dec;
+    
+    std::vector<Move> moves;
+    move_gen.generate_moves(moves);
+
+    for (int i = 0; i < moves.size(); i++)
+    {
+      std::cout << i << ": " << move_gen.notation_from_move(moves[i]) << std::endl;
+    }
+
+    int i;
+    std::cin >> i;
+
+    if (i == -1)
+    {
+      board->unmake_move(board->get_last_move());
+    }
+    else  
+    {
+      board->make_move(moves[i]);
+    }
+
+  }
+}
+
 int main() 
 {
   std::string test_pos_1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -41,16 +76,18 @@ int main()
   // std::cout << ((double)total / seconds) << std::endl;
 
 
-  Board::Ptr board = std::make_shared<Board>();
-  Searcher searcher{board};
-  MoveGenerator move_gen{board};
+  // Board::Ptr board = std::make_shared<Board>();
+  // Searcher searcher{board};
+  // MoveGenerator move_gen{board};
 
-  board->reset(test_pos_1);
-  std::cout << board->to_string();
-  std::cout << move_gen.move_to_long_algebraic(searcher.find_best_move(1000)) << std::endl;
+  // board->reset(test_pos_1);
+  // std::cout << board->to_string();
+  // std::cout << move_gen.move_to_long_algebraic(searcher.find_best_move(1000)) << std::endl;
 
-  // UCICommunicator uci;
-  // uci.start_uci_communication();
+  UCICommunicator uci;
+  uci.start_uci_communication();
+
+  // simulate_game();
 
   return 0;
 }

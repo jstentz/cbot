@@ -44,7 +44,7 @@ void Board::reset(std::string fen)
   if (num_read != 6)
   {
     std::cerr << "Invalid fen string!" << std::endl;
-    exit(1);
+    return;
   }
   /// TODO: fix this
   std::string layout{layout_buf};

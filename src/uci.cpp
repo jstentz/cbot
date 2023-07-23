@@ -124,9 +124,10 @@ void UCICommunicator::handle_position(std::vector<std::string>& parsed_cmd, std:
 
 void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::string& cmd)
 {
-  if (parsed_cmd.size() == 1)
+  if (parsed_cmd.size() == 1 || parsed_cmd[1] != PERFT)
   {
-    // search the board here
+    Move bestmove = m_searcher.find_best_move(1000);
+    std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(bestmove) << std::endl;
   } 
   else if (parsed_cmd[1] == PERFT)
   {

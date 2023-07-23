@@ -89,7 +89,6 @@ Move Searcher::find_best_move(int search_time)
   /* check in opening book */
   // Move opening_move = m_opening_book.get_opening_move(m_board);
   // if(!opening_move.is_no_move()) {
-  //   std::cout << "Depth: None | Evaluation: Book | Move: ";
   //   std::cout << m_move_gen.notation_from_move(opening_move) << std::endl;
   //   return opening_move;
   // }
@@ -106,38 +105,47 @@ Move Searcher::find_best_move(int search_time)
   std::thread t;
 
   /* iterative deepening framework with threading */
-  while(true) {
+  while(true) 
+  {
     tStop = clock();
-    if((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000)){
+    if ((((double)(tStop - tStart)) / CLOCKS_PER_SEC) > ((double)search_time / 1000))
+    {
       m_abort_search = true;
       break;
     }
-    if(m_search_complete) {
+    if (m_search_complete) 
+    {
       if(t.joinable())
         t.join();
+      
+      if (depth)
+      {
+        std::cout << "info depth " << depth << " currmove " << m_move_gen.move_to_long_algebraic(m_best_move) 
+                  << " score " << m_score << std::endl;
+      }
+
       m_search_complete = false;
       depth++;
       t = std::thread{&Searcher::search, this, 0, depth, alpha, beta, true, true};
     }
   }
   /* wait for any lingering thread to finish */
-  if(t.joinable())
+  if (t.joinable())
+  {
     t.join();
+  }
 
-  float time_elapsed = (tStop - tStart);
-  std::cout << "Depth: " << depth << " | ";
-
-  int perspective = (m_board->is_white_turn()) ? 1 : -1;
-  Move final_best_move = m_best_move;
-  int final_score = m_score * perspective;
-  if(utils::is_mate_score(final_score) && final_score > 0)
-    std::cout << "Evaluation: White has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
-  else if(utils::is_mate_score(final_score) && final_score < 0)
-    std::cout << "Evaluation: Black has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
-  else
-    std::cout << "Evaluation: " << final_score / 100.0 << " | ";
-  std::cout << "Move: " << m_move_gen.notation_from_move(final_best_move) << std::endl;
-  return final_best_move;
+  // int perspective = (m_board->is_white_turn()) ? 1 : -1;
+  // Move final_best_move = m_best_move;
+  // int final_score = m_score * perspective;
+  // if(utils::is_mate_score(final_score) && final_score > 0)
+  //   std::cout << "Evaluation: White has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
+  // else if(utils::is_mate_score(final_score) && final_score < 0)
+  //   std::cout << "Evaluation: Black has mate in " << utils::moves_until_mate(final_score) << " move(s) | ";
+  // else
+  //   std::cout << "Evaluation: " << final_score / 100.0 << " | ";
+  // std::cout << "Move: " << m_move_gen.notation_from_move(final_best_move) << std::endl;
+  return m_best_move;
 }
 
 int Searcher::qsearch(int alpha, int beta)
@@ -174,7 +182,7 @@ int Searcher::qsearch(int alpha, int beta)
 
 int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_pv, bool can_null)
 {
-  if(m_abort_search)
+  if (m_abort_search)
     return 0;
 
   std::vector<Move> moves;
@@ -182,15 +190,17 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
 
   TranspositionTable::Flags flags = TranspositionTable::ALPHA;
 
-  bool check_flag;
-  if(!can_null) /* if we just made a null move (passed the turn), we cannot be in check */
-    check_flag = false;
-  else
-    check_flag = m_move_gen.in_check();
+  // bool check_flag;
+  // if(!can_null) /* if we just made a null move (passed the turn), we cannot be in check */
+  //   check_flag = false;
+  // else
+  //   check_flag = m_move_gen.in_check();
+
+  bool check_flag = m_move_gen.in_check();
 
   /* check extension */
-  if(check_flag)
-    depth++;
+  // if(check_flag)
+  //   depth++;
 
   /* look up the hash value in the transposition table 
      this will set the tt best move global variable */
@@ -206,10 +216,15 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     return qsearch(alpha, beta);
   }
 
-  if(ply_from_root > 0 && m_board->is_repetition()) 
-  {
-    return 0;
-  }
+  // if (depth == 0)
+  // {
+  //   return m_evaluator.evaluate(alpha, beta);
+  // }
+
+  // if(ply_from_root > 0 && m_board->is_repetition()) 
+  // {
+  //   return 0;
+  // }
 
   /* 
     Null Move Pruning:
@@ -219,35 +234,33 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
       - Because of ZugZwang in the endgame, where making a null move can be good, this pruning
       is turned off in the endgame.
   */
-  if(depth > 2 && 
-     can_null && 
-     !is_pv && 
-     m_board->get_total_material() > constants::ENDGAME_MATERIAL &&
-     !check_flag) {
-    int reduce = 2;
-    if(depth > 6) reduce = 3;
-    m_board->make_nullmove();
-    int score = -search(ply_from_root, depth - reduce - 1, -beta, -beta + 1, false, false);
-    m_board->unmake_nullmove();
-    if(m_abort_search) return 0;
-    // m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE);
-    if(score >= beta) return beta;
-  }
+  // if(depth > 2 && 
+  //    can_null && 
+  //    !is_pv && 
+  //    m_board->get_total_material() > constants::ENDGAME_MATERIAL &&
+  //    !check_flag) {
+  //   int reduce = 2;
+  //   if(depth > 6) reduce = 3;
+  //   m_board->make_nullmove();
+  //   int score = -search(ply_from_root, depth - reduce - 1, -beta, -beta + 1, false, false);
+  //   m_board->unmake_nullmove();
+  //   if(m_abort_search) return 0;
+  //   m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE);
+  //   if(score >= beta) return beta;
+  // }
 
   m_move_gen.generate_moves(moves);
   m_move_gen.order_moves(moves, best_tt_move);
+  // m_move_gen.order_moves(moves, Move::NO_MOVE);
   
   Move best_move;
   int num_moves = moves.size();
-  Move move;
   int evaluation;
   bool pv_search = true;
   
   /// TODO: don't need the move number, just use : 
-  for(int i = 0; i < num_moves; i++) {
-    move = moves[i];
-    /* searches lines deeper where you push a pawn close to promotion (or promote it)! */
-    if(m_move_gen.pawn_promo_or_close_push(move)) depth++;
+  for (const auto& move : moves) 
+  {
     m_board->make_move(move);
     /*
       Principal Variation Search (PVS):
@@ -256,26 +269,38 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
         - If we are wrong about being in a PV node, a costly re-search is required.
     */
 
-    if(pv_search) {
-      evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, true, true);
+    // if(pv_search) {
+    //   evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, true, true);
+    // }
+    // else {
+    //   evaluation = -search(ply_from_root + 1, depth - 1, -alpha - 1, -alpha, false, true);
+    //   if(evaluation > alpha) {
+    //     evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, true, true);
+    //   }
+    // }
+
+    if (m_move_gen.pawn_promo_or_close_push(move))
+    {
+      evaluation = -search(ply_from_root + 1, depth, -beta, -alpha, false, false);
     }
-    else {
-      evaluation = -search(ply_from_root + 1, depth - 1, -alpha - 1, -alpha, false, true);
-      if(evaluation > alpha) {
-        evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, true, true);
-      }
+    else
+    {
+      evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, false, false);
     }
+
     m_board->unmake_move(move);
 
     if(m_abort_search)
       return 0;
     
-    if(evaluation >= beta) {
-      // m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, move);
+    if(evaluation >= beta) 
+    {
+      m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, move);
       return beta;
     }
     /* found a new best move here! */
-    if(evaluation > alpha) {
+    if(evaluation > alpha) 
+    {
       flags = TranspositionTable::EXACT;
       alpha = evaluation;
       best_move = move;

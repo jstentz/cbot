@@ -79,3 +79,10 @@ It seems as though the hashing might be broken, cuz idk if we are getting
 hits on the TT table 
 
 ^ make sure its being initialized correctly first in fen decoding
+
+8/8/P7/3B4/2P1p3/2K1k1p1/2P5/3r4 w - - 0 57
+this position gives back a null move
+seems like the promotion extension is breaking it
+
+1k1r1b1r/pppqpppp/8/3pP3/6b1/2PBP1B1/P1P2PPP/R2Q1RK1 w - - 7 12
+hanging my queen in this position?

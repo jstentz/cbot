@@ -13,13 +13,15 @@ Evaluator::Evaluator(Board::Ptr board) : m_board{board}, m_table{constants::EVAL
 int Evaluator::evaluate(int alpha, int beta)
 {
   /* widen the margins a bit for lazy evaluation */
-  // if (!utils::is_mate_score(alpha)) alpha -= constants::LAZY_EVAL_MARGIN; /* prevents underflow */
-  // if (!utils::is_mate_score(beta))  beta  += constants::LAZY_EVAL_MARGIN; /* prevents overflow  */
+  if (!utils::is_mate_score(alpha)) alpha -= constants::LAZY_EVAL_MARGIN; /* prevents underflow */
+  if (!utils::is_mate_score(beta))  beta  += constants::LAZY_EVAL_MARGIN; /* prevents overflow  */
 
   /* probe the eval table */
-  // std::optional<int> table_score = m_table.fetch(m_board->get_piece_hash(), alpha, beta); /* use the pieces since that's all that matters for eval */
-  // if (table_score)
-  //   return table_score.value();
+  std::optional<int> table_score = m_table.fetch(m_board->get_piece_hash(), alpha, beta); /* use the pieces since that's all that matters for eval */
+  if (table_score)
+  {
+    return table_score.value();
+  }
 
   int eval;
   int lazy_eval;
@@ -27,8 +29,9 @@ int Evaluator::evaluate(int alpha, int beta)
   int endgame_eval;
   int perspective = (m_board->is_white_turn()) ? 1 : -1;
 
-  if(!sufficient_checkmating_material()) {
-    // m_table.store(m_board->get_piece_hash(), TranspositionTable::EXACT, 0);
+  if (!sufficient_checkmating_material()) 
+  {
+    m_table.store(m_board->get_piece_hash(), TranspositionTable::EXACT, 0);
     return 0;
   }
 
@@ -50,28 +53,33 @@ int Evaluator::evaluate(int alpha, int beta)
 
 
   /* in order to do lazy eval, we will see if this exceeds the alpha-beta bounds */
-  // lazy_eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
-  // lazy_eval *= perspective;
-  // if(lazy_eval >= beta) {
-  //   m_table.store(m_board->get_piece_hash(), TranspositionTable::BETA, beta);
-  //   return beta;
-  // }
-  // else if(lazy_eval <= alpha) {
-  //   m_table.store(m_board->get_piece_hash(), TranspositionTable::ALPHA, alpha);
-  //   return alpha;
-  // }
+  lazy_eval = (((middlegame_eval * (256 - game_phase)) + (endgame_eval * game_phase)) / 256);
+  lazy_eval *= perspective;
+  if (lazy_eval >= beta) 
+  {
+    m_table.store(m_board->get_piece_hash(), TranspositionTable::BETA, beta);
+    return beta;
+  }
+  else if (lazy_eval <= alpha) 
+  {
+    m_table.store(m_board->get_piece_hash(), TranspositionTable::ALPHA, alpha);
+    return alpha;
+  }
   /* otherwise we get the exact score */
 
   /* mop up eval for winning side */
-  if(m_board->get_material_score() != 0){
-    if(m_board->get_material_score() > 0) endgame_eval += mop_up_eval(true);
-    else endgame_eval += mop_up_eval(false);
+  if (m_board->get_material_score() != 0)
+  {
+    if (m_board->get_material_score() > 0) 
+    {
+      endgame_eval += mop_up_eval(true);
+    }
+    else
+    {
+      endgame_eval += mop_up_eval(false);
+    } 
   }
   
-  // /* add a tempo bonus to middle game */
-  // if(b.t == W) middlegame_eval += 10;
-  // else         middlegame_eval -= 10;
-
   int queen_moves_from_white_king = pop_count(lut.get_queen_attacks(m_board->get_white_king_loc(), m_board->get_all_pieces()) & ~m_board->get_white_pieces());
   int queen_moves_from_black_king = pop_count(lut.get_queen_attacks(m_board->get_black_king_loc(), m_board->get_all_pieces()) & ~m_board->get_black_pieces());
 
@@ -105,15 +113,13 @@ int Evaluator::evaluate(int alpha, int beta)
   eval = (((middlegame_eval * (256.0 - game_phase)) + (endgame_eval * game_phase)) / 256);
 
 
-  if(m_board->get_piece_count(WHITE | BISHOP) >= 2) eval += 30; /* bishop pair bonus for white */
-  if(m_board->get_piece_count(BLACK | BISHOP) >= 2) eval -= 30; /* bishop pair bonus for black */
+  if (m_board->get_piece_count(WHITE | BISHOP) >= 2) eval += 30; /* bishop pair bonus for white */
+  if (m_board->get_piece_count(BLACK | BISHOP) >= 2) eval -= 30; /* bishop pair bonus for black */
 
   eval *= perspective;
 
   /* save the evaluation we just made */
-  /* here I just need to hash the board's pieces 
-  add this after I finish unmake move */
-  // m_table.store(m_board->get_piece_hash(), TranspositionTable::EXACT, eval); /* use just the pieces again */
+  m_table.store(m_board->get_piece_hash(), TranspositionTable::EXACT, eval); /* use just the pieces again */
   return eval;
 }
 

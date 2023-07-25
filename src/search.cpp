@@ -143,7 +143,6 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     return 0;
   }
 
-
   TranspositionTable::Flags flags = TranspositionTable::ALPHA;
   uint64_t h = m_board->get_hash();
   if (ply_from_root > 0)
@@ -160,25 +159,20 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     }
   }
 
-  // if (depth == 0) 
-  // {
-  //   return qsearch(alpha, beta);
-  // }
-
   if (depth == 0) 
   {
-    return m_evaluator.evaluate(alpha, beta);
+    return qsearch(alpha, beta);
   }
 
   // if we just made a null move (passed the turn), we cannot be in check
-  // bool check_flag = can_null ? m_move_gen.in_check() : false;
-  bool check_flag = m_move_gen.in_check();
+  bool check_flag = can_null ? m_move_gen.in_check() : false;
+  // bool check_flag = m_move_gen.in_check();
 
   /* check extension */
-  // if (check_flag)
-  // {
-  //   depth++;
-  // }
+  if (check_flag)
+  {
+    depth++;
+  }
 
   /* 
     Null Move Pruning:
@@ -188,45 +182,45 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
       - Because of ZugZwang in the endgame, where making a null move can be good, this pruning
       is turned off in the endgame.
   */
-  // if (depth > 2 && 
-  //     can_null && 
-  //     !is_pv && 
-  //     m_board->get_total_material() > constants::ENDGAME_MATERIAL &&
-  //     !check_flag &&
-  //     ply_from_root > 0) 
-  // {
-  //   int reduce = 2;
-  //   if (depth > 6) 
-  //   {
-  //     reduce = 3;
-  //   }
-  //   m_board->make_nullmove();
-  //   int score = -search(ply_from_root, depth - reduce - 1, -beta, -beta + 1, false, false);
-  //   m_board->unmake_nullmove();
+  if (depth > 2 && 
+      can_null && 
+      !is_pv && 
+      m_board->get_total_material() > constants::ENDGAME_MATERIAL &&
+      !check_flag &&
+      ply_from_root > 0) 
+  {
+    int reduce = 2;
+    if (depth > 6) 
+    {
+      reduce = 3;
+    }
+    m_board->make_nullmove();
+    int score = -search(ply_from_root, depth - reduce - 1, -beta, -beta + 1, false, false);
+    m_board->unmake_nullmove();
 
-  //   if (m_abort_search)
-  //   {
-  //     return 0;
-  //   }
+    if (m_abort_search)
+    {
+      return 0;
+    }
 
-  //   if (score >= beta)
-  //   {
-  //     m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE); // this used to be above the if statement
-  //     return beta;
-  //   }
-  // }
+    if (score >= beta)
+    {
+      m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, Move::NO_MOVE); // this used to be above the if statement
+      return beta;
+    }
+  }
 
   std::vector<Move> moves;
   m_move_gen.generate_moves(moves);
   m_move_gen.order_moves(moves, (ply_from_root == 0) ? m_best_move : m_tt.fetch_best_move(h)); // search the best move if in the top position
-  // m_move_gen.order_moves(moves, Move::NO_MOVE);
   
   Move best_move_this_search;
+  int evaluation;
   bool pv_search = true;
   
   for (const auto& move : moves) 
   {
-    // bool pawn_extension = m_move_gen.pawn_promo_or_close_push(move);
+    bool pawn_extension = m_move_gen.pawn_promo_or_close_push(move);
     m_board->make_move(move);
     /*
       Principal Variation Search (PVS):
@@ -235,19 +229,19 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
         - If we are wrong about being in a PV node, a costly re-search is required.
     */
 
-    // if (pv_search) 
-    // {
-    //   evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -beta, -alpha, true, true);
-    // }
-    // else 
-    // {
-    //   evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -alpha - 1, -alpha, false, true);
-    //   if (evaluation > alpha) 
-    //   {
-    //     evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -beta, -alpha, true, true);
-    //   }
-    // }
-    int evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, false, false);
+    if (pv_search) 
+    {
+      evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -beta, -alpha, true, true);
+    }
+    else 
+    {
+      evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -alpha - 1, -alpha, false, true);
+      if (evaluation > alpha) 
+      {
+        evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -beta, -alpha, true, true);
+      }
+    }
+    // int evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, false, false);
 
     m_board->unmake_move(move);
 

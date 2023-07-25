@@ -86,3 +86,6 @@ seems like the promotion extension is breaking it
 
 1k1r1b1r/pppqpppp/8/3pP3/6b1/2PBP1B1/P1P2PPP/R2Q1RK1 w - - 7 12
 hanging my queen in this position?
+
+r1bQ2k1/1q1p1r2/p2Pp3/2p5/P7/R7/1P3PPP/2B2RK1 b - - 0 1
+null move here

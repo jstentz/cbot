@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cmath>
 
 namespace constants
 {
@@ -240,8 +241,8 @@ inline int* piece_scores[14] =
 
 /// TODO: make these part of the parameterization 
 // this is also the number of entries... the real size is num_entries * sizeof(Entry)
-inline size_t SEARCH_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
-inline size_t EVAL_TT_SIZE = 131072; // 2^17 THIS MUST BE A POWER OF 2
+inline size_t SEARCH_TT_SIZE = std::pow(2, 26); 
+inline size_t EVAL_TT_SIZE = std::pow(2, 26); 
 
 inline int center_manhattan_distance_arr[64] = 
 {

@@ -33,8 +33,10 @@ public:
     BETA
   };
 
-  std::optional<int> fetch(uint64_t hash, int depth, int ply_searched, int alpha, int beta, Move& best_move); // for search
-  std::optional<int> fetch(uint64_t hash, int alpha, int beta); // for eval
+  std::optional<int> fetch_score(uint64_t hash, int depth, int ply_searched, int alpha, int beta); // for search
+  Move fetch_best_move(uint64_t hash);
+  std::optional<int> fetch_score(uint64_t hash, int alpha, int beta); // for eval
+
   void store(uint64_t hash, int depth, int ply_searched, Flags flags, int score, Move best_move); // for search
   void store(uint64_t hash, Flags flags, int score); // for eval
   void clear();

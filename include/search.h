@@ -35,7 +35,9 @@ public:
   uint64_t perft(int depth);
   uint64_t num_nodes_bulk(int depth);
   uint64_t num_nodes(int depth);
-  Move find_best_move(int search_time);
+  void find_best_move();
+  Move get_best_move();
+  void abort_search();
 
   /// TODO: add more states to be able to interrupt it at any time
   enum class Status
@@ -54,11 +56,12 @@ private:
   TranspositionTable m_tt;
 
   Move m_best_move;
-  int m_score;
+  Move m_best_move_this_iteration;
+  int m_best_score_this_iteration;
+  int m_best_score;
   Status m_status;
 
   bool m_abort_search;
-  bool m_search_complete;
 
   int qsearch(int alpha, int beta);
   int search(int ply_from_room, int depth, int alpha, int beta, bool is_pv = false, bool can_null = false);

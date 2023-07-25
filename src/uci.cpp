@@ -2,6 +2,8 @@
 #include <thread>
 #include <string>
 #include <bits/stdc++.h> 
+#include <thread>
+#include <chrono>
 
 #include "include/uci.h"
 #include "include/search.h"
@@ -126,8 +128,15 @@ void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::strin
 {
   if (parsed_cmd.size() == 1 || parsed_cmd[1] != PERFT)
   {
-    Move bestmove = m_searcher.find_best_move(1000);
-    std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(bestmove) << std::endl;
+    /// TODO: move this into a function in the search class 
+    std::thread t(&Searcher::find_best_move, &m_searcher);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    m_searcher.abort_search();
+    if (t.joinable())
+    {
+      t.join();
+    }
+    std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(m_searcher.get_best_move()) << std::endl;
   } 
   else if (parsed_cmd[1] == PERFT)
   {

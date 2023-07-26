@@ -89,6 +89,7 @@ void TranspositionTable::store(uint64_t hash, int depth, int ply_searched, Flags
 {
   int corrected_score = correct_stored_mate_score(score, ply_searched);
   Entry* entry = &m_table[hash & (m_entries - 1)];
+  entry->key ? m_overwrites++ : m_filled_entries++;
   entry->key = hash;
   entry->depth = depth;
   entry->flags = flags;
@@ -102,5 +103,10 @@ void TranspositionTable::store(uint64_t hash, Flags flags, int score)
   entry->key = hash;
   entry->score = score;
   entry->flags = flags;
+}
+
+double TranspositionTable::get_occupancy()
+{
+  return (double) m_filled_entries / (double) m_entries;
 }
 

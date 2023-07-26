@@ -25,7 +25,7 @@ uint64_t Searcher::perft(int depth)
   uint64_t total_nodes = 0;
   uint64_t nodes_from_move;
   m_move_gen.sort_by_long_algebraic_notation(moves);
-  for(Move& move : moves) {
+  for (Move& move : moves) {
     std::cout << m_move_gen.move_to_long_algebraic(move) << ": ";
     m_board->make_move(move);
     nodes_from_move = num_nodes_bulk(depth - 1);
@@ -41,15 +41,15 @@ uint64_t Searcher::num_nodes_bulk(int depth)
 {
   std::vector<Move> moves;
   m_move_gen.generate_moves(moves);
-  if(depth == 1) {
+  if (depth == 1) {
     return moves.size();
   }
-  else if(depth == 0) {
+  else if (depth == 0) {
     return 1;
   }
 
   uint64_t total_moves = 0;
-  for(Move& move : moves) {
+  for (Move& move : moves) {
     m_board->make_move(move);
     total_moves += num_nodes_bulk(depth - 1); 
     m_board->unmake_move(move);
@@ -59,14 +59,14 @@ uint64_t Searcher::num_nodes_bulk(int depth)
 
 uint64_t Searcher::num_nodes(int depth)
 {
-  if(depth == 0) {
+  if (depth == 0) {
     return 1;
   }
 
   uint64_t total_moves = 0;
   std::vector<Move> moves;
   m_move_gen.generate_moves(moves);
-  for(Move& move : moves) {
+  for (Move& move : moves) {
     m_board->make_move(move);
     total_moves += num_nodes(depth - 1); 
     m_board->unmake_move(move);
@@ -166,7 +166,6 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
 
   // if we just made a null move (passed the turn), we cannot be in check
   bool check_flag = can_null ? m_move_gen.in_check() : false;
-  // bool check_flag = m_move_gen.in_check();
 
   /* check extension */
   if (check_flag)
@@ -241,7 +240,6 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
         evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -beta, -alpha, true, true);
       }
     }
-    // int evaluation = -search(ply_from_root + 1, depth - 1, -beta, -alpha, false, false);
 
     m_board->unmake_move(move);
 

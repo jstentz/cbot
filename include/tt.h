@@ -41,6 +41,8 @@ public:
   void store(uint64_t hash, Flags flags, int score); // for eval
   void clear();
 
+  double get_occupancy();
+
 private:
   struct Entry
   {
@@ -53,6 +55,9 @@ private:
 
   Entry* m_table;
   size_t m_entries;
+
+  size_t m_filled_entries{};
+  size_t m_overwrites{};
 
   int correct_stored_mate_score(int score, int ply_searched);
   int correct_retrieved_mate_score(int score, int ply_searched);

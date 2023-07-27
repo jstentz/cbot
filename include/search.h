@@ -18,7 +18,6 @@
 #include "include/tt.h"
 
 #include <stddef.h>
-#include <stack>
 #include <cstdint>
 
 // new class implementation

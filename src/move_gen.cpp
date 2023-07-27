@@ -52,7 +52,8 @@ void MoveGenerator::generate_moves(std::vector<Move> &curr_moves, bool captures_
   generate_king_moves(curr_moves, captures_only);
 }
 
-void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move) const
+/// TODO: make tt_best_move an optional with a default
+void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move, std::optional<int> ply_from_root) const
 {
   signed short int score;
   piece mv_piece;
@@ -78,7 +79,9 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move) con
     score = 0;
     if (!tt_best_move.is_no_move() && mv == tt_best_move) 
     {
-      score += 10000; // idk try the PV node first
+      score += 30000; // idk try the PV node first
+      mv.set_score(score);
+      continue;
     }
     to = mv.to();
     from = mv.from();
@@ -130,9 +133,14 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move) con
       score += perspective * (constants::piece_scores[utils::index_from_pc(mv_piece)][to] - constants::piece_scores[utils::index_from_pc(mv_piece)][from]);
     }
 
-    // if(flags == QUIET_MOVE) {
-    //     score -= 1000; /* try quiet moves last even behind bad captures */
-    // }     
+    if(flags == Move::QUIET_MOVE) {
+      score -= 10000; /* try quiet moves last even behind bad captures */
+      if (ply_from_root.has_value() && is_killer(ply_from_root.value(), mv))
+      {
+        score += 5000; // consider killers higher
+      }
+
+    }     
     mv.set_score(score);
   }
   std::sort(moves.begin(), moves.end(), [](Move mv1, Move mv2) { return mv1.score() > mv2.score(); });
@@ -1362,4 +1370,3 @@ bitboard MoveGenerator::opponent_slider_rays_to_square(int sq) const
   }
   return res;
 }
-

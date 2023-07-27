@@ -89,3 +89,6 @@ hanging my queen in this position?
 
 r1bQ2k1/1q1p1r2/p2Pp3/2p5/P7/R7/1P3PPP/2B2RK1 b - - 0 1
 null move here
+
+things broke here
+8/8/2K5/8/8/8/5k2/6R1 b - - 0 1

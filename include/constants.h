@@ -283,7 +283,8 @@ inline int index64[64] = {
    13, 18,  8, 12,  7,  6,  5, 63
 };
 
-const unsigned long long debruijn64 = 0x03f79d71b4cb0a89;
+inline const unsigned long long debruijn64 = 0x03f79d71b4cb0a89;
 
+inline const size_t KILLER_MAX_SIZE = 40; // defines the size of the killer move table 
 
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 /**
  * @brief Representation for a move. The first 16 bits hold the from square, 
  * the to square, and the move type. This is signed so the higher order bits can
@@ -96,6 +98,11 @@ public:
   inline bool operator==(Move other_move) const
   {
     return (to() == other_move.to()) && (from() == other_move.from()) && (type() == other_move.type());
+  }
+
+  inline size_t operator()() const
+  {
+    return m_move & 0x0000FFFF; // ignore the score 
   }
 
 private:

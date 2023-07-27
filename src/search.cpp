@@ -77,6 +77,7 @@ uint64_t Searcher::num_nodes(int depth)
 /// TODO: Need to make this interruptable from the outside
 void Searcher::find_best_move()
 {
+  m_move_gen.clear_killers(); // clear the killer moves
   m_best_move = Move::NO_MOVE;
 
   /* iterative deepening framework with threading */
@@ -211,7 +212,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
 
   std::vector<Move> moves;
   m_move_gen.generate_moves(moves);
-  m_move_gen.order_moves(moves, (ply_from_root == 0) ? m_best_move : m_tt.fetch_best_move(h)); // search the best move if in the top position
+  m_move_gen.order_moves(moves, (ply_from_root == 0) ? m_best_move : m_tt.fetch_best_move(h), std::make_optional<int>(ply_from_root)); // search the best move if in the top position
   
   Move best_move_this_search;
   int evaluation;
@@ -250,6 +251,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
     
     if (evaluation >= beta) 
     {
+      m_move_gen.insert_killer(ply_from_root, move);
       m_tt.store(h, depth, ply_from_root, TranspositionTable::BETA, beta, move); 
       return beta;
     }

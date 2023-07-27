@@ -13,6 +13,9 @@
 
 #include <vector>
 #include <string>
+#include <array>
+#include <optional>
+#include <unordered_set>
 
 #include "include/move.h"
 #include "include/board.h"
@@ -24,8 +27,35 @@ public:
   MoveGenerator(Board::Ptr board);
 
   void generate_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
-  void order_moves(std::vector<Move> &moves, Move tt_best_move) const;
+  void order_moves(std::vector<Move> &moves, Move tt_best_move, std::optional<int> ply_from_root = std::nullopt) const; /// TODO: fix this I don't like passing this in
 
+  inline void insert_killer(int ply_from_root, const Move& move)
+  {
+    if (ply_from_root >= constants::KILLER_MAX_SIZE)
+    {
+      return;
+    }
+    int lookup = (move.get_move() & 0x0000FFFF) | ((*m_board)[move.from()] << 16); // insert the move and moving piece together 
+    m_killer_moves[ply_from_root].insert(lookup); // add the move and the moving piece 
+  }
+
+  inline bool is_killer(int ply_from_root, const Move& move) const
+  {
+    if (ply_from_root >= constants::KILLER_MAX_SIZE)
+    {
+      return false;
+    }
+    int lookup = (move.get_move() & 0x0000FFFF) | ((*m_board)[move.from()] << 16); // look up the move and moving piece together
+    return m_killer_moves[ply_from_root].count(lookup); 
+  }
+
+  inline void clear_killers()
+  {
+    for (auto& set : m_killer_moves)
+    {
+      set.clear();
+    }
+  }
 
   std::string notation_from_move(Move move) const;
   Move move_from_notation(std::string notation) const;
@@ -43,6 +73,8 @@ public:
 private:
   Board::Ptr m_board;
   LookUpTable lut;
+  // look up by ply, and also store the moving piece to ensure its the same move 
+  std::array<std::unordered_set<int>, constants::KILLER_MAX_SIZE> m_killer_moves;
 
 
   struct Pin

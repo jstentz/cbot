@@ -137,7 +137,7 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, std::optional<Move> tt
     }     
     mv.set_score(score);
   }
-  std::sort(moves.begin(), moves.end(), [](Move mv1, Move mv2) { return mv1.score() > mv2.score(); });
+  std::sort(moves.begin(), moves.end(), [](Move& mv1, Move& mv2) { return mv1.score() > mv2.score(); });
 }
 
 std::string MoveGenerator::notation_from_move(Move move) const

@@ -52,22 +52,9 @@ void MoveGenerator::generate_moves(std::vector<Move> &curr_moves, bool captures_
   generate_king_moves(curr_moves, captures_only);
 }
 
-/// TODO: make tt_best_move an optional with a default
-void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move, std::optional<int> ply_from_root) const
+void MoveGenerator::order_moves(std::vector<Move>& moves, std::optional<Move> tt_best_move, std::optional<int> ply_from_root) const
 {
-  signed short int score;
-  piece mv_piece;
-  piece tar_piece;
-  int to;
-  int from;
-  Move mv;
-  int flags;
   int perspective = m_board->is_white_turn() ? 1 : -1;
-  // maybe add a bonus for castling moves
-  // add recapturing the piece that was last captured as a good bonus to check first
-  // bigger bonus for the higher value piece being captured
-  // just have the board store the move that was made to get to that position
-  // still need to add the least_valued_attacker logic, not exactly sure how to implement
   Move last_move = m_board->get_last_move();
   int recapture_square = -1;
   if (!last_move.is_no_move() && last_move.is_capture()) 
@@ -76,29 +63,33 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move, std
   }
   for (Move& mv : moves) 
   {
-    score = 0;
-    if (!tt_best_move.is_no_move() && mv == tt_best_move) 
+    signed short int score;
+    if (tt_best_move.has_value() && mv == tt_best_move.value()) 
     {
       score += 30000; // idk try the PV node first
       mv.set_score(score);
       continue;
     }
-    to = mv.to();
-    from = mv.from();
-    flags = mv.type();
-    mv_piece = (*m_board)[from];
+    int to = mv.to();
+    int from = mv.from();
+    int flags = mv.type();
+    piece mv_piece = (*m_board)[from];
     if (mv.is_promo()) 
     {
-      if (flags == Move::KNIGHT_PROMO || flags == Move::KNIGHT_PROMO_CAPTURE) {
+      if (flags == Move::KNIGHT_PROMO || flags == Move::KNIGHT_PROMO_CAPTURE) 
+      {
         score += constants::piece_values[constants::WHITE_KNIGHTS_INDEX]; // just use the white knights because positive value
       }
-      else if (flags == Move::BISHOP_PROMO || flags == Move::BISHOP_PROMO_CAPTURE) {
+      else if (flags == Move::BISHOP_PROMO || flags == Move::BISHOP_PROMO_CAPTURE) 
+      {
         score += constants::piece_values[constants::WHITE_BISHOPS_INDEX];
       }
-      else if (flags == Move::ROOK_PROMO || flags == Move::ROOK_PROMO_CAPTURE) {
+      else if (flags == Move::ROOK_PROMO || flags == Move::ROOK_PROMO_CAPTURE) 
+      {
         score += constants::piece_values[constants::WHITE_ROOKS_INDEX];
       }
-      else {
+      else 
+      {
         score += constants::piece_values[constants::WHITE_QUEENS_INDEX];
       }
     }
@@ -107,9 +98,10 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move, std
     {
       score += 5 * abs(constants::piece_values[utils::index_from_pc(mv_piece)]); // arbitrary multiplication
     }
-    else if (mv.is_capture()) {
+    else if (mv.is_capture()) 
+    {
       // score += see_capture(mv); /* this function isn't fast enough I need incrementally updated attack tables */
-      tar_piece = (*m_board)[to];
+      piece tar_piece = (*m_board)[to];
       if (!is_attacked(to, m_board->get_all_pieces())) 
       {
         score += 5 * abs(constants::piece_values[utils::index_from_pc(tar_piece)]);
@@ -121,7 +113,9 @@ void MoveGenerator::order_moves(std::vector<Move>& moves, Move tt_best_move, std
     }
     /* score moves to squares attacked by pawns */
     else if(PIECE(mv_piece) != PAWN && is_attacked_by_pawn(to)) 
+    {
       score -= abs(constants::piece_values[utils::index_from_pc(mv_piece)]); // can play around with this
+    }
     
     // done for better endgame move ordering of king moves
     if (PIECE(mv_piece) == KING && m_board->get_piece_bitboard(WHITE | QUEEN) == 0 && m_board->get_piece_bitboard(BLACK | QUEEN) == 0)

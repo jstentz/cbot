@@ -2,8 +2,6 @@
 #include <thread>
 #include <string>
 #include <bits/stdc++.h> 
-#include <thread>
-#include <chrono>
 
 #include "include/uci.h"
 #include "include/search.h"
@@ -48,6 +46,10 @@ void UCICommunicator::start_uci_communication()
     else if (main_cmd == GO)
     {
       handle_go(cmd_list, cmd);
+    }
+    else if (main_cmd == STOP)
+    {
+      handle_stop();
     }
     else if (main_cmd == QUIT)
     {
@@ -126,17 +128,17 @@ void UCICommunicator::handle_position(std::vector<std::string>& parsed_cmd, std:
 
 void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::string& cmd)
 {
-  if (parsed_cmd.size() == 1 || parsed_cmd[1] != PERFT)
+  if (parsed_cmd.size() == 1 || parsed_cmd[1] != PERFT) // this catches the go ponder case for now
   {
-    /// TODO: move this into a function in the search class 
-    std::thread t(&Searcher::find_best_move, &m_searcher);
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-    m_searcher.abort_search();
-    if (t.joinable())
+    auto pos = std::find(parsed_cmd.begin(), parsed_cmd.end(), MOVETIME);
+    if (pos != parsed_cmd.end())
     {
-      t.join();
+      m_searcher.find_best_move_timed(std::stoi(*(pos + 1))); // find the movetime argument 
     }
-    std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(m_searcher.get_best_move()) << std::endl;
+    else
+    {
+      m_searcher.ponder();
+    }
   } 
   else if (parsed_cmd[1] == PERFT)
   {
@@ -147,6 +149,11 @@ void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::strin
     int depth = std::stoi(parsed_cmd[2]);
     m_searcher.perft(depth);
   }
+}
+
+void UCICommunicator::handle_stop()
+{
+  m_searcher.stop();
 }
 
 void UCICommunicator::handle_verify(std::vector<std::string>& parsed_cmd)

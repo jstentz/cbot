@@ -19,6 +19,7 @@
 
 #include <stddef.h>
 #include <cstdint>
+#include <thread>
 
 // new class implementation
 
@@ -34,18 +35,12 @@ public:
   uint64_t perft(int depth);
   uint64_t num_nodes_bulk(int depth);
   uint64_t num_nodes(int depth);
-  void find_best_move();
+  void find_best_move(); // searches forever 
+  void ponder();
+  void stop();
+  void find_best_move_timed(int time); // searches for time milliseconds
   Move get_best_move();
   void abort_search();
-
-  /// TODO: add more states to be able to interrupt it at any time
-  enum class Status
-  {
-    WORKING,
-    ABORT,
-    DONE
-  };
-
 
 private:
   Board::Ptr m_board;
@@ -54,11 +49,12 @@ private:
   Evaluator m_evaluator;
   TranspositionTable m_tt;
 
+  std::thread m_search_thread;
+
   Move m_best_move;
   Move m_best_move_this_iteration;
   int m_best_score_this_iteration;
   int m_best_score;
-  Status m_status;
 
   bool m_abort_search;
 

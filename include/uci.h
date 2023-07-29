@@ -90,6 +90,7 @@ private:
   void handle_new_game();
   void handle_position(std::vector<std::string>& parsed_cmd, std::string& cmd);
   void handle_go(std::vector<std::string>& parsed_cmd, std::string& cmd);
+  void handle_stop();
 
   void handle_quit();
 
@@ -107,6 +108,8 @@ private:
   inline static const std::string QUIT = "quit";
   inline static const std::string GO = "go";
   inline static const std::string PERFT = "perft";
+  inline static const std::string STOP = "stop";
+  inline static const std::string MOVETIME = "movetime";
 
   /* ENGINE -> GUI COMMANDS */
   inline static const std::string UCIOK = "uciok\n";

@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 Searcher::Searcher(Board::Ptr board) : m_board{board}, m_move_gen{board}, m_tt{constants::SEARCH_TT_SIZE}, m_evaluator{m_board} {}
 
@@ -75,12 +77,12 @@ uint64_t Searcher::num_nodes(int depth)
 }
 
 /// TODO: Need to make this interruptable from the outside
+/// TODO: rename this to be the iterative deepening search 
 void Searcher::find_best_move()
 {
   m_move_gen.clear_killers(); // clear the killer moves
   m_best_move = Move::NO_MOVE;
 
-  /* iterative deepening framework with threading */
   for (size_t depth = 1; depth < INT_MAX; depth++) 
   {
     m_best_move_this_iteration = Move::NO_MOVE;
@@ -93,7 +95,7 @@ void Searcher::find_best_move()
       m_best_move = m_best_move_this_iteration;
       m_best_score = m_best_score_this_iteration;
       std::cout << "info depth " << depth << " currmove " << m_move_gen.move_to_long_algebraic(m_best_move) 
-                << " score " << m_best_score * (m_board->is_white_turn() ? 1 : -1) << std::endl;
+                << " cp " << m_best_score * (m_board->is_white_turn() ? 1 : -1) << std::endl;
     }
 
     if (m_abort_search)
@@ -103,6 +105,36 @@ void Searcher::find_best_move()
     
   }
   m_abort_search = false; // reset
+}
+
+// spawns a thread to do the searching and returns 
+void Searcher::ponder()
+{
+  // start searching
+  m_search_thread = std::thread{&Searcher::find_best_move, this};
+}
+
+void Searcher::stop()
+{
+  abort_search();
+  if (m_search_thread.joinable())
+  {
+    m_search_thread.join();
+  }
+  std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(get_best_move()) << std::endl;
+}
+
+void Searcher::find_best_move_timed(int time)
+{
+  /// TODO: move this into a function in the search class 
+  std::thread t{&Searcher::find_best_move, this};
+  std::this_thread::sleep_for(std::chrono::milliseconds(time));
+  abort_search();
+  if (t.joinable())
+  {
+    t.join();
+  }
+  std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(get_best_move()) << std::endl;
 }
 
 int Searcher::qsearch(int alpha, int beta)

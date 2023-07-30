@@ -110,6 +110,10 @@ void Searcher::find_best_move()
 // spawns a thread to do the searching and returns 
 void Searcher::ponder()
 {
+  if (m_search_thread.joinable())
+  {
+    m_search_thread.join();
+  }
   // start searching
   m_search_thread = std::thread{&Searcher::find_best_move, this};
 }
@@ -126,15 +130,9 @@ void Searcher::stop()
 
 void Searcher::find_best_move_timed(int time)
 {
-  /// TODO: move this into a function in the search class 
-  std::thread t{&Searcher::find_best_move, this};
+  ponder();
   std::this_thread::sleep_for(std::chrono::milliseconds(time));
-  abort_search();
-  if (t.joinable())
-  {
-    t.join();
-  }
-  std::cout << "bestmove " << m_move_gen.move_to_long_algebraic(get_best_move()) << std::endl;
+  stop();
 }
 
 int Searcher::qsearch(int alpha, int beta)
@@ -153,7 +151,7 @@ int Searcher::qsearch(int alpha, int beta)
   if(alpha < stand_pat) alpha = stand_pat;
 
   m_move_gen.generate_moves(captures, true); // true flag generates only captures
-  m_move_gen.order_moves(captures, Move::NO_MOVE); /* I could make an order capture functions that I call here to not waste time */
+  m_move_gen.order_moves(captures); /* I could make an order capture functions that I call here to not waste time */
   for (Move& capture : captures) {
     /* delta pruning helps to stop searching helpless nodes */
     // piece captured_piece = b.sq_board[TO(capture)];
@@ -261,6 +259,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
         - If we are wrong about being in a PV node, a costly re-search is required.
     */
 
+    /// TODO: I feel like this changes some flags in the transposition table 
     if (pv_search) 
     {
       evaluation = -search(ply_from_root + 1, depth - 1 + pawn_extension, -beta, -alpha, true, true);
@@ -294,7 +293,7 @@ int Searcher::search(int ply_from_root, int depth, int alpha, int beta, bool is_
       alpha = evaluation;
       best_move_this_search = move;
       /* if we are at the root node, replace the best move we've seen so far */
-      if (ply_from_root == 0 && !m_abort_search)
+      if (ply_from_root == 0)
       {
         m_best_move_this_iteration = best_move_this_search;
         m_best_score_this_iteration = evaluation;

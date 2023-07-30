@@ -27,7 +27,7 @@ public:
   MoveGenerator(Board::Ptr board);
 
   void generate_moves(std::vector<Move> &curr_moves, bool captures_only = false) const;
-  void order_moves(std::vector<Move> &moves, Move tt_best_move, std::optional<int> ply_from_root = std::nullopt) const; /// TODO: fix this I don't like passing this in
+  void order_moves(std::vector<Move> &moves, Move tt_best_move = Move::NO_MOVE, std::optional<int> ply_from_root = std::nullopt) const; /// TODO: fix this I don't like passing this in
 
   inline void insert_killer(int ply_from_root, const Move& move)
   {

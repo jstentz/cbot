@@ -76,8 +76,6 @@ uint64_t Searcher::num_nodes(int depth)
   return total_moves;
 }
 
-/// TODO: Need to make this interruptable from the outside
-/// TODO: rename this to be the iterative deepening search 
 void Searcher::find_best_move()
 {
   m_move_gen.clear_killers(); // clear the killer moves
@@ -94,8 +92,8 @@ void Searcher::find_best_move()
 
       m_best_move = m_best_move_this_iteration;
       m_best_score = m_best_score_this_iteration;
-      std::cout << "info depth " << depth << " currmove " << m_move_gen.move_to_long_algebraic(m_best_move) 
-                << " cp " << m_best_score * (m_board->is_white_turn() ? 1 : -1) << std::endl;
+      // std::cout << "info depth " << depth << " currmove " << m_move_gen.move_to_long_algebraic(m_best_move) 
+      //           << " cp " << m_best_score * (m_board->is_white_turn() ? 1 : -1) << std::endl;
     }
 
     if (m_abort_search)
@@ -120,6 +118,7 @@ void Searcher::ponder()
 
 void Searcher::stop()
 {
+  // stop searching
   abort_search();
   if (m_search_thread.joinable())
   {

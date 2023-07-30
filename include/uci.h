@@ -110,6 +110,9 @@ private:
   inline static const std::string PERFT = "perft";
   inline static const std::string STOP = "stop";
   inline static const std::string MOVETIME = "movetime";
+  inline static const std::string PONDER = "ponder";
+  inline static const std::string WTIME = "wtime";
+  inline static const std::string BTIME = "btime";
 
   /* ENGINE -> GUI COMMANDS */
   inline static const std::string UCIOK = "uciok\n";

@@ -126,19 +126,12 @@ void UCICommunicator::handle_position(std::vector<std::string>& parsed_cmd, std:
   }
 }
 
+/// TODO: use some kind of parser instead of this 
 void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::string& cmd)
 {
-  if (parsed_cmd.size() == 1 || parsed_cmd[1] != PERFT) // this catches the go ponder case for now
+  if (parsed_cmd.size() == 1 || parsed_cmd[1] == PONDER) 
   {
-    auto pos = std::find(parsed_cmd.begin(), parsed_cmd.end(), MOVETIME);
-    if (pos != parsed_cmd.end())
-    {
-      m_searcher.find_best_move_timed(std::stoi(*(pos + 1))); // find the movetime argument 
-    }
-    else
-    {
-      m_searcher.ponder();
-    }
+    m_searcher.ponder();
   } 
   else if (parsed_cmd[1] == PERFT)
   {
@@ -148,6 +141,25 @@ void UCICommunicator::handle_go(std::vector<std::string>& parsed_cmd, std::strin
     }
     int depth = std::stoi(parsed_cmd[2]);
     m_searcher.perft(depth);
+  }
+  else // handle the go case with more parameters
+  {
+    auto move_time_pos = std::find(parsed_cmd.begin(), parsed_cmd.end(), MOVETIME);
+    if (move_time_pos != parsed_cmd.end())
+    {
+      m_searcher.find_best_move_timed(std::stoi(*(move_time_pos + 1))); // find the movetime argument 
+      return;
+    }
+    
+    auto wtime_pos = std::find(parsed_cmd.begin(), parsed_cmd.end(), WTIME);
+    auto btime_pos = std::find(parsed_cmd.begin(), parsed_cmd.end(), BTIME);
+    if (wtime_pos != parsed_cmd.end() && btime_pos != parsed_cmd.end())
+    {
+      int wtime = std::stoi(*(wtime_pos + 1));
+      int btime = std::stoi(*(btime_pos + 1));
+      int engine_time = m_board->is_white_turn() ? wtime : btime;
+      m_searcher.find_best_move_timed(1000); // for now just use 1 second for now
+    }
   }
 }
 
